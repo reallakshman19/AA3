@@ -1,23 +1,26 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0018
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0019
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0019_COMMENT_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557560846
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557561801
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING
 PR: 1675
 PR_STATUS: OPEN_DRAFT
 PR_BRANCH: agent/emp1-1651-split-console-leg009
 PR_BASE: main
-PR_BASE_SHA: f8d051c989c8a0627db7560f996baf72987775d4
-MAIN_HEAD_OBSERVED: f8d051c989c8a0627db7560f996baf72987775d4
+MATERIAL_BASE_MAIN: f8d051c989c8a0627db7560f996baf72987775d4
+MAIN_HEAD_OBSERVED: bae94200c1cbe064a7d0735032741e964514ea0d
+MAIN_DRIFT_SOURCE: PR_1674_ISSUE_1673
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_OVERLAP_WITH_EMP1_CHAIN
+PR_RELATION_TO_CURRENT_MAIN: DIVERGED_AHEAD_68_BEHIND_67
 MERGEABILITY: MERGEABLE
 REVIEWS: 1
 REVIEW_STATES: COMMENTED
@@ -40,7 +43,7 @@ PREVIOUS_PR_MERGE_COMMIT: 4436dc3c3590d1afd40ba20f74380f442fb32935
 POST_MERGE_RECONCILIATION_PR: 1668
 POST_MERGE_RECONCILIATION_PR_STATUS: MERGED
 POST_MERGE_RECONCILIATION_MERGE_COMMIT: f8d051c989c8a0627db7560f996baf72987775d4
-ACTIVE_ENDPOINT: EP-0018
+ACTIVE_ENDPOINT: EP-0019
 LAST_COMPLETED_MATERIAL_LEG: LEG-010
 MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
 MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-010.md
@@ -52,7 +55,7 @@ CURRENT_MATERIAL_LEG: NONE
 - TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE COMPLETE. PR #1681 gives static acceptance PASS retaining 5 identities × Internal/External = 10 governed cells. Sample-loaded live confirmation remains pending.
 - TASK-003 | Replace append-only waterfall with two-column/equivalent architecture. | LEG-009 owner screenshots = UX FAIL. LEG-010 source complete. PR #1681 gives supporting PASS evidence for Review/LAFEA.2 presentation coherence, but both structured viewport audits explicitly return `FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION`; full human-factor acceptance remains pending sample-loaded rerun.
 - TASK-004 | CAUx staged integration/hardening. | SOURCE COMPLETE. PR #1681 gives supporting browser observations only; full sample-loaded acceptance remains pending. CAUx/PV Elite numerical/source authority unchanged.
-- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND EP-0018 CUSTODY CLARIFICATION. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
+- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND EP-0019 DRIFT RECONCILIATION. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
 
 ## LEG-010 material boundary
 
@@ -100,19 +103,22 @@ NOT A SUBSTITUTE: [SIMULATED] Load EMP.1.A demonstration source
 
 ## EP-0018 owner custody clarification
 
-Owner instruction observed:
+Owner explicitly rejected takeover. Current custodian continues. PR #1684 is closed unmerged and non-canonical. `proceed` was not treated as one of the three normal Owner progression commands; no LEG-011 was opened.
 
-```text
-no take over, you will do. that was a novice agent text! proceed
-```
+## EP-0019 main-drift reconciliation
 
-Durable interpretation:
+`main` advanced from `f8d051c989c8a0627db7560f996baf72987775d4` to `bae94200c1cbe064a7d0735032741e964514ea0d` through merged PR #1674 for separate issue #1673.
 
-- no takeover is requested or authorized;
-- the current custodian continues this chain;
-- PR #1684 is a novice-generated documentation artifact, is closed unmerged, and is not a baton, successor chain, acceptance authority, or merge authority;
-- `proceed` is not one of the three normal Owner progression commands, so it does not open a fresh material engineering leg;
-- this endpoint changes custody/control-plane interpretation only.
+Compare shows 67 commits ahead and only these unrelated domains:
+
+- `agents/chains/LAFEA-UQ-1673/**`;
+- `agents/qualifications/LAFEA-UQ-1673/**`;
+- `scripts/lafea-uq-*.mjs` and `scripts/lib/lafea-uq-reference-sampler.mjs`;
+- `validation/lafea-benchmark-data/UQ/**`.
+
+No EMP.1 LEG-010 file or protected EMP.1 authority path is touched by the drift. No `.github/workflows/**`, EMP.1 source, WRC/Pressure mechanics, EMP.1 route registry, retained EMP.1 benchmark authority, or EMP.1 roadmap file is changed.
+
+PR #1675 is now diverged from current main (68 ahead / 67 behind) but remains mechanically mergeable. No rebase/merge-from-main is required for custody or correctness at this checkpoint and none is authorized by the current Owner text.
 
 ## Validation truth
 

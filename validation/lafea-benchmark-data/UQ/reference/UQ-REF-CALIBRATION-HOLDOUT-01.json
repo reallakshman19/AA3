@@ -58,6 +58,6 @@
     "calibratedToRawRmseRatio": 0.4014023582529246,
     "rmseReductionIsAcceptanceCriterion": false
   },
-  "negativeCaseCount": 30,
+  "negativeCaseCount": 34,
   "nextBoundary": "RECONCILE_REFERENCE_CALIBRATION_HOLDOUT_PASS_TO_PARENT_1673_AND_PLAN_NEXT_REFERENCE_CASE"
 }

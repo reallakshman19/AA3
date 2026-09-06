@@ -12,8 +12,8 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0016
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0016.md
+ENDPOINT: EP-0017
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0017.md
 PR: 1675
 PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-1651-split-console-leg009
@@ -40,28 +40,28 @@ ENGINEERING_STATE: LEG_010_ROBUST_PRESENTATION_SOURCE_COMPLETE_SAMPLE_LOADED_REO
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
 WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
-WRITE_AUTHORITY_REASON: PR #1681 confirms static gates and key coherence, but both structured viewport audits remain FAIL because the required qualification sample was not loaded
+WRITE_AUTHORITY_REASON: static gates/key coherence are supported, but both structured viewport audits remain FAIL because the complete qualification sample was not loaded
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 MERGE_AUTHORIZATION_DISPOSITION: NO_AUTHORIZATION_FOR_PR_1675_OR_PR_1681
 AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 20
-COORDINATION_STATE: EP0016_VALIDATION_EVIDENCE_INTAKE_SAMPLE_LOADED_RERUN_PENDING
-POST_BASIS_DRIFT: NONE; main remains f8d051c989c8a0627db7560f996baf72987775d4 and no new material source was opened
+CUSTODY_EPOCH: 21
+COORDINATION_STATE: EP0017_VALIDATION_PREREQUISITE_DISAMBIGUATED_RERUN_PENDING
+POST_BASIS_DRIFT: NONE; main unchanged and no new material source opened
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0016
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0017
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557073742
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0017_COMMENT_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557074702
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING
 OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 OWNER_MERGE_COMMAND: NONE
@@ -80,15 +80,15 @@ QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: FAIL
-HANDOVER_VALIDATION_EVIDENCE: PR #1681 supplies three static Node PASS results and supporting Review/LAFEA.2 coherence evidence; its desktop and narrow audit objects themselves return FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION because the normal qualification sample was not loaded
+HANDOVER_VALIDATION_EVIDENCE: PR #1681 supplies three static Node PASS results and supporting Review/LAFEA.2 coherence evidence; both structured viewport audit objects return FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION because the complete qualification sample prerequisite was not satisfied
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 VALIDATION_PASS_OBSERVED: three focused Node/static checks PASS at fixed material head dc2df7a8a8b26feea26d29dbf0741794f788cfac; key presentation-coherence observation is supporting PASS evidence
 VALIDATION_LIVE_UX: LEG009_FAIL; LEG010_PARTIAL_SUPPORTING_REOBSERVATION; FULL_SAMPLE_LOADED_ACCEPTANCE_PENDING
 VALIDATION_FAILED_LEG010: desktop structured audit FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION; narrow structured audit FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION
-VALIDATION_NOT_RUN_LEG010: required sample-loaded rerun; complete screenshot set from a passing run; focused Playwright; check:imports; build; git diff --check unless separately evidenced
+VALIDATION_NOT_RUN_LEG010: exact complete-sample-loaded rerun; passing screenshot set; focused Playwright; check:imports; build; git diff --check unless separately evidenced
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN; zero status contexts/workflows are not PASS
-VALIDATION_PROTOCOL_DIAGNOSIS: EP-0015 is correct; it requires loading the normal qualification sample before audit. seedQualificationPressure only adds P-EXTERNAL to an existing LAFEA.1 document and does not load the qualification sample. PR #1681 therefore reflects operator/procedure deviation, not a product/harness defect.
-AUTHORITY_BOUNDARY: no LEG-011; no WRC/Pressure mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
-CURRENT_BLOCKER: rerun EP-0015 with the normal qualification sample loaded before invoking the audit. PR #1675 merge is Owner-only and not authorized; PR #1681 is supporting evidence only and also has no merge authorization.
-EXACT_NEXT_ACTION: checkout dc2df7a8a8b26feea26d29dbf0741794f788cfac, start localhost, enter EMPIRICAL -> EMP.1, load the normal qualification sample, run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Accept only each object's own status. Required closeout: both PASS_CURRENT_VIEWPORT_DOM_OBSERVATION with failures=[], CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.
+VALIDATION_PROTOCOL_DIAGNOSIS: exact prerequisite is `[SIMULATED] Load complete EMP.1 qualification sample`; `[SIMULATED] Load EMP.1.A demonstration source` is distinct and is not a substitute. `seedQualificationPressure` only adds P-EXTERNAL to an existing LAFEA.1 document.
+AUTHORITY_BOUNDARY: no LEG-011; no product/engineering/workflow source change.
+CURRENT_BLOCKER: external sample-loaded localhost rerun remains required. PR #1675 merge is Owner-only and not authorized; PR #1681 is supporting evidence only and also has no merge authorization.
+EXACT_NEXT_ACTION: checkout dc2df7a8a8b26feea26d29dbf0741794f788cfac, start localhost, enter EMPIRICAL -> EMP.1, click `[SIMULATED] Load complete EMP.1 qualification sample` (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Accept only each object's own status. Closeout requires both PASS_CURRENT_VIEWPORT_DOM_OBSERVATION with failures=[], CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.

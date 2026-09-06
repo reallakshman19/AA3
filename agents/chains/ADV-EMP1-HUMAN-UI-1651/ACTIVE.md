@@ -20,8 +20,8 @@ PR_1675_HEAD_AT_MERGE: 661b2b0c0eacb3243e037e5356b6f2188596a3d6
 PR_1675_MERGE_COMMIT: 11f655e71a81b0d7ebef42e99792482b434e60db
 MAIN_HEAD_OBSERVED: 11f655e71a81b0d7ebef42e99792482b434e60db
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-postmerge-reconciliation-0020
-POST_MERGE_RECONCILIATION_PR: PENDING
-POST_MERGE_RECONCILIATION_PR_STATUS: PENDING_DRAFT_OWNER_ONLY
+POST_MERGE_RECONCILIATION_PR: 1690
+POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
 SUPPORTING_VALIDATION_PR: 1681
 SUPPORTING_VALIDATION_PR_STATUS: OPEN_DRAFT_SUPPORTING_EVIDENCE_ONLY
 SUPPORTING_VALIDATION_PR_HEAD: c106d489fa125e75f02843d84034f6324357fa7b
@@ -40,7 +40,7 @@ WRITE_AUTHORITY_REASON: implementation is merged; sample-loaded desktop/narrow h
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGE_AUTHORIZATION_DISPOSITION: PR_1675_AUTHORIZATION_CONSUMED; NO_AUTHORIZATION_FOR_SUCCESSOR_OR_PR_1681
+MERGE_AUTHORIZATION_DISPOSITION: PR_1675_AUTHORIZATION_CONSUMED; NO_AUTHORIZATION_FOR_PR_1690_OR_PR_1681
 AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_EPOCH: 24
@@ -53,12 +53,12 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0020
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0020_COMMENT_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557733922
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557734781
 OWNER_TEXT_OBSERVED: `merge. clearly say what that novice agent should do step by step!`
 OWNER_PROGRESSION_COMMAND: NONE
 OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
@@ -88,5 +88,5 @@ VALIDATION_NOT_RUN_LEG010: sample-loaded post-merge desktop+narrow audit; passin
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN unless compatible project-local browser executes it; zero statuses/workflows are not PASS
 VALIDATION_PROTOCOL_DIAGNOSIS: required prerequisite is `[SIMULATED] Load complete EMP.1 qualification sample`; `[SIMULATED] Load EMP.1.A demonstration source` is not a substitute; seedQualificationPressure does not load the sample
 AUTHORITY_BOUNDARY: no LEG-011; no WRC/Pressure mechanics, retained benchmark authority, route/code/release authority, roadmap or workflow-YAML change
-CURRENT_BLOCKER: external post-merge localhost validation against main merge commit 11f655e71a81b0d7ebef42e99792482b434e60db. Successor reconciliation PR is control-plane-only and not merge-authorized.
+CURRENT_BLOCKER: external post-merge localhost validation against main merge commit 11f655e71a81b0d7ebef42e99792482b434e60db. PR #1690 is control-plane-only and not merge-authorized.
 EXACT_NEXT_ACTION: validation runner only: checkout 11f655e71a81b0d7ebef42e99792482b434e60db, run static checks, start localhost, enter EMPIRICAL -> EMP.1, click `[SIMULATED] Load complete EMP.1 qualification sample`, import manual-audit=4, run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow 720x900 `runEmp1ManualBrowserAudit()`, require each object's own PASS status and failures=[], perform actual CAUx Enter-open/Space-close observation, capture desktop default/readiness-open/narrow screenshots, and return evidence without repository mutation.

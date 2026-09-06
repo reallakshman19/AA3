@@ -115,7 +115,7 @@ export class LafeaWorkbenchController {
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
       onSetScalar: (descriptorId, entityId, rawText) => this.setScalar(descriptorId, entityId, rawText),
-      onSetScalarBatch: (edits) => this.setScalarBatch(edits, 'FORM_GROUP'),
+      onSetScalarBatch: (edits) => this.setScalarBatch(edits),
       onApplyJson: (text) => this.applyDocumentText(text),
       onMoveNode: (path, nodeId, x, y) => this.store.moveNode(path, nodeId, x, y),
       onBenchmark: () => this.runBenchmark(),
@@ -167,6 +167,7 @@ export class LafeaWorkbenchController {
       return this.store.reportEditError('analysisMeshEvidence', null, error);
     }
   }
+
   importDocument(value, stageId, sourceHash = null) {
     return this.store.importDocument(value, stageId, sourceHash);
   }
@@ -361,6 +362,7 @@ export class LafeaWorkbenchController {
       stage?.retainedAnalysisMeshEvidence ?? null,
     );
   }
+
   exportAnalysisMeshEvidence(stageId = this.getState().activeStageId) {
     return this.store.exportAnalysisMeshEvidence(stageId);
   }

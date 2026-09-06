@@ -11,8 +11,8 @@ WORK_ITEM_MODE: EXCLUSIVE
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0024
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0024.md
+ENDPOINT: EP-0025
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0025.md
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
 CUSTODY_STATE: HELD
@@ -25,33 +25,36 @@ CURRENT_REPAIR_PR: 1701
 CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
 CURRENT_PR_FIXED_MATERIAL_HEAD: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
-CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: 8db56b1b0b8322182196b4235b8f6538f6b6d4cd
+CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: b455ba0ead0446492e1d951131801490e93835e9
 CURRENT_PR_MERGEABLE_AT_STATUS_CHECK: TRUE
 CURRENT_PR_REVIEWS_AT_STATUS_CHECK: 0
 CURRENT_PR_UNRESOLVED_REVIEW_THREADS_AT_STATUS_CHECK: 0
 CURRENT_PR_STATUS_CONTEXTS_AT_STATUS_CHECK: 0
 CURRENT_PR_WORKFLOW_RUNS_AT_STATUS_CHECK: 0
-MATERIAL_BASE: 718d42810fd7e51307edf78373a9158eb20246bd
+MATERIAL_BASE: a66931152fdfa3b516744e49c9e4c0f0b5ce7e28
 MATERIAL_MAIN_BASIS: 687b9ff3b8884031e4776f031af7a739f29eb2c8
-MAIN_HEAD_OBSERVED: f62abea09dfc1da1d6412525790bc73a2fa8f6e7
-MAIN_DRIFT_FROM_MATERIAL_BASIS: AHEAD_16_BEHIND_0
-MAIN_DRIFT_SOURCE: LAFEA_UQ_REF_HOLDOUT_1699
+MAIN_HEAD_OBSERVED: e8cdc8473ac12d9773f4be598746d13acd3eabc6
+MAIN_DRIFT_FROM_MATERIAL_BASIS: AHEAD_32_BEHIND_0
+MAIN_DRIFT_SOURCE: LAFEA_UQ_REF_HOLDOUT_1699_AND_LAFEA_UQ_REF_CAL_UNC_1702
 MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_EMP1_OVERLAP
-MAIN_DRIFT_AFFECTS_LEG012_DIAGNOSIS_OR_MATERIAL: FALSE
+MAIN_DRIFT_AFFECTS_LEG013_SCOPE_OR_AUTHORITY: FALSE
+POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
 
 LAST_COMPLETED_MATERIAL_LEG: LEG-012
 LATEST_MATERIAL_HEAD: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-012.md
-CURRENT_MATERIAL_LEG: NONE
-ENGINEERING_STATE: LEG_012_SOURCE_COMPLETE_EXECUTABLE_REOBSERVATION_PENDING
-WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
-WRITE_AUTHORITY_REASON: LEG-012 material is frozen; exact-head Node/Playwright/Stage-17 and subsequent human-factor gates require external execution
+CURRENT_MATERIAL_LEG: LEG-013
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0025.md
+ENGINEERING_STATE: LEG_013_VALIDATION_CARRIER_HARDENING_IN_PROGRESS
+WRITE_AUTHORITY: WRITE_ALLOWED
+WRITE_AUTHORITY_REASON: Owner `proceed next` authorizes one bounded same-scope progression; EP-0025 prework exists before material changes and limits LEG-013 to validation-carrier hardening
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 MERGE_AUTHORIZATION_DISPOSITION: PR_1675_AUTHORIZATION_CONSUMED; NO_AUTHORIZATION_FOR_PR_1701_OR_SUCCESSOR
 
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_012
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_PROGRESSION_STATUS: ACTIVE_FOR_LEG_013
 OWNER_MERGE_COMMAND: NONE
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
@@ -69,21 +72,21 @@ ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5559596599
 RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5559598051
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_LEG013_COMPLETION
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
 
 ROADMAP: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
-ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED; section 4.1 sequencing debt addressed by LEG-011/LEG-012 repair chain
+ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED; section 4.1 sequencing debt addressed by LEG-011/LEG-012; LEG-013 changes validation carrier only
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 VALIDATION_HISTORICAL_LEG011: FAIL_EXACT_HEAD_CHROMIUM_2_OF_2_PLUS_STAGE17_STALE_GATE
 VALIDATION_SOURCE_INSPECTION_LEG012: PASS_PROTECTED_BOUNDARY
-VALIDATION_NODE_LEG012: NOT_RUN
-VALIDATION_PLAYWRIGHT_LEG012: NOT_RUN
-VALIDATION_STAGE17_LEG012: NOT_RUN
-VALIDATION_HUMAN_FACTOR_LEG012: NOT_RUN
+VALIDATION_NODE_LEG012: PASS_EXTERNAL_FIVE_OF_FIVE
+VALIDATION_PLAYWRIGHT_LEG012: NOT_RUN_POWERSHELL_INVOCATION_ERROR
+VALIDATION_STAGE17_LEG012: BLOCKED_ENVIRONMENT_MISSING_PROJECT_LOCAL_CHROMIUM
+VALIDATION_HUMAN_FACTOR_LEG012: NOT_RUN_GATED_BY_EXECUTABLE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 CHAIN_HANDOVER_READY: TRUE
@@ -93,6 +96,7 @@ DEFECT_PRIMARY_REPAIRED_IN_SOURCE: QUALIFICATION_SAMPLE_FACTORY_RAW_VS_NORMALIZE
 LEG012_FACTORY_CONTRACT: raw A -> public LAFEA.1 normalization -> private A execution -> A/B refresh using same normalized A -> return source-only A/B/C bundle
 LEG012_CONTROLLER_CONTRACT: import A -> normal controller/store A execution -> require QUALIFIED/ACCEPTED -> import B -> typed C binding -> governed EMP.1 run
 STAGE17_TEST_ALIGNMENT: stale public-product pre-promotion expectation updated to current bounded gamma5 authority; authority source unchanged
+LEG013_SCOPE: cross-platform fail-fast exact-head validation runner + Windows/manual carrier hardening only
 
 ACCEPTANCE_TASK_001: SOURCE_RETAINED_LIVE_FINAL_PENDING
 ACCEPTANCE_TASK_002: SOURCE_RETAINED_PRESSURE_5X2_LIVE_FINAL_PENDING
@@ -103,6 +107,6 @@ ACCEPTANCE_TASK_005: PROTECTED_AUTHORITY_PRESERVED_BY_LEG012_DIFF_INSPECTION
 BENCHMARK_CAUX: retained 8/8 within frozen 3%; worst relative 2.0355862430856293% at Cu; worst absolute 26.786740343133943 kPa at Du; governing Du/Du agreement; comparison evidence only, not global WRC/code/release authority
 BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / no invented expected values, version or tolerance
 
-AUTHORITY_BOUNDARY: no WRC/Pressure mechanics, bounded-route registry or authority state, retained benchmark source/tolerance, roadmap, workflow YAML, code-compliance, production authorization or release authority change in LEG-012
-CURRENT_BLOCKER: exact-head executable validation of LEG-012 is pending. Post-freeze main drift is an unrelated LAFEA-UQ holdout chain and does not alter the fixed material target. PR #1701 must not merge before explicit Owner authorization and is not validated until the five Node gates, focused Playwright and Stage-17 pass; human-factor acceptance follows only after those executable gates pass.
-EXACT_NEXT_ACTION: external runner checks out fixed material head 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3 and follows MANUAL-EP-0024. Return complete five Node outputs, focused Playwright output, Stage-17 output; only on executable PASS continue desktop/narrow structured audits, CAUx physical Enter/Space and three screenshots. Evidence intake is read-only and does not require another Owner progression command.
+AUTHORITY_BOUNDARY: LEG-013 may change scripts/validation documentation only; no production src, WRC/Pressure mechanics, bounded-route registry/authority, retained benchmark source/tolerance, roadmap, workflow YAML, code-compliance, production authorization, release authority or LAFEA.3+ mechanics
+CURRENT_BLOCKER: external executable qualification was derailed by PowerShell command transcription and missing project-local Chromium; LEG-013 is hardening the validation carrier so those conditions fail early and distinctly before the governed product/browser assertions.
+EXACT_NEXT_ACTION: complete LEG-013 validation-runner and guide patch, inspect the material diff/protected paths, freeze a new material head, then require external exact-head execution; no human-factor acceptance until executable browser gates pass.

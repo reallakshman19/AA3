@@ -22,7 +22,9 @@
     {"sourceId":"S-014","role":"benchmarkMeshLadderDefinitions","path":"validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json","blobSha":"7be1e34b9e35c35f27be4aae49dfc441090fad4b"},
     {"sourceId":"S-015","role":"benchmarkFixedPhysicalProbeDefinitions","path":"validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json","blobSha":"32436222284374cd94bad09ba4980ce64a0d28e8"},
     {"sourceId":"S-016","role":"lafea4MultiPatchMidsurfaceContract","path":"src/workspace/lafea-shell-multipatch-midsurface-contract.js","blobSha":"45158697eb552688f71b68ce09c9e33869f263f2"},
-    {"sourceId":"S-017","role":"lafea4MultiPatchMeshProducer","path":"src/workspace/lafea-shell-multipatch-mesh-core.js","blobSha":"b54063378d8265e5d5905975368b8094c251b8e7"}
+    {"sourceId":"S-017","role":"lafea4MultiPatchMeshProducer","path":"src/workspace/lafea-shell-multipatch-mesh-core.js","blobSha":"b54063378d8265e5d5905975368b8094c251b8e7"},
+    {"sourceId":"S-018","role":"lafea3DomainFirstMeshRequestContract","path":"src/workspace/lafea-domain-first-requests.js","blobSha":"51907e33fcf363e1d84fa491e7124a3c961529a0"},
+    {"sourceId":"S-019","role":"explicitMappedQ8Primitive","path":"src/core/lafea-meshing/mapped-mitc-mesh.js","blobSha":"4ad4740e3853cfec31ea372710713a8e270619f6"}
   ],
   "trace": {
     "LAFEA.3": {
@@ -39,6 +41,12 @@
       "topologyAdapter": "S-005",
       "producerEngine": "S-003",
       "canonicalMeshContract": "S-006"
+    },
+    "TASK-005": {
+      "overCeilingPublication": "S-002",
+      "unauthorizedFamilyIntent": "S-018",
+      "explicitMappedQ8Topology": "S-019",
+      "nonconformingMultipatchSeam": "S-016"
     }
   },
   "authority": {

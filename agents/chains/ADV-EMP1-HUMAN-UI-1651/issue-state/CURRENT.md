@@ -3,11 +3,11 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0024
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0024_COMMENT_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0024_COMMENT_SYNC
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0024_COMMENT_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5559596599
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5559598051
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
@@ -76,9 +76,7 @@ import returned A
 -> run governed EMP.1 product
 ```
 
-The factory never exports/injects its private A execution.
-
-The sequencing check is strengthened with a runtime factory/A-to-B identity smoke so the exact EP-0023 failure is directly falsifiable before Playwright.
+The factory never exports/injects its private A execution. The sequencing check adds a runtime factory/A-to-B identity smoke that directly falsifies the EP-0023 mismatch before Playwright.
 
 ## Stage-17 baseline alignment
 

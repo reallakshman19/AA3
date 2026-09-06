@@ -25,7 +25,7 @@ CURRENT_REPAIR_PR: 1701
 CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
 CURRENT_PR_FIXED_MATERIAL_HEAD: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
-CURRENT_PR_RELAY_HEAD_AT_ACTIVE_WRITE: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
+CURRENT_PR_RELAY_HEAD_OBSERVED_PRE_FINAL_SYNC: e1a14e3f1554504582651ec0e57f10e03d31f248
 MATERIAL_BASE: 718d42810fd7e51307edf78373a9158eb20246bd
 MATERIAL_MAIN_BASIS: 687b9ff3b8884031e4776f031af7a739f29eb2c8
 MAIN_HEAD_OBSERVED: 687b9ff3b8884031e4776f031af7a739f29eb2c8
@@ -37,7 +37,7 @@ MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-012
 CURRENT_MATERIAL_LEG: NONE
 ENGINEERING_STATE: LEG_012_SOURCE_COMPLETE_EXECUTABLE_REOBSERVATION_PENDING
 WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
-WRITE_AUTHORITY_REASON: LEG-012 material is frozen; executable Node/Playwright/Stage-17 and subsequent human-factor gates require exact-head external execution
+WRITE_AUTHORITY_REASON: LEG-012 material is frozen; exact-head Node/Playwright/Stage-17 and subsequent human-factor gates require external execution
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
@@ -59,9 +59,9 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0024
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0024_COMMENT_SYNC
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0024_COMMENT_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0024_COMMENT_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5559596599
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5559598051
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
@@ -96,5 +96,5 @@ BENCHMARK_CAUX: retained 8/8 within frozen 3%; worst relative 2.0355862430856293
 BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / no invented expected values, version or tolerance
 
 AUTHORITY_BOUNDARY: no WRC/Pressure mechanics, bounded-route registry or authority state, retained benchmark source/tolerance, roadmap, workflow YAML, code-compliance, production authorization or release authority change in LEG-012
-CURRENT_BLOCKER: exact-head executable validation of LEG-012 is pending. PR #1701 must not merge before Owner authorization and should not be considered validated until the five Node gates, focused Playwright and Stage-17 pass; human-factor acceptance follows only after those executable gates pass.
-EXACT_NEXT_ACTION: external runner checks out fixed material head 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3 and follows MANUAL-EP-0024. Return complete five Node outputs, focused Playwright output, Stage-17 output; only on executable PASS continue desktop/narrow structured audits, CAUx physical Enter/Space and three screenshots. Evidence intake is read-only and does not require a new Owner progression command.
+CURRENT_BLOCKER: exact-head executable validation of LEG-012 is pending. PR #1701 must not merge before explicit Owner authorization and is not validated until the five Node gates, focused Playwright and Stage-17 pass; human-factor acceptance follows only after those executable gates pass.
+EXACT_NEXT_ACTION: external runner checks out fixed material head 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3 and follows MANUAL-EP-0024. Return complete five Node outputs, focused Playwright output, Stage-17 output; only on executable PASS continue desktop/narrow structured audits, CAUx physical Enter/Space and three screenshots. Evidence intake is read-only and does not require another Owner progression command.

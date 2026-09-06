@@ -1,0 +1,65 @@
+{
+  "schema": "lafea-uq-reference-calibration-bias/v1",
+  "issue": 1697,
+  "parentIssue": 1673,
+  "dependencyIssue": 1694,
+  "caseId": "UQ-REF-CALIBRATION-BIAS-01",
+  "scope": "REFERENCE_BENCHMARK_ONLY",
+  "referenceCalibrationBiasExecutionAuthorized": true,
+  "productionCalibrationFactorAuthorized": false,
+  "productionStatisticalExecutionAuthorized": false,
+  "activeProductionNumericStochasticSourceCount": 0,
+  "productionSensitivityAuthorized": false,
+  "productionValidationAcceptanceAuthorized": false,
+  "productionReliabilityTargetAuthority": "NONE",
+  "b03ActivationAuthorized": false,
+  "programReleaseAuthority": false,
+  "programTemperatureAuthority": false,
+  "productionApplicabilityBlocker": "ENGINEERING_POPULATION_APPLICABILITY_REQUIRED",
+  "universalCalibrationAcceptanceThreshold": null,
+  "plan": {
+    "unit": "REFERENCE_QOI",
+    "requiredPairIds": ["P1", "P2", "P3", "P4"],
+    "ratioOrientation": "TEST_OVER_MODEL",
+    "biasEstimator": "ARITHMETIC_MEAN_OF_PAIR_RATIOS",
+    "scatterConvention": "SAMPLE_STANDARD_DEVIATION_N_MINUS_1",
+    "scatterDenominator": "N_MINUS_1",
+    "residualSign": "TEST_MINUS_CALIBRATED_MODEL"
+  },
+  "pairs": [
+    {
+      "id": "P1",
+      "model": {"pairId": "P1", "value": 100, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_MODEL_P1"},
+      "test": {"pairId": "P1", "value": 102, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_TEST_P1"}
+    },
+    {
+      "id": "P2",
+      "model": {"pairId": "P2", "value": 125, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_MODEL_P2"},
+      "test": {"pairId": "P2", "value": 130, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_TEST_P2"}
+    },
+    {
+      "id": "P3",
+      "model": {"pairId": "P3", "value": 150, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_MODEL_P3"},
+      "test": {"pairId": "P3", "value": 159, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_TEST_P3"}
+    },
+    {
+      "id": "P4",
+      "model": {"pairId": "P4", "value": 200, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_MODEL_P4"},
+      "test": {"pairId": "P4", "value": 216, "unit": "REFERENCE_QOI", "provenance": "SYNTHETIC_TEST_P4"}
+    }
+  ],
+  "oracle": {
+    "ratios": [1.02, 1.04, 1.06, 1.08],
+    "biasFactor": 1.05,
+    "selectedSampleRatioStandardDeviation": 0.025819888974716113,
+    "populationRatioStandardDeviationCrosscheck": 0.022360679774997897,
+    "calibratedModelValues": [105, 131.25, 157.5, 210],
+    "rawResiduals": [2, 5, 9, 16],
+    "calibratedResiduals": [-3, -1.25, 1.5, 6],
+    "rawResidualRmse": 9.565563234854496,
+    "calibratedResidualRmse": 3.49329715312053,
+    "rmseReductionIsAcceptanceCriterion": false
+  },
+  "negativeCaseCount": 23,
+  "nextBoundary": "RECONCILE_REFERENCE_CALIBRATION_BIAS_PASS_TO_PARENT_1673_AND_PLAN_NEXT_REFERENCE_CASE"
+}

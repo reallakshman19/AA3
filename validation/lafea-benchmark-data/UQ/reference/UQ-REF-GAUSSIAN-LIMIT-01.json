@@ -1,0 +1,109 @@
+{
+  "schema": "lafea-uq-reference-limit-state/v1",
+  "issue": 1689,
+  "parentIssue": 1673,
+  "dependencyIssue": 1685,
+  "caseId": "UQ-REF-GAUSSIAN-LIMIT-01",
+  "definitionState": "FROZEN_BEFORE_EXECUTION",
+  "authorityClass": "REFERENCE_BENCHMARK_ONLY",
+  "productionOutputUsedToChooseDefinition": false,
+  "variableIds": ["R", "S"],
+  "canonicalDrawOrder": ["R", "S"],
+  "inputModel": {
+    "dependency": "INDEPENDENT_SYNTHETIC_REFERENCE_ONLY",
+    "distributions": [
+      {
+        "variableId": "R",
+        "family": "NORMAL",
+        "mean": 120,
+        "standardDeviation": 10,
+        "unit": "REFERENCE_FORCE"
+      },
+      {
+        "variableId": "S",
+        "family": "NORMAL",
+        "mean": 80,
+        "standardDeviation": 8,
+        "unit": "REFERENCE_FORCE"
+      }
+    ]
+  },
+  "limitState": {
+    "relation": "g = R - S",
+    "coefficients": [1, -1],
+    "offset": 0,
+    "failureOperator": "<=",
+    "failureThreshold": 0,
+    "signConvention": "FAILURE_WHEN_G_LE_ZERO"
+  },
+  "analyticalOracle": {
+    "limitStateMean": 40,
+    "limitStateVariance": 164,
+    "limitStateStandardDeviation": 12.806248474865697,
+    "reliabilityIndexBeta": 3.1234752377721215,
+    "failureProbability": 0.0008936445184936082,
+    "betaDefinition": "mu_g / sigma_g",
+    "probabilityDefinition": "Phi(-beta)"
+  },
+  "samplingPlan": {
+    "prng": "XORSHIFT32",
+    "normalTransform": "BOX_MULLER_COSINE_SINE",
+    "seedUint32": 1689001,
+    "sampleCounts": [4096, 16384, 65536, 262144],
+    "finalSampleCount": 262144,
+    "nestedPrefixSamples": true,
+    "failureEstimator": "EMPIRICAL_INDICATOR_COUNT_G_LE_ZERO"
+  },
+  "acceptance": {
+    "analyticReconstructionRelativeTolerance": 1e-12,
+    "normalTailAbsoluteTolerance": 1e-9,
+    "finalNormalizedErrorMaximum": 5,
+    "minimumExpectedFailureCount": 100,
+    "requireSameSeedReplayExact": true,
+    "requireDifferentSeedSummaryChanged": true,
+    "requireConsistentPermutationExact": true,
+    "requireInconsistentOrderFailClosed": true,
+    "monotonicRawErrorReductionRequired": false
+  },
+  "zeroVarianceControl": {
+    "variableIds": ["R", "S"],
+    "values": [120, 80],
+    "coefficients": [1, -1],
+    "offset": 0,
+    "failureOperator": "<=",
+    "failureThreshold": 0,
+    "expectedG": 40,
+    "expectedVariance": 0,
+    "expectedFailureProbability": 0,
+    "betaApplicability": "NOT_APPLICABLE_ZERO_VARIANCE"
+  },
+  "permutationControl": {
+    "permutedVariableIds": ["S", "R"],
+    "permutedDistributions": [
+      {
+        "variableId": "S",
+        "family": "NORMAL",
+        "mean": 80,
+        "standardDeviation": 8,
+        "unit": "REFERENCE_FORCE"
+      },
+      {
+        "variableId": "R",
+        "family": "NORMAL",
+        "mean": 120,
+        "standardDeviation": 10,
+        "unit": "REFERENCE_FORCE"
+      }
+    ],
+    "permutedCoefficients": [-1, 1]
+  },
+  "authority": {
+    "referenceLimitStateStatisticalExecutionAuthorized": true,
+    "productionStatisticalExecutionAuthorized": false,
+    "productionReliabilityTargetAuthorized": false,
+    "productionSensitivityAuthorized": false,
+    "codeQualificationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  }
+}

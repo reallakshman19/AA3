@@ -32,6 +32,8 @@ SUPPORTING_VALIDATION_PR_STATUS: OPEN_DRAFT_SUPPORTING_EVIDENCE_ONLY
 SUPPORTING_VALIDATION_PR_HEAD: c106d489fa125e75f02843d84034f6324357fa7b
 SUPPORTING_VALIDATION_PR_STATUS_CONTEXTS: 0
 SUPPORTING_VALIDATION_PR_WORKFLOW_RUNS: 0
+NONCANONICAL_HANDOVER_PR: 1684
+NONCANONICAL_HANDOVER_PR_DISPOSITION: OWNER_REJECTED_AS_NOVICE_ARTIFACT_NO_TAKEOVER
 LATEST_MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
 LAST_COMPLETED_MATERIAL_LEG: LEG-010
 CURRENT_MATERIAL_LEG: NONE
@@ -47,7 +49,8 @@ MERGE_AUTHORIZED: FALSE
 MERGE_AUTHORIZATION_DISPOSITION: NO_AUTHORIZATION_FOR_PR_1675_OR_PR_1681
 AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 21
+CUSTODY_EPOCH: 22
+CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
 COORDINATION_STATE: EP0017_VALIDATION_PREREQUISITE_DISAMBIGUATED_RERUN_PENDING
 POST_BASIS_DRIFT: NONE; main unchanged and no new material source opened
 ISSUE_BASIS_ID: IB-0001
@@ -62,8 +65,9 @@ PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
 RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557292405
-OWNER_TEXT_OBSERVED: `proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_TEXT_OBSERVED: `no take over, you will do. that was a novice agent text! proceed`
+OWNER_PROGRESSION_COMMAND: NONE
+OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
 OWNER_MERGE_COMMAND: NONE
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -91,4 +95,4 @@ VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT /
 VALIDATION_PROTOCOL_DIAGNOSIS: exact prerequisite is `[SIMULATED] Load complete EMP.1 qualification sample`; `[SIMULATED] Load EMP.1.A demonstration source` is distinct and is not a substitute. `seedQualificationPressure` only adds P-EXTERNAL to an existing LAFEA.1 document.
 AUTHORITY_BOUNDARY: no LEG-011; no product/engineering/workflow source change.
 CURRENT_BLOCKER: external sample-loaded localhost rerun remains required. PR #1675 merge is Owner-only and not authorized; PR #1681 is supporting evidence only and also has no merge authorization.
-EXACT_NEXT_ACTION: checkout dc2df7a8a8b26feea26d29dbf0741794f788cfac, start localhost, enter EMPIRICAL -> EMP.1, click `[SIMULATED] Load complete EMP.1 qualification sample` (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Accept only each object's own status. Closeout requires both PASS_CURRENT_VIEWPORT_DOM_OBSERVATION with failures=[], CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.
+EXACT_NEXT_ACTION: current custodian continues. Checkout dc2df7a8a8b26feea26d29dbf0741794f788cfac, start localhost, enter EMPIRICAL -> EMP.1, click `[SIMULATED] Load complete EMP.1 qualification sample` (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Accept only each object's own status. Closeout requires both PASS_CURRENT_VIEWPORT_DOM_OBSERVATION with failures=[], CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.

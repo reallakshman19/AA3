@@ -3,8 +3,8 @@
   "bucketId": "MESH",
   "issue": "github:reallaksh19/Advanced_Analysis#1652",
   "benchmarkId": "BM-MESH",
-  "materialLeg": "LEG-010",
-  "state": "STAGED_RUNNER_FAIL_CLOSED_M3_NON_THICKNESS_WIRED",
+  "materialLeg": "LEG-011",
+  "state": "STAGED_RUNNER_MULTIPATCH_WIRED_M3_THICKNESS_BLOCKED",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "authority": {
     "benchmarkExecutionAuthorized": true,
@@ -19,11 +19,11 @@
   },
   "scopeBoundary": {
     "allowed": [
-      "Execute the registered production mesh producer for M0/M1 and the executable LAFEA.3 portion of M2.",
-      "Retain canonical lafea-analysis-mesh/v1 hashes, counts, DOF and mesh-quality observations.",
-      "Execute frozen LAFEA.3 L0/L1/L2 production ladders for M3 non-thickness quality distributions and verify genuine refinement plus non-worsening worst metrics.",
+      "Execute registered production continuum, single-patch shell and qualified multipatch shell mesh producers for the frozen M0-M3 observations.",
+      "Retain canonical lafea-analysis-mesh/v1 hashes, counts, DOF, conforming seam identity and mesh-quality observations.",
+      "Execute frozen LAFEA.3 and LAFEA.4 L0/L1/L2 production ladders for M3 non-thickness quality distributions and verify genuine refinement plus non-worsening worst metrics.",
       "Retain per-stage audit records and gate later stages on a contiguous PASS prefix.",
-      "Emit explicit BLOCKED records where production scope or owner authority is absent."
+      "Emit explicit BLOCKED records where owner authority is absent."
     ],
     "forbidden": [
       "Benchmark-authored meshes or benchmark-only mesh adapters defining ladder meshes.",
@@ -60,7 +60,9 @@
             "S-005",
             "S-006",
             "S-011",
-            "S-014"
+            "S-014",
+            "S-016",
+            "S-017"
           ],
           "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
           "oracleAuthority": "PRODUCTION_CONTRACT_AND_FROZEN_LADDER_REQUESTS"
@@ -85,7 +87,9 @@
             "S-005",
             "S-006",
             "S-011",
-            "S-014"
+            "S-014",
+            "S-016",
+            "S-017"
           ],
           "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
           "oracleAuthority": "BYTE_STABLE_CANONICAL_MESH_HASH"
@@ -95,8 +99,8 @@
     {
       "benchmarkStage": "M2",
       "title": "Independent geometry fidelity",
-      "definitionState": "READY_WITH_DECLARED_PRODUCTION_SCOPE_BLOCKER",
-      "gateMode": "FAIL_CLOSED",
+      "definitionState": "READY",
+      "gateMode": "REQUIRE_PASS",
       "methods": [
         {
           "methodId": "M2-INDEPENDENT-GEOMETRY-FIDELITY",
@@ -110,28 +114,30 @@
             "S-006",
             "S-008",
             "S-011",
-            "S-014"
+            "S-014",
+            "S-016",
+            "S-017"
           ],
           "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
           "oracleAuthority": "validation/lafea-benchmark-data/MESH/oracle/expected-values.json"
         }
       ],
-      "declaredBlockers": [
-        {
-          "blockerId": "M2-LAFEA4-MULTIPATCH-SEAM",
-          "caseId": "M2-TWO-PATCH-SHELL-01",
-          "reason": "The qualified LAFEA.4 production midsurface/producer scope is single-patch and declares NO_MULTI_PATCH_SEAMS; benchmark-side node merging is forbidden."
-        }
-      ]
+      "multipatchSeamPolicy": {
+        "caseId": "M2-TWO-PATCH-SHELL-01",
+        "producerScope": "PLANAR_TWO_RECTANGULAR_PATCHES_CONFORMING_FULL_EDGE_SEAM_CST_DKT_TRI3_V1",
+        "requiredIdentity": "TOPOLOGICAL_IDENTITY_NOT_COORDINATE_PROXIMITY",
+        "benchmarkSideNodeMergeAllowed": false,
+        "requireSharedSeamEdgeOwnerCount": 2
+      }
     },
     {
       "benchmarkStage": "M3",
       "title": "Quality-gate distributions over systematic refinement",
-      "definitionState": "PARTIAL_READY_NON_THICKNESS_WITH_BLOCKED_LAFEA4",
+      "definitionState": "READY_NON_THICKNESS_BLOCKED_SHELL_THICKNESS",
       "gateMode": "FAIL_CLOSED",
       "methods": [
         {
-          "methodId": "M3-LAFEA3-NON-THICKNESS-QUALITY-DISTRIBUTIONS",
+          "methodId": "M3-ALL-FROZEN-LADDERS-NON-THICKNESS-QUALITY-DISTRIBUTIONS",
           "authorityClass": "PRODUCTION_QUALITY_OBSERVATION_FROZEN_LADDER",
           "executor": "scripts/lafea-mesh-benchmark-run.mjs",
           "sourceRefs": [
@@ -140,7 +146,9 @@
             "S-006",
             "S-007",
             "S-011",
-            "S-014"
+            "S-014",
+            "S-016",
+            "S-017"
           ],
           "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
           "oracleAuthority": "FROZEN_LADDER_PLUS_EXISTING_PRODUCTION_QUALITY_POLICY_NO_THRESHOLD_MUTATION"
@@ -151,6 +159,12 @@
         "MINIMUM_ANGLE_DEGREES",
         "SCALED_JACOBIAN"
       ],
+      "shellAdditionalEvidence": [
+        "ADJACENT_SIZE_RATIO",
+        "SHELL_ORIENTATION_TOPOLOGY",
+        "CONFORMING_SHARED_SEAM"
+      ],
+      "warpageDisposition": "NOT_APPLICABLE_FOR_CST_DKT_TRI3_QUAD_WARPAGE_METRIC",
       "refinementAcceptance": {
         "requireDistinctMeshHash": true,
         "requireIncreasingNodeCount": true,
@@ -160,16 +174,8 @@
       },
       "declaredBlockers": [
         {
-          "blockerId": "M3-LAFEA4-MULTIPATCH-PRODUCTION-SCOPE",
-          "reason": "The frozen L4-CST-DKT ladder is tied to M2-TWO-PATCH-SHELL-01, while the qualified production shell producer is single-patch; benchmark-side seam merging is forbidden."
-        },
-        {
           "blockerId": "M3-SHELL-THICKNESS-AUTHORITY",
           "reason": "Shell h/t qualification requires governed shell thickness not frozen by BM-MESH."
-        },
-        {
-          "blockerId": "M3-PREDECESSOR-GATE",
-          "reason": "M3 cannot advance unless M2 is PASS; the current frozen two-patch LAFEA.4 M2 case remains outside the qualified production scope."
         }
       ]
     },

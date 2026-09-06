@@ -1,0 +1,60 @@
+{
+  "schema": "lafea-uq-reference-calibration-uncertainty/v1",
+  "issue": 1702,
+  "parentIssue": 1673,
+  "dependencyIssue": 1699,
+  "caseId": "UQ-REF-CALIBRATION-UNCERTAINTY-01",
+  "scope": "REFERENCE_BENCHMARK_ONLY",
+  "referenceCalibrationUncertaintyExecutionAuthorized": true,
+  "productionCalibrationFactorAuthorized": false,
+  "productionStatisticalExecutionAuthorized": false,
+  "activeProductionNumericStochasticSourceCount": 0,
+  "productionSensitivityAuthorized": false,
+  "productionValidationAcceptanceAuthorized": false,
+  "productionReliabilityTargetAuthority": "NONE",
+  "b03ActivationAuthorized": false,
+  "programReleaseAuthority": false,
+  "programTemperatureAuthority": false,
+  "productionApplicabilityBlocker": "ENGINEERING_POPULATION_APPLICABILITY_REQUIRED",
+  "universalProductionCoverageTarget": null,
+  "factorDistribution": {
+    "family": "NORMAL",
+    "mean": 1.05,
+    "standardDeviation": 0.02,
+    "meanSource": "SYNTHETIC_REFERENCE_INDEPENDENT_FREEZE",
+    "standardDeviationSource": "SYNTHETIC_REFERENCE_INDEPENDENT_FREEZE"
+  },
+  "plan": {
+    "unit": "REFERENCE_QOI",
+    "requiredHoldoutIds": ["H1", "H2", "H3", "H4"],
+    "propagationEquation": "Y_EQUALS_FACTOR_TIMES_DETERMINISTIC_MODEL",
+    "intervalConstruction": "CENTRAL_TWO_SIDED_NORMAL_REFERENCE",
+    "nominalIntervalLevel": 0.95,
+    "normalQuantileZ": 1.959963984540054,
+    "standardizedResidualConvention": "TEST_MINUS_MEAN_OVER_PROPAGATED_SD",
+    "holdoutDerivedFactorParametersAuthorized": false
+  },
+  "holdoutPairs": [
+    {"id":"H1","model":{"pairId":"H1","value":110,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_MODEL_H1"},"test":{"pairId":"H1","value":112,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_TEST_H1"}},
+    {"id":"H2","model":{"pairId":"H2","value":140,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_MODEL_H2"},"test":{"pairId":"H2","value":146,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_TEST_H2"}},
+    {"id":"H3","model":{"pairId":"H3","value":175,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_MODEL_H3"},"test":{"pairId":"H3","value":187,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_TEST_H3"}},
+    {"id":"H4","model":{"pairId":"H4","value":220,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_MODEL_H4"},"test":{"pairId":"H4","value":239,"unit":"REFERENCE_QOI","provenance":"SYNTHETIC_HOLD_TEST_H4"}}
+  ],
+  "oracle": {
+    "propagatedMeans": [115.5, 147, 183.75, 231],
+    "propagatedStandardDeviations": [2.2, 2.8, 3.5, 4.4],
+    "lowerBounds": [111.18807923401188, 141.51210084328784, 176.8901260541098, 222.37615846802376],
+    "upperBounds": [119.81192076598812, 152.48789915671216, 190.6098739458902, 239.62384153197624],
+    "standardizedResiduals": [-1.5909090909090908, -0.3571428571428571, 0.9285714285714286, 1.8181818181818181],
+    "standardizedResidualApplicability": ["APPLICABLE", "APPLICABLE", "APPLICABLE", "APPLICABLE"],
+    "coverageIndicators": [true, true, true, true],
+    "observedDiagnosticCoverageFraction": 1.0,
+    "observedCoverageIsProductionAcceptanceCriterion": false
+  },
+  "zeroUncertaintyControl": {
+    "standardDeviation": 0,
+    "expectedStandardizedResidualApplicability": "NOT_APPLICABLE_ZERO_FACTOR_UNCERTAINTY"
+  },
+  "negativeCaseCount": 31,
+  "nextBoundary": "RECONCILE_REFERENCE_CALIBRATION_UNCERTAINTY_PASS_TO_PARENT_1673_AND_PLAN_NEXT_REFERENCE_CASE"
+}

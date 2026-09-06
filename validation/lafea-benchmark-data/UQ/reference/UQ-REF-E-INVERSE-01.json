@@ -1,0 +1,55 @@
+{
+  "schema": "lafea-uq-reference-case/v1",
+  "issue": 1673,
+  "caseId": "UQ-REF-E-INVERSE-01",
+  "definitionState": "FROZEN_BEFORE_REFERENCE_EXECUTION",
+  "productionOutputUsedToChooseDefinition": false,
+  "authorityClass": "REFERENCE_BENCHMARK_ONLY",
+  "sourcePriorId": "SRC-UQ-PRIOR-JCSS-STRUCTURAL-STEEL-E",
+  "deterministicMechanicsRef": "validation/lafea-b02-definitions/B02A-nonuniform-bending.json",
+  "inputModel": {
+    "quantity": "elasticModulus",
+    "canonicalUnit": "MPa",
+    "distributionFamily": "LOGNORMAL",
+    "arithmeticMean": 200000,
+    "coefficientOfVariation": 0.03,
+    "logMean": 12.205622847908757,
+    "logStandardDeviation": 0.029993253288631328
+  },
+  "deterministicReference": {
+    "nominalElasticModulusMPa": 200000,
+    "poissonRatio": 0.3,
+    "nominalTipDeflectionMagnitudeMm": 2.0156,
+    "responseConstantK_MPa_mm": 403120,
+    "exactRelation": "D(E) = K / E = D0 * E0 / E"
+  },
+  "closedFormOracle": {
+    "derivation": [
+      "For lognormal E with parameters mu_E and sigma_E_ln, 1/E is lognormal with parameters -mu_E and sigma_E_ln.",
+      "Multiplication by positive constant K preserves lognormality.",
+      "Because arithmetic mean(E)=E0, mean(D)=D0*(1+COV(E)^2).",
+      "COV(D)=COV(E).",
+      "Q_p(D)=exp(ln(K)-mu_E+sigma_E_ln*Phi^-1(p))."
+    ],
+    "meanMm": 2.01741404,
+    "standardDeviationMm": 0.0605224212,
+    "varianceMm2": 0.003662963467910208,
+    "p05Mm": 1.9194375568611886,
+    "p50Mm": 2.016506816012281,
+    "p95Mm": 2.1184850345814383
+  },
+  "acceptance": {
+    "analyticReconstructionRelativeTolerance": 1e-12,
+    "productionAuthorityMustRemainFalse": true,
+    "activeProductionNumericStochasticSourceCountExpected": 0
+  },
+  "authority": {
+    "referenceStatisticalExecutionAuthorized": true,
+    "productionStatisticalExecutionAuthorized": false,
+    "reliabilityTargetAuthorized": false,
+    "codeQualificationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshUqQualified": false
+  }
+}

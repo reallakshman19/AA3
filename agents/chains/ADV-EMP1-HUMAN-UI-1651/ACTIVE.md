@@ -19,11 +19,11 @@ PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-1651-split-console-leg009
 PR_BASE: main
 PR_BASE_SHA: f8d051c989c8a0627db7560f996baf72987775d4
-PR_HEAD_OBSERVED_PRE_ENDPOINT: dc32519bf07a0c46c501c273ac18363274d3bf66
+PR_HEAD_OBSERVED_PRE_FINAL_SYNC: 5140665f840ab34f1bd9029dcab3846e582b33da
 MAIN_HEAD_OBSERVED: f8d051c989c8a0627db7560f996baf72987775d4
 MERGEABILITY: MERGEABLE
-REVIEWS: 0
-REVIEW_STATES: NONE
+REVIEWS: 1
+REVIEW_STATES: COMMENTED
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
 STATUS_CONTEXTS_AT_PR_HEAD: 0
@@ -52,12 +52,12 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0015
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0015_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0015_COMMENT_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5556488626
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0015_SYNC
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5556489378
 OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 OWNER_MERGE_COMMAND: NONE
@@ -85,4 +85,4 @@ VALIDATION_NOT_RUN_LEG010: focused static scripts; focused Playwright including 
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN until compatible project-local browser executes; zero status contexts/workflows are not PASS.
 AUTHORITY_BOUNDARY: LEG-010 changes only presentation/state-selection and acceptance evidence. No WRC/Pressure mechanics, retained benchmark values/tolerance/source authority, route/code-release authority, roadmap, or workflow-YAML change.
 CURRENT_BLOCKER: external localhost/browser re-observation remains NOT_RUN; PR #1675 merge is Owner-only and not authorized.
-EXACT_NEXT_ACTION: synchronize EP-0015 into #1651/#1664 comments, then run `agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0015.md` against fixed material head dc2df7a8a8b26feea26d29dbf0741794f788cfac. Return three Node outputs, desktop+narrow audit JSON, CAUx keyboard observation, and desktop default/readiness-open/narrow screenshots. No further source-changing recovery leg is justified without new failure evidence.
+EXACT_NEXT_ACTION: run `agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0015.md` against fixed material head dc2df7a8a8b26feea26d29dbf0741794f788cfac. Return three Node outputs, desktop+narrow audit JSON, CAUx keyboard observation, and desktop default/readiness-open/narrow screenshots. No further source-changing recovery leg is justified without new failure evidence.

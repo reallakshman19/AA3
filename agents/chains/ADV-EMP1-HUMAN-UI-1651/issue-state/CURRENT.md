@@ -26,6 +26,11 @@ LAST_COMPLETED_MATERIAL_LEG: LEG-012
 MATERIAL_HEAD: 84001f0dbb4612821ba0c18555b5d5ed7b1da9c3
 MATERIAL_BASE: 718d42810fd7e51307edf78373a9158eb20246bd
 MATERIAL_MAIN_BASIS: 687b9ff3b8884031e4776f031af7a739f29eb2c8
+CURRENT_MAIN_OBSERVED: f62abea09dfc1da1d6412525790bc73a2fa8f6e7
+MAIN_DRIFT_FROM_MATERIAL_BASIS: AHEAD_16_BEHIND_0
+MAIN_DRIFT_SOURCE: LAFEA_UQ_REF_HOLDOUT_1699
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_EMP1_OVERLAP
+MAIN_DRIFT_AFFECTS_LEG012: FALSE
 MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-012.md
 VALIDATION_PROTOCOL: agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0024.md
 CURRENT_MATERIAL_LEG: NONE
@@ -82,6 +87,10 @@ The factory never exports/injects its private A execution. The sequencing check 
 
 At the material basis, the bounded gamma5 registry already has `registered=true`, `engineeringUseAuthorized=true`, `suspensionReasons=[]`. The global/full-domain route remains unregistered and release remains false. LEG-012 changes `scripts/emp1-public-product-check.mjs` only to test this already-current authority split; route registry/authority source is untouched.
 
+## Post-freeze main drift
+
+After LEG-012 froze, `main` advanced from `687b9ff3b8884031e4776f031af7a739f29eb2c8` to `f62abea09dfc1da1d6412525790bc73a2fa8f6e7` by 16 commits. The changed files are confined to `LAFEA-UQ-REF-HOLDOUT-1699` custody/qualification records, UQ holdout scripts/library, and one UQ reference JSON. No EMP.1 source/test/control file, WRC/Pressure authority path, retained EMP.1 benchmark path, roadmap or workflow YAML changed. The fixed LEG-012 validation target therefore remains unchanged.
+
 ## Material boundary
 
 Nine material files from write-ahead base `718d42810fd7e51307edf78373a9158eb20246bd`: controller, qualification-sample factory, focused Playwright spec, sequencing/static runtime gate, public-product test alignment, #1651 acceptance manifest, manual-audit contract, Stage-17 carrier, and MANUAL-EP-0024.
@@ -105,7 +114,7 @@ At fixed LEG-012 head:
 - CAUx physical-keyboard Enter/Space: NOT_RUN;
 - passing screenshot set: NOT_RUN.
 
-Historical failures remain historical FAIL; no failure is promoted. Zero GitHub statuses/workflow runs do not constitute PASS.
+Historical failures remain historical FAIL; no failure is promoted. PR #1701 had 0 reviews, 0 unresolved review threads, 0 status contexts and 0 PR workflow runs at relay head `8db56b1b0b8322182196b4235b8f6538f6b6d4cd`; zero does not constitute PASS.
 
 ## Benchmark / authority ledger
 
@@ -142,5 +151,5 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: exact-head LEG-012 executable validation is pending. PR #1701 is Draft and must not merge without explicit Owner authorization.
+CURRENT_BLOCKER: exact-head LEG-012 executable validation is pending. Unrelated post-freeze UQ holdout drift does not alter the fixed material target. PR #1701 is Draft and must not merge without explicit Owner authorization.
 EXACT_NEXT_ACTION: external evidence intake at fixed head `84001f0dbb4612821ba0c18555b5d5ed7b1da9c3` using MANUAL-EP-0024: five Node gates, focused Playwright, Stage-17; only after all executable gates pass, run desktop/narrow structured audits, CAUx physical Enter/Space and capture three screenshots. Returned evidence can be recorded read-only without another progression command.

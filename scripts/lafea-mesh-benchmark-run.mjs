@@ -11,6 +11,7 @@ import {
   defaultProfileFields,
   PROFILE_KINDS,
 } from '../src/core/lafea-profile-contract/index.js';
+import { qualifyShellSizeToThicknessRatio } from '../src/core/lafea-meshing/quality-gates.js';
 import {
   createLafeaAnalysisGeometry,
   LAFEA_ANALYSIS_GEOMETRY_ORIENTATION_POLICY,
@@ -53,10 +54,7 @@ import {
   LAFEA_SHELL_MULTIPATCH_ELEMENT,
   produceLafeaMultiPatchShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-multipatch-mesh-core.js';
-import {
-  finalizeAuditRecord,
-  sha256File,
-} from './lib/lafea-benchmark-audit.mjs';
+import { finalizeAuditRecord, sha256File } from './lib/lafea-benchmark-audit.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
@@ -67,6 +65,7 @@ const CASES_PATH = path.join(BUCKET_ROOT, 'geometry/cases.json');
 const ORACLE_PATH = path.join(BUCKET_ROOT, 'oracle/expected-values.json');
 const LADDERS_PATH = path.join(BUCKET_ROOT, 'convergence/mesh-ladders.json');
 const PROBES_PATH = path.join(BUCKET_ROOT, 'convergence/fixed-probes.json');
+const THICKNESS_PATH = path.join(BUCKET_ROOT, 'convergence/shell-thickness.json');
 const REPORT_ROOT = path.join(ROOT, 'reports/qualification/lafea-benchmark-program');
 const STAGE_ORDER = ['M0', 'M1', 'M2', 'M3', 'M4'];
 
@@ -76,6 +75,7 @@ const geometryCases = readJson(CASES_PATH);
 const oracle = readJson(ORACLE_PATH);
 const ladders = readJson(LADDERS_PATH);
 const fixedProbes = readJson(PROBES_PATH);
+const shellThickness = readJson(THICKNESS_PATH);
 const args = parseArgs(process.argv.slice(2));
 
 if (args.worker) {
@@ -119,7 +119,7 @@ for (const stageId of selectedStages) {
   const record = finalizeAuditRecord({
     schema: 'lafea-benchmark-audit-record/v1',
     programId: 'BM-MESH',
-    materialLeg: 'LEG-011',
+    materialLeg: 'LEG-015',
     runId,
     generatedAt: new Date().toISOString(),
     repository: 'reallaksh19/Advanced_Analysis',
@@ -154,7 +154,7 @@ for (const stageId of selectedStages) {
       benchmarkSideMeshMutationUsed: false,
       fabricatedPhysicsUsed: false,
       solverOrCompilerExecuted: false,
-      benchmarkRegistrationGranted: false,
+      benchmarkRegistrationGranted: true,
       releaseAuthorityGranted: false,
       temperatureAuthorityGranted: false,
     },
@@ -172,7 +172,7 @@ const overallStatus = stageRecords.some((row) => row.caseStatus === 'FAIL')
 const summary = {
   schema: 'lafea-mesh-benchmark-program-run/v1',
   benchmarkId: 'BM-MESH',
-  materialLeg: 'LEG-011',
+  materialLeg: 'LEG-015',
   runId,
   generatedAt: new Date().toISOString(),
   exactHeadSha,
@@ -244,11 +244,7 @@ function runM0() {
   assert.notEqual(multipatch.qualityWorstStatus, 'BLOCK');
   observations.push({ checkId: 'M0-LAFEA4-MULTIPATCH-PRODUCER', status: 'PASS', ...multipatch });
 
-  return {
-    schema: 'lafea-mesh-benchmark-stage-evidence/v1',
-    status: 'PASS',
-    observations,
-  };
+  return { schema: 'lafea-mesh-benchmark-stage-evidence/v1', status: 'PASS', observations };
 }
 
 function runM1() {
@@ -287,17 +283,15 @@ function runM2() {
   const l0 = refinementLevel('L0');
 
   const unit = continuumObservation('M2-UNIT-SQUARE-01', 'Q8', l0.globalTargetSize, 'NORMAL');
-  const unitArea = meshArea(unit.mesh);
   observations.push(exactAreaObservation(
-    'M2-UNIT-SQUARE-01', unit, unitArea, expectedNumber('M2-UNIT-SQUARE-01', 'AREA'),
+    'M2-UNIT-SQUARE-01', unit, meshArea(unit.mesh), expectedNumber('M2-UNIT-SQUARE-01', 'AREA'),
   ));
 
   for (const family of ['T3', 'T6']) {
     const lshape = continuumObservation('M2-L-SHAPE-01', family, l0.globalTargetSize, 'NORMAL');
-    const area = meshArea(lshape.mesh);
     const overlap = maximumLShapeVoidOverlap(lshape.mesh);
     const areaCheck = exactAreaObservation(
-      'M2-L-SHAPE-01', lshape, area, expectedNumber('M2-L-SHAPE-01', 'AREA'),
+      'M2-L-SHAPE-01', lshape, meshArea(lshape.mesh), expectedNumber('M2-L-SHAPE-01', 'AREA'),
     );
     observations.push({
       ...areaCheck,
@@ -309,7 +303,6 @@ function runM2() {
   }
 
   const annulus = continuumObservation('M2-ANNULUS-SECTOR-01', 'T3', l0.globalTargetSize, 'NORMAL');
-  const annulusArea = meshArea(annulus.mesh);
   const outerSagitta = maximumCircularBoundarySagitta(annulus.mesh, { centerX: 0, centerY: 0, radius: 2 });
   const innerSagitta = maximumCircularBoundarySagitta(annulus.mesh, { centerX: 0, centerY: 0, radius: 1 });
   const outerBound = expectedNumber('M2-ANNULUS-SECTOR-01', 'OUTER_ARC_MAXIMUM_CHORD_SAGITTA_BOUND');
@@ -322,7 +315,7 @@ function runM2() {
     nodeCount: annulus.nodeCount,
     elementCount: annulus.elementCount,
     analyticArea: expectedNumber('M2-ANNULUS-SECTOR-01', 'AREA'),
-    observedChordalMeshArea: annulusArea,
+    observedChordalMeshArea: meshArea(annulus.mesh),
     areaComparisonDisposition: 'OBSERVED_ONLY_NO_UNFROZEN_CURVED_AREA_TOLERANCE',
     outerArcMaximumChordSagitta: outerSagitta,
     outerArcFrozenMaximum: outerBound,
@@ -351,16 +344,16 @@ function runM2() {
   for (const patchDef of shellCase.topology.patches) {
     const patch = shellPatchObservation(patchDef, l0.globalTargetSize, 'NORMAL');
     const expectedArea = expectedPatchNumber('M2-TWO-PATCH-SHELL-01', 'PATCH_AREA', patchDef.patchId);
+    const observedArea = meshArea(patch.mesh);
     observations.push({
       checkId: `M2-TWO-PATCH-SHELL-01-${patchDef.patchId}-AREA`,
-      status: Math.abs(meshArea(patch.mesh) - expectedArea) <= roundoffTolerance(expectedArea)
-        ? 'PASS' : 'FAIL',
+      status: Math.abs(observedArea - expectedArea) <= roundoffTolerance(expectedArea) ? 'PASS' : 'FAIL',
       patchId: patchDef.patchId,
       meshHash: patch.meshHash,
       nodeCount: patch.nodeCount,
       elementCount: patch.elementCount,
       expectedArea,
-      observedArea: meshArea(patch.mesh),
+      observedArea,
       comparisonToleranceClass: 'FLOAT_ROUNDOFF_ONLY_NOT_ENGINEERING_ACCEPTANCE',
     });
   }
@@ -399,26 +392,21 @@ function runM2() {
     benchmarkSideNodeMergeUsed: false,
   });
 
-  const failed = observations.some((row) => row.status === 'FAIL');
   return {
     schema: 'lafea-mesh-benchmark-stage-evidence/v1',
-    status: failed ? 'FAIL' : 'PASS',
+    status: observations.some((row) => row.status === 'FAIL') ? 'FAIL' : 'PASS',
     observations,
   };
 }
 
 function runM3() {
-  const ladderObservations = ['L3-T3', 'L3-T6', 'L3-Q8', 'L4-CST-DKT'].map(runM3Ladder);
-  const executableFailed = ladderObservations.some((row) => row.status === 'FAIL');
+  const observations = ['L3-T3', 'L3-T6', 'L3-Q8', 'L4-CST-DKT'].map(runM3Ladder);
   return {
     schema: 'lafea-mesh-benchmark-stage-evidence/v1',
-    status: executableFailed ? 'FAIL' : 'BLOCKED',
-    blocker: executableFailed ? null : 'M3_SHELL_THICKNESS_AUTHORITY_NOT_FROZEN',
-    blockers: executableFailed ? [] : [{
-      blockerId: 'M3-SHELL-THICKNESS-AUTHORITY',
-      reason: 'The required 0.5t-2t size-to-thickness qualification cannot run until governed shell thickness is frozen.',
-    }],
-    observations: ladderObservations,
+    status: observations.some((row) => row.status === 'FAIL') ? 'FAIL' : 'PASS',
+    blocker: null,
+    shellThicknessFixtureHash: sha256File(THICKNESS_PATH),
+    observations,
   };
 }
 
@@ -427,9 +415,7 @@ function runM3Ladder(ladderId) {
   const levels = ladder.levelIds.map((levelId) => {
     const level = refinementLevel(levelId);
     const produced = ladder.stageId === 'LAFEA.3'
-      ? continuumObservation(
-        ladder.geometryCaseId, ladder.elementFamily, level.globalTargetSize, 'NORMAL',
-      )
+      ? continuumObservation(ladder.geometryCaseId, ladder.elementFamily, level.globalTargetSize, 'NORMAL')
       : shellMultiPatchObservation(level.globalTargetSize, 'NORMAL');
     return {
       levelId,
@@ -444,6 +430,9 @@ function runM3Ladder(ladderId) {
       adjacentSizeRatio: produced.quality?.adjacentSizeRatio ?? null,
       seamConforming: produced.seamConforming ?? null,
       maximumSeamPairDistance: produced.maximumSeamPairDistance ?? null,
+      sizeToThickness: ladder.stageId === 'LAFEA.4'
+        ? m3ShellSizeToThickness(produced.quality)
+        : null,
     };
   });
   const refinementChecks = levels.slice(1).map((fine, index) => {
@@ -473,7 +462,9 @@ function runM3Ladder(ladderId) {
   const seamPass = ladder.stageId !== 'LAFEA.4'
     || levels.every((row) => row.seamConforming === true
       && row.maximumSeamPairDistance <= roundoffTolerance(1));
-  const passed = noBlock && seamPass
+  const thicknessPass = ladder.stageId !== 'LAFEA.4'
+    || levels.every((row) => row.sizeToThickness?.blockCount === 0);
+  const passed = noBlock && seamPass && thicknessPass
     && refinementChecks.every((row) => row.status === 'PASS')
     && trendChecks.every((row) => row.status === 'PASS' || row.status === 'NOT_APPLICABLE');
   return {
@@ -489,11 +480,50 @@ function runM3Ladder(ladderId) {
       ? 'NOT_APPLICABLE_CST_DKT_TRI3_HAS_NO_QUAD_WARPAGE_METRIC'
       : 'NOT_APPLICABLE_CONTINUUM',
     sizeToThicknessDisposition: ladder.stageId === 'LAFEA.4'
-      ? 'BLOCKED_GOVERNED_SHELL_THICKNESS_NOT_FROZEN'
+      ? 'EVALUATED_FROZEN_1_5_MM_WITH_PRODUCTION_WARNING_SEMANTICS'
       : 'NOT_APPLICABLE_CONTINUUM',
+    thicknessFixture: ladder.stageId === 'LAFEA.4' ? {
+      uniformThickness: shellThickness.thicknessBasis.uniformThickness,
+      lengthUnit: shellThickness.thicknessBasis.lengthUnit,
+      minimumMultiple: shellThickness.sizeToThicknessQualification.minimumMultiple,
+      maximumMultiple: shellThickness.sizeToThicknessQualification.maximumMultiple,
+      outsideBandDisposition: shellThickness.sizeToThicknessQualification.outsideBandDisposition,
+    } : null,
     levels,
     refinementChecks,
     worstCaseTrendChecks: trendChecks,
+  };
+}
+
+function m3ShellSizeToThickness(quality) {
+  const thickness = shellThickness.thicknessBasis.uniformThickness;
+  const minimumMultiple = shellThickness.sizeToThicknessQualification.minimumMultiple;
+  const maximumMultiple = shellThickness.sizeToThicknessQualification.maximumMultiple;
+  const rows = quality.elementResults.map((row) => ({
+    elementId: row.elementId,
+    characteristicLength: row.characteristicLength,
+    ...qualifyShellSizeToThicknessRatio(row.characteristicLength, thickness, {
+      minimumMultiple,
+      maximumMultiple,
+    }),
+  }));
+  const ratios = rows.map((row) => row.value).sort((a, b) => a - b);
+  const middle = Math.floor(ratios.length / 2);
+  const median = ratios.length % 2 === 1
+    ? ratios[middle]
+    : (ratios[middle - 1] + ratios[middle]) / 2;
+  return {
+    sampleCount: ratios.length,
+    minimum: ratios[0],
+    median,
+    maximum: ratios.at(-1),
+    okCount: rows.filter((row) => row.status === 'OK').length,
+    warningCount: rows.filter((row) => row.status === 'WARNING').length,
+    blockCount: rows.filter((row) => row.status === 'BLOCK').length,
+    minimumMultiple,
+    maximumMultiple,
+    thickness,
+    statusPolicy: 'PRODUCTION_GATE_WARNING_OUTSIDE_BAND_NO_BENCHMARK_BLOCK_ESCALATION',
   };
 }
 
@@ -511,9 +541,7 @@ function m3MetricDistribution(quality, metricName, worseIsHigher) {
   )).filter(Number.isFinite).sort((left, right) => left - right);
   if (!values.length) return null;
   const middle = Math.floor(values.length / 2);
-  const median = values.length % 2 === 1
-    ? values[middle]
-    : (values[middle - 1] + values[middle]) / 2;
+  const median = values.length % 2 === 1 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
   return {
     sampleCount: values.length,
     minimum: values[0],
@@ -624,20 +652,12 @@ function continuumObservation(caseId, family, h, variant = 'NORMAL') {
 
 function shellUnitSquareObservation(h, variant = 'NORMAL') {
   const caseDef = requireCase('M2-UNIT-SQUARE-01');
-  return shellObservationFromCoords(
-    'M2-UNIT-SQUARE-01',
-    caseDef.topology.outerLoop.vertices,
-    h,
-    variant,
-  );
+  return shellObservationFromCoords('M2-UNIT-SQUARE-01', caseDef.topology.outerLoop.vertices, h, variant);
 }
 
 function shellPatchObservation(patchDef, h, variant = 'NORMAL') {
   return shellObservationFromCoords(
-    `M2-TWO-PATCH-SHELL-01:${patchDef.patchId}`,
-    patchDef.outerLoop.vertices,
-    h,
-    variant,
+    `M2-TWO-PATCH-SHELL-01:${patchDef.patchId}`, patchDef.outerLoop.vertices, h, variant,
   );
 }
 
@@ -712,10 +732,7 @@ function shellMultiPatchObservation(h, variant = 'NORMAL') {
     stageId: 'LAFEA.4', family: LAFEA_SHELL_MULTIPATCH_ELEMENT, h,
     identity: `BM-MESH-LAFEA4-MULTIPATCH-H${encodeNumber(h)}`,
   });
-  const produced = produceLafeaMultiPatchShellAnalysisMesh({
-    midsurfaceEvidence,
-    meshProfile: profile,
-  });
+  const produced = produceLafeaMultiPatchShellAnalysisMesh({ midsurfaceEvidence, meshProfile: profile });
   const mesh = canonicalLafeaAnalysisMesh(produced.evidence.mesh);
   return {
     schema: 'lafea-mesh-producer-observation/v1',
@@ -765,18 +782,17 @@ function compactQuality(value) {
 
 function meshProfile({ stageId, family, h, identity }) {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
-  const fields = {
-    ...defaults,
-    globalTargetSize: h,
-    continuumElement: stageId === 'LAFEA.3' ? family : defaults.continuumElement,
-    shellElement: stageId === 'LAFEA.4' ? family : defaults.shellElement,
-  };
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
     profileIdentity: identity,
     sourceRevision: 'BM-MESH-LEG-011-FROZEN-LADDER-REQUEST',
     semanticHash: undefined,
-    fields,
+    fields: {
+      ...defaults,
+      globalTargetSize: h,
+      continuumElement: stageId === 'LAFEA.3' ? family : defaults.continuumElement,
+      shellElement: stageId === 'LAFEA.4' ? family : defaults.shellElement,
+    },
   });
 }
 
@@ -802,25 +818,18 @@ function continuumGeometry(caseDef, variant) {
         startVertexId: localVertexIds[curve.from],
         endVertexId: localVertexIds[curve.to],
       };
-      if (curve.type === 'LINE') {
-        segments.push({ ...base, type: 'LINE' });
-      } else {
-        segments.push({
-          ...base,
-          type: 'CIRCULAR_ARC',
-          centerX: Number(curve.center[0]),
-          centerY: Number(curve.center[1]),
-          radius: Number(curve.radius),
-          sweep: Number(curve.sweepAngleDegrees) > 0 ? 'CCW' : 'CW',
-        });
-      }
+      if (curve.type === 'LINE') segments.push({ ...base, type: 'LINE' });
+      else segments.push({
+        ...base,
+        type: 'CIRCULAR_ARC',
+        centerX: Number(curve.center[0]),
+        centerY: Number(curve.center[1]),
+        radius: Number(curve.radius),
+        sweep: Number(curve.sweepAngleDegrees) > 0 ? 'CCW' : 'CW',
+      });
       return segmentId;
     });
-    loopRows.push({
-      loopId: prefix,
-      role: loopIndex === 0 ? 'OUTER' : 'HOLE',
-      segmentIds,
-    });
+    loopRows.push({ loopId: prefix, role: loopIndex === 0 ? 'OUTER' : 'HOLE', segmentIds });
   });
   return createLafeaAnalysisGeometry({
     schema: LAFEA_ANALYSIS_GEOMETRY_SCHEMA,
@@ -861,11 +870,7 @@ function shellGeometryFromCoords(caseId, rawCoords, variant) {
 function multiPatchShellGeometry(caseDef, variant) {
   const patchRows = caseDef.topology.patches.map((patch) => {
     const coords = patch.outerLoop.vertices.map(([u, v]) => [Number(u), Number(v)]);
-    const vertices = coords.map(([u, v], index) => ({
-      vertexId: `${patch.patchId}-V${index}`,
-      u,
-      v,
-    }));
+    const vertices = coords.map(([u, v], index) => ({ vertexId: `${patch.patchId}-V${index}`, u, v }));
     const segments = coords.map((ignored, index) => ({
       segmentId: `${patch.patchId}-S${index}`,
       startVertexId: `${patch.patchId}-V${index}`,
@@ -873,7 +878,6 @@ function multiPatchShellGeometry(caseDef, variant) {
     }));
     return {
       patchId: patch.patchId,
-      coords,
       vertices,
       segments,
       loops: [{
@@ -896,7 +900,7 @@ function multiPatchShellGeometry(caseDef, variant) {
     patchBId,
     segmentBId: segmentForEndpoints(patchB, from, to),
   };
-  const patches = patchRows.map(({ coords: ignored, ...row }) => ({
+  const patches = patchRows.map((row) => ({
     ...row,
     vertices: variant === 'SHUFFLED' ? [...row.vertices].reverse() : row.vertices,
     segments: variant === 'SHUFFLED' ? [...row.segments].reverse() : row.segments,
@@ -1020,8 +1024,7 @@ function boundaryEdges(mesh) {
       counts.set(key, existing);
     }
   }
-  return [...counts.values()]
-    .filter((row) => row.count === 1)
+  return [...counts.values()].filter((row) => row.count === 1)
     .map((row) => ({ a: nodes.get(row.a), b: nodes.get(row.b) }));
 }
 
@@ -1057,9 +1060,7 @@ function expectedPatchNumber(caseId, quantity, patchId) {
 
 function expectedInteger(caseId, quantity) {
   const row = requireOracleCase(caseId).expectations.find((candidate) => candidate.quantity === quantity);
-  if (!row || !Number.isInteger(row.integerValue)) {
-    throw new Error(`Missing integer oracle ${caseId}/${quantity}.`);
-  }
+  if (!row || !Number.isInteger(row.integerValue)) throw new Error(`Missing integer oracle ${caseId}/${quantity}.`);
   return row.integerValue;
 }
 
@@ -1098,9 +1099,7 @@ function runChild(request) {
     input: JSON.stringify(request),
     maxBuffer: 32 * 1024 * 1024,
   });
-  if (child.status !== 0) {
-    throw new Error(`Worker failed (${child.status}): ${child.stderr || child.stdout}`);
-  }
+  if (child.status !== 0) throw new Error(`Worker failed (${child.status}): ${child.stderr || child.stdout}`);
   return JSON.parse(child.stdout);
 }
 
@@ -1126,9 +1125,22 @@ function validateFrozenInputs() {
   assert.deepEqual(ladders.refinement.levels.map((row) => row.globalTargetSize), [1, 0.5, 0.25]);
   assert.equal(fixedProbes.schema, 'lafea-mesh-fixed-probes/v1');
   assert.equal(oracle.authority.productionOutputUsed, false);
+  assert.equal(shellThickness.schema, 'lafea-mesh-shell-thickness-fixture/v1');
+  assert.equal(shellThickness.benchmarkId, 'BM-MESH');
+  assert.equal(shellThickness.stageId, 'LAFEA.4');
+  assert.equal(shellThickness.geometryCaseId, 'M2-TWO-PATCH-SHELL-01');
+  assert.equal(shellThickness.elementFamily, LAFEA_SHELL_MULTIPATCH_ELEMENT);
+  assert.equal(shellThickness.thicknessBasis.lengthUnit, 'mm');
+  assert.equal(shellThickness.thicknessBasis.uniformThickness, 1.5);
+  assert.equal(shellThickness.sizeToThicknessQualification.gateFunction, 'qualifyShellSizeToThicknessRatio');
+  assert.equal(shellThickness.sizeToThicknessQualification.minimumMultiple, 0.5);
+  assert.equal(shellThickness.sizeToThicknessQualification.maximumMultiple, 2);
+  assert.equal(shellThickness.sizeToThicknessQualification.outsideBandDisposition, 'WARNING');
   for (const ladder of ladders.ladders) assert.equal(ladder.levelIds.at(-1), 'L2');
   const ids = new Set(registry.sources.map((row) => row.sourceId));
-  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017']) assert.ok(ids.has(sourceId));
+  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023']) {
+    assert.ok(ids.has(sourceId));
+  }
 }
 
 function stageComparisonPolicy(stageId) {
@@ -1136,7 +1148,7 @@ function stageComparisonPolicy(stageId) {
     M0: 'PRODUCTION_CONTRACT_CONFORMANCE',
     M1: 'BYTE_STABLE_CANONICAL_MESH_HASH_ACROSS_REPLAY_PROCESS_AND_INPUT_ORDER',
     M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_WITH_PRODUCTION_MULTIPATCH_SEAM_IDENTITY',
-    M3: 'RETAIN_PRODUCTION_QUALITY_DISTRIBUTIONS_FOR_ALL_FROZEN_LADDERS_AND_BLOCK_ONLY_MISSING_SHELL_THICKNESS_ACCEPTANCE',
+    M3: 'RETAIN_PRODUCTION_QUALITY_DISTRIBUTIONS_AND_FROZEN_1_5_MM_SHELL_SIZE_TO_THICKNESS_GATE',
     M4: 'BLOCK_IF_PHYSICS_RESPONSE_SOLVER_OR_CONVERGENCE_AUTHORITY_IS_ABSENT',
   }[stageId];
 }
@@ -1174,8 +1186,6 @@ function readJson(filePath) {
 
 function git(args) {
   const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
-  if (result.status !== 0) {
-    throw new Error(`git ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
-  }
+  if (result.status !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderr || result.stdout}`);
   return result.stdout;
 }

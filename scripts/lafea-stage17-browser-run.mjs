@@ -44,6 +44,7 @@ runNodeScript('scripts/lafea1371-cross-stage-anti-drift-check.mjs');
 // the LAFEA.3 B01/B02 gate.
 runNodeScript('scripts/emp1-public-product-check.mjs');
 runNodeScript('scripts/emp1-a-to-b-refresh-check.mjs');
+runNodeScript('scripts/emp1-qualification-sample-orchestration-check.mjs');
 runNodeScript('scripts/emp1-analytical-layout-check.mjs');
 runNodeScript('scripts/emp1-benchmark-evidence-ui-check.mjs');
 runNodeScript('scripts/emp1-issue1651-acceptance-check.mjs');
@@ -64,6 +65,7 @@ runPlaywright([
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 runPlaywright(['e2e/emp1-human-presentation-tokens.spec.js']);
+runPlaywright(['e2e/emp1-qualification-sample-orchestration.spec.js']);
 runPlaywright(['e2e/emp1-analytical-layout.spec.js']);
 runPlaywright(['e2e/emp1-presentation-coherence.spec.js']);
 runPlaywright(['e2e/emp1-benchmark-evidence.spec.js']);
@@ -90,6 +92,7 @@ runPlaywright([
   'e2e/lafea-emp1-a-to-b-refresh.spec.js',
   'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/emp1-human-presentation-tokens.spec.js',
+  'e2e/emp1-qualification-sample-orchestration.spec.js',
   'e2e/emp1-analytical-layout.spec.js',
   'e2e/emp1-presentation-coherence.spec.js',
   'e2e/emp1-benchmark-evidence.spec.js',

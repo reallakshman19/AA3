@@ -64,28 +64,38 @@ const state = {
 
 const projection = buildEmp1ProductProjection(state);
 assert.equal(EMP1_PUBLIC_PRODUCT.productId, 'EMP.1');
-assert.equal(projection.state, 'BLOCKED_LOCAL_CORRELATION');
+assert.equal(projection.state, 'BOUNDED_LOCAL_CORRELATION_AVAILABLE');
 assert.equal(projection.steps.length, 3);
 assert.equal(projection.steps[0].state, 'CALCULATED');
 assert.equal(projection.steps[1].state, 'READY_TO_RUN');
-assert.equal(projection.steps[2].state, 'BLOCKED');
+assert.equal(projection.steps[2].state, 'BOUNDED_ROUTE_AVAILABLE');
 assert.equal(projection.steps[2].runAuthorized, false);
+assert.deepEqual(projection.steps[2].blockers, [
+  'GLOBAL_EMP1_C_ROUTE_NOT_REGISTERED',
+  'EMP1_C_WORKSPACE_EXECUTION_NOT_WIRED',
+]);
 
+// Global/full-domain EMP.1.C remains unregistered. The separately-qualified
+// gamma=5 bounded route is now registered for engineering use; this script must
+// follow that already-current authority state rather than its historical
+// pre-promotion expectation.
 assert.equal(EMP1_C_PRODUCTION_ROUTE.registered, false);
-assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length, 1);
-const bounded = EMP1_C_BOUNDED_PRODUCTION_ROUTES[0];
-const reasons = [EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON];
-assert.equal(bounded.routeId, EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
-assert.equal(bounded.registered, false);
-assert.equal(bounded.engineeringUseAuthorized, false);
+assert.equal(EMP1_C_BOUNDED_PRODUCTION_ROUTES.length, 2);
+const bounded = EMP1_C_BOUNDED_PRODUCTION_ROUTES.find(
+  (route) => route.routeId === EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID,
+);
+assert.ok(bounded, 'bounded gamma5 route required');
+assert.equal(bounded.registered, true);
+assert.equal(bounded.engineeringUseAuthorized, true);
 assert.equal(bounded.comparisonQualificationAvailable, true);
-assert.deepEqual(bounded.suspensionReasons, reasons);
-assert.equal(bounded.method.routeRequalificationRequired, true);
+assert.deepEqual(bounded.suspensionReasons, []);
+assert.equal(bounded.method.routeRequalificationRequired, false);
 for (const resolved of [
   EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
   EMP1_C_WRC537_R0_SOURCE_SUSPENSION_REASON,
   EMP1_C_WRC537_LONGITUDINAL_CURVE_SUSPENSION_REASON,
   EMP1_C_WRC537_APPLICABILITY_SOURCE_SUSPENSION_REASON,
+  EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
 ]) {
   assert.equal(bounded.suspensionReasons.includes(resolved), false,
     `resolved bounded source blocker reappeared: ${resolved}`);
@@ -137,7 +147,9 @@ assert.equal(bounded.scope.attachmentStationBasis, EMP1_WRC537_ATTACHMENT_STATIO
 assert.equal(bounded.scope.nearestEndDistanceBasis, 'DERIVED_MIN_X_L_MINUS_X');
 assert.equal(bounded.scope.runtimeApplicabilitySourceEvidenceRequired, true);
 assert.equal(bounded.scope.legacyApplicabilityEvidenceAuthorizedForProduction, false);
-assert.ok(bounded.remainingBlocked.includes(EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON));
+assert.equal(bounded.remainingBlocked.includes(
+  EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON,
+), false);
 
 assert.equal(bounded.scope.Kn, 1);
 assert.equal(bounded.scope.Kb, 1);
@@ -165,15 +177,16 @@ assert.equal(bounded.scope.eightPointEnvelopeBasis,
 assert.equal(bounded.scope.absoluteShellMaximumAssured, false);
 assert.equal(bounded.scope.continuousJunctureSearchPerformed, false);
 assert.equal(bounded.scope.arbitraryLoadingExtremaRequiresEngineeringJudgment, true);
-assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'NOT_AUTHORIZED');
+assert.equal(projection.qualificationBoundary.emp1CProductionAuthority, 'BOUNDED_ROUTE_ONLY');
 assert.equal(projection.qualificationBoundary.emp1CRunAuthorized, false);
 assert.equal(projection.qualificationBoundary.globalEmp1CRouteAuthority, false);
 assert.equal(projection.qualificationBoundary.releaseQualified, false);
 
+// The historical global/full-domain qualification record remains blocked. It is
+// intentionally distinct from the registered gamma=5 bounded route above.
 const globalQualification = projection.steps[2].qualification;
 assert.equal(globalQualification.technicalQualificationReady, false);
 assert.ok(globalQualification.blockerCodes.includes(EMP1_C_BLOCKER_CODES.WRC_SIGN_ARBITRATION_OPEN));
-assert.deepEqual(projection.steps[2].blockers, globalQualification.blockerCodes);
 assert.equal(projection.custody.bSourceEvidenceState, EMP1_B_SOURCE_CUSTODY_STATES.CURRENT);
 assert.equal(isEmp1BackingStage('LAFEA.1'), true);
 assert.equal(isEmp1BackingStage('LAFEA.2'), true);
@@ -183,10 +196,12 @@ assert.equal(emp1StepForBackingStage('LAFEA.2').stepId, 'EMP.1.B');
 console.log(JSON.stringify({
   status: 'PASS',
   productState: projection.state,
-  suspendedRoute: bounded.routeId,
-  suspensionReasons: reasons,
+  boundedRoute: bounded.routeId,
+  boundedRouteRegistered: bounded.registered,
+  boundedEngineeringUseAuthorized: bounded.engineeringUseAuthorized,
+  suspensionReasons: bounded.suspensionReasons,
   allBoundedWrcSourceAuthorityClosed: true,
-  routeRequalificationRequired: true,
+  routeRequalificationRequired: bounded.method.routeRequalificationRequired,
   applicabilityAuthority: {
     state: bounded.scope.applicabilitySourceAuthorityState,
     authority: bounded.scope.applicabilitySourceAuthority,

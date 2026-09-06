@@ -7,7 +7,7 @@ import {
   SECTION_BASIS,
 } from '../core/local-attachment-screening/index.js';
 import { refreshEmp1BSourceEvidence } from '../core/emp1/emp1-a-to-b-refresh.js';
-import { executeLafeaStage } from './lafea-workbench-model.js';
+import { executeLafeaStage, normalizeLafeaStageDocument } from './lafea-workbench-model.js';
 import {
   EMP1_WORKBENCH_ATTACHMENT_DIAMETER_BASIS,
   EMP1_WORKBENCH_ATTACHMENT_PHYSICAL_LOCATION,
@@ -30,12 +30,14 @@ export const EMP1_QUALIFICATION_SAMPLE_SCHEMA = 'emp1-workbench-qualification-sa
  *
  * B is made importable by executing the real A stage and passing that result
  * through the same refreshEmp1BSourceEvidence() custody seam used by a real
- * unified EMP.1 transaction. executeEmp1WorkbenchProduct() repeats that refresh
- * from its own current A execution, so the sample has no privileged B evidence
- * path.
+ * unified EMP.1 transaction. The raw fixture is first normalized through the
+ * public LAFEA.1 workbench document boundary so the returned A document is the
+ * same retained source identity carried by execution.source. The private factory
+ * execution is still not returned or injected into runtime custody.
  */
 export function createEmp1WorkbenchQualificationSample() {
-  const aDocument = createQualificationAInput();
+  const rawAInput = createQualificationAInput();
+  const aDocument = normalizeLafeaStageDocument('LAFEA.1', rawAInput);
   const aExecution = executeLafeaStage('LAFEA.1', aDocument);
   if (aExecution.status !== 'QUALIFIED' || aExecution.result?.qualification?.state !== 'ACCEPTED') {
     throw sampleError('EMP1_QUALIFICATION_SAMPLE_A_NOT_QUALIFIED');

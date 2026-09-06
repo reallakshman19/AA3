@@ -3,8 +3,8 @@
   "bucketId": "MESH",
   "issue": "github:reallaksh19/Advanced_Analysis#1652",
   "benchmarkId": "BM-MESH",
-  "materialLeg": "LEG-014",
-  "state": "M3_THICKNESS_FIXTURE_FROZEN_RUNNER_WIRING_PENDING",
+  "materialLeg": "LEG-015",
+  "state": "M3_THICKNESS_RUNNER_WIRED_STATIC_NOT_RUN_M4_BLOCKED",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "authority": {
     "benchmarkExecutionAuthorized": true,
@@ -135,8 +135,9 @@
     {
       "benchmarkStage": "M3",
       "title": "Quality-gate distributions over systematic refinement",
-      "definitionState": "THICKNESS_FIXTURE_FROZEN_RUNNER_WIRING_PENDING",
-      "gateMode": "FAIL_CLOSED",
+      "definitionState": "READY_STATIC_NOT_RUN",
+      "executionState": "STATIC_NOT_RUN",
+      "gateMode": "REQUIRE_PASS",
       "methods": [
         {
           "methodId": "M3-ALL-FROZEN-LADDERS-NON-THICKNESS-QUALITY-DISTRIBUTIONS",
@@ -159,7 +160,7 @@
           "methodId": "M3-LAFEA4-SHELL-SIZE-TO-THICKNESS",
           "authorityClass": "OWNER_FROZEN_THICKNESS_PLUS_PRODUCTION_QUALITY_GATE",
           "executor": "scripts/lafea-mesh-benchmark-run.mjs",
-          "implementationState": "RUNNER_WIRING_PENDING",
+          "implementationState": "WIRED_STATIC_NOT_RUN",
           "sourceRefs": [
             "S-007",
             "S-020",
@@ -200,12 +201,7 @@
         "adjacentTargetHRatio": 2,
         "worstCaseTrend": "IMPROVES_OR_HOLDS"
       },
-      "declaredBlockers": [
-        {
-          "blockerId": "M3-THICKNESS-RUNNER-WIRING-PENDING",
-          "reason": "Thickness authority is frozen, but the staged runner has not yet been changed to evaluate per-element characteristic length through qualifyShellSizeToThicknessRatio."
-        }
-      ]
+      "declaredBlockers": []
     },
     {
       "benchmarkStage": "M4",

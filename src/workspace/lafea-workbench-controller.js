@@ -115,7 +115,7 @@ export class LafeaWorkbenchController {
       onUndo: () => this.undo(),
       onRedo: () => this.redo(),
       onSetScalar: (descriptorId, entityId, rawText) => this.setScalar(descriptorId, entityId, rawText),
-      onSetScalarBatch: (edits) => this.setScalarBatch(edits),
+      onSetScalarBatch: (edits) => this.setScalarBatch(edits, 'FORM_GROUP'),
       onApplyJson: (text) => this.applyDocumentText(text),
       onMoveNode: (path, nodeId, x, y) => this.store.moveNode(path, nodeId, x, y),
       onBenchmark: () => this.runBenchmark(),
@@ -167,7 +167,6 @@ export class LafeaWorkbenchController {
       return this.store.reportEditError('analysisMeshEvidence', null, error);
     }
   }
-
   importDocument(value, stageId, sourceHash = null) {
     return this.store.importDocument(value, stageId, sourceHash);
   }
@@ -240,8 +239,33 @@ export class LafeaWorkbenchController {
         './emp1-workbench-qualification-sample.js'
       );
       const sample = createEmp1WorkbenchQualificationSample();
-      this.importDocument(sample.aDocument, 'LAFEA.1');
-      this.importDocument(sample.bDocument, 'LAFEA.2');
+      const importedA = this.importDocument(sample.aDocument, 'LAFEA.1');
+      if (!importedA?.stages?.['LAFEA.1']?.document) {
+        const error = new TypeError('EMP.1 qualification sample requires an imported step A document.');
+        error.code = 'EMP1_WORKBENCH_A_DOCUMENT_REQUIRED';
+        throw error;
+      }
+
+      this.store.selectStage('LAFEA.1');
+      const ranA = this.run();
+      const aExecution = ranA?.stages?.['LAFEA.1']?.execution;
+      if (ranA?.status === 'FAILED'
+        || aExecution?.status !== 'QUALIFIED'
+        || aExecution?.result?.qualification?.state !== 'ACCEPTED') {
+        const error = new TypeError(
+          'EMP.1 qualification sample requires step A to produce a current qualified result before B/C.',
+        );
+        error.code = 'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED';
+        throw error;
+      }
+
+      const importedB = this.importDocument(sample.bDocument, 'LAFEA.2');
+      if (!importedB?.stages?.['LAFEA.2']?.document) {
+        const error = new TypeError('EMP.1 qualification sample requires an imported step B document.');
+        error.code = 'EMP1_WORKBENCH_B_DOCUMENT_REQUIRED';
+        throw error;
+      }
+
       const applied = this.setEmp1RunInput(sample.runInput);
       if (applied.status !== 'APPLIED') {
         const error = new TypeError(applied.code ?? 'EMP1_QUALIFICATION_SAMPLE_RUN_INPUT_REJECTED');
@@ -337,7 +361,6 @@ export class LafeaWorkbenchController {
       stage?.retainedAnalysisMeshEvidence ?? null,
     );
   }
-
   exportAnalysisMeshEvidence(stageId = this.getState().activeStageId) {
     return this.store.exportAnalysisMeshEvidence(stageId);
   }

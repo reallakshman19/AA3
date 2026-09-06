@@ -9,8 +9,8 @@ UPDATED_AT: 2026-09-06
 COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5557418057
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5557418871
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP_0001_PUBLICATION
-ISSUE_HANDOVER_SYNC_STATUS: OUT_OF_SYNC_PENDING_EP_0001_PUBLICATION
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557453157
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ## Parent retained evidence
 
@@ -75,4 +75,4 @@ QUESTION_SET_STATUS: CURRENT
 - no solver/mesh/recovery/program/oracle-tolerance/roadmap/workflow mutation.
 
 CURRENT_BLOCKER: EXACT_HEAD_REFERENCE_CORRELATED_GAUSSIAN_CHECK_NOT_RUN
-EXACT_NEXT_ACTION: publish/synchronize EP-0001, then run `node scripts/lafea-uq-reference-correlated-gaussian-check.mjs` on the final PR head. Further material progression requires fresh Owner authority.
+EXACT_NEXT_ACTION: run `node scripts/lafea-uq-reference-correlated-gaussian-check.mjs` on the final PR head. Further material progression requires fresh Owner authority.

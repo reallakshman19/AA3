@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   assertZeroMassWaiversAdmissible,
   createNonFeaZeroMassWaiverSet,
@@ -106,3 +107,21 @@ console.log(JSON.stringify({
   unknownEntityWaiverRejected: true,
   unapprovedProfileEntryWaivesNothing: true,
 }, null, 2));
+
+// The waiver control lives in the fitting-weight dialog, which needs a DOM and
+// so is not constructed here. Its one cross-module dependency is checked
+// statically instead: a missing import throws only when a reviewer opens the
+// dialog, and the view catches that into a message, so the control silently
+// does nothing and the fittings it was meant to resolve stay blocked.
+const dialogSource = readFileSync(
+  new URL('../src/workspace/load-calc-fitting-weight-dialog.js', import.meta.url),
+  'utf8',
+);
+for (const helper of ['zeroMassWaiverSuggested']) {
+  if (!dialogSource.includes(helper)) continue;
+  assert.match(
+    dialogSource,
+    new RegExp(`import[^;]*\\b${helper}\\b[^;]*from`, 'u'),
+    `${helper} is used by the fitting-weight dialog but never imported`,
+  );
+}

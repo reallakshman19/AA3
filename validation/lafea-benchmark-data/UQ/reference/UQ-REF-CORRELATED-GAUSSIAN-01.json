@@ -1,0 +1,60 @@
+{
+  "schema": "lafea-uq-correlated-gaussian-reference/v1",
+  "issue": 1685,
+  "parentIssue": 1673,
+  "caseId": "UQ-REF-CORRELATED-GAUSSIAN-01",
+  "definitionState": "FROZEN_BEFORE_EXECUTION",
+  "authorityClass": "REFERENCE_BENCHMARK_ONLY",
+  "productionOutputUsedToChooseDefinition": false,
+  "variableIds": ["X1", "X2"],
+  "inputModel": {
+    "distributionFamily": "MULTIVARIATE_GAUSSIAN",
+    "mean": [10, 20],
+    "standardDeviation": [2, 3],
+    "correlation": [[1, 0.4], [0.4, 1]],
+    "covariance": [[4, 2.4], [2.4, 9]]
+  },
+  "linearTransform": {
+    "outputIds": ["Y1", "Y2"],
+    "matrixA": [[2, -1], [0.5, 1]],
+    "offsetD": [5, -2]
+  },
+  "analyticalOracle": {
+    "inputMean": [10, 20],
+    "inputCovariance": [[4, 2.4], [2.4, 9]],
+    "inputCorrelationX1X2": 0.4,
+    "outputMean": [5, 23],
+    "outputCovariance": [[15.4, -1.4], [-1.4, 12.4]]
+  },
+  "samplingPlan": {
+    "seedUint32": 1685001,
+    "sampleCounts": [4096, 16384, 65536, 262144],
+    "finalSampleCount": 262144,
+    "randomGenerator": "XORSHIFT32",
+    "normalTransform": "BOX_MULLER_COS_SIN_PAIR",
+    "covarianceFactorization": "CHOLESKY_POSITIVE_DEFINITE",
+    "sampleCovarianceDenominator": "N_MINUS_1",
+    "sameSeedReplayMustMatchExactly": true,
+    "differentSeedMustChangeSummary": true
+  },
+  "acceptance": {
+    "analyticReconstructionRelativeTolerance": 1e-12,
+    "symmetryAbsoluteTolerance": 1e-12,
+    "finalNormalizedErrorMaximum": 5,
+    "meanErrorNormalization": "ANALYTICAL_STANDARD_ERROR",
+    "covarianceErrorNormalization": "WISHART_ANALYTICAL_STANDARD_ERROR",
+    "correlationErrorNormalization": "FISHER_Z_STANDARD_ERROR",
+    "productionAuthorityMustRemainFalse": true,
+    "activeProductionNumericStochasticSourceCountExpected": 0
+  },
+  "authority": {
+    "referenceCorrelatedStatisticalExecutionAuthorized": true,
+    "productionStatisticalExecutionAuthorized": false,
+    "productionSensitivityAuthorized": false,
+    "reliabilityTargetAuthorized": false,
+    "codeQualificationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshUqQualified": false
+  }
+}

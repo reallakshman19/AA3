@@ -21,7 +21,7 @@
     "releaseAuthorityGrantedByProgram": false,
     "temperatureAuthorityGrantedByProgram": false
   },
-  "activeCaseId": "B01",
+  "activeCaseId": "B02",
   "cases": [
     {
       "caseId": "B01",
@@ -35,7 +35,10 @@
         {
           "methodId": "T3",
           "authorityClass": "REGISTERED_PRODUCTION_ROUTE_FALLBACK",
-          "command": ["node", "scripts/lafea-bucket-01-t3-patch-check.mjs"],
+          "command": [
+            "node",
+            "scripts/lafea-bucket-01-t3-patch-check.mjs"
+          ],
           "sourceRefs": [
             "scripts/lafea-bucket-01-t3-patch-check.mjs",
             "validation/bucket-01/04-t3-patch-oracle.json"
@@ -50,16 +53,26 @@
         {
           "methodId": "T6",
           "authorityClass": "REGISTERED_PRODUCTION_ROUTE",
-          "command": ["node", "scripts/lafea.3-t6-patch-check.mjs"],
-          "sourceRefs": ["scripts/lafea.3-t6-patch-check.mjs"],
+          "command": [
+            "node",
+            "scripts/lafea.3-t6-patch-check.mjs"
+          ],
+          "sourceRefs": [
+            "scripts/lafea.3-t6-patch-check.mjs"
+          ],
           "expectedEvidenceSchema": null,
           "oracleAuthority": "ELEMENT_PATCH_INVARIANTS_AND_QUALIFICATION_PROFILE"
         },
         {
           "methodId": "Q8",
           "authorityClass": "REGISTERED_PRODUCTION_ROUTE",
-          "command": ["node", "scripts/lafea.3-q8-patch-check.mjs"],
-          "sourceRefs": ["scripts/lafea.3-q8-patch-check.mjs"],
+          "command": [
+            "node",
+            "scripts/lafea.3-q8-patch-check.mjs"
+          ],
+          "sourceRefs": [
+            "scripts/lafea.3-q8-patch-check.mjs"
+          ],
           "expectedEvidenceSchema": null,
           "oracleAuthority": "ELEMENT_PATCH_INVARIANTS_AND_QUALIFICATION_PROFILE"
         }
@@ -71,13 +84,103 @@
         "no expected value is generated from observed production output",
         "release and temperature authority remain false"
       ]
+    },
+    {
+      "caseId": "B02",
+      "definitionState": "READY",
+      "title": "2D continuum engineering response — bending, shear, hole and lug progression",
+      "stageId": "LAFEA.3",
+      "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
+      "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
+      "purpose": "Execute the retained S0-S5 LAFEA.3 solver and element numerical ladder through its governed contiguous stage gate without granting production-mesh, temperature, or release authority.",
+      "methods": [
+        {
+          "methodId": "BM-S-S0-S5",
+          "authorityClass": "STAGED_SOLVER_BENCHMARK_PROGRAM",
+          "command": [
+            "node",
+            "scripts/lafea.3-solver-benchmark-run.mjs",
+            "--stage",
+            "S0..S5"
+          ],
+          "sourceRefs": [
+            "scripts/lafea.3-solver-benchmark-run.mjs",
+            "validation/lafea-benchmark-data/B02/bucket-manifest.json"
+          ],
+          "expectedEvidenceSchema": "lafea3-bm-s-program-run/v1",
+          "oracleAuthority": "B02_STAGED_S0_S5_INDEPENDENT_ORACLE_AND_INVARIANT_LADDER"
+        }
+      ],
+      "passCriteria": [
+        "the governed staged runner exits zero",
+        "S0 through S5 form one contiguous authorized PASS prefix",
+        "each selected stage retains its own audit record and evidence",
+        "performance observations remain informational only",
+        "production mesh, temperature, and release authority remain false"
+      ]
+    },
+    {
+      "caseId": "BM-MESH",
+      "definitionState": "READY",
+      "title": "Common analysis-mesh benchmark — LAFEA.3 and LAFEA.4 staged producer contract",
+      "stageId": "LAFEA.3+LAFEA.4",
+      "benchmarkClass": "STAGED_ANALYSIS_MESH_BENCHMARK",
+      "comparisonPolicy": "STAGE_SPECIFIC_PRODUCTION_MESH_CONTRACT_AND_INDEPENDENT_ORACLE",
+      "purpose": "Execute the retained M0-M4 production analysis-mesh benchmark across LAFEA.3 and LAFEA.4 while preserving fail-closed stage gating and without granting shell-thickness, solver/convergence, release, or temperature authority.",
+      "methods": [
+        {
+          "methodId": "BM-MESH-M0-M4",
+          "authorityClass": "STAGED_ANALYSIS_MESH_BENCHMARK_PROGRAM",
+          "command": [
+            "node",
+            "scripts/lafea-mesh-benchmark-run.mjs",
+            "--stage",
+            "M4"
+          ],
+          "sourceRefs": [
+            "scripts/lafea-mesh-benchmark-run.mjs",
+            "validation/lafea-benchmark-data/MESH/bucket-manifest.json",
+            "validation/lafea-benchmark-data/MESH/sources/source-registry.json",
+            "validation/lafea-benchmark-data/MESH/geometry/cases.json",
+            "validation/lafea-benchmark-data/MESH/oracle/expected-values.json",
+            "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json",
+            "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json",
+            "validation/lafea-benchmark-data/MESH/governance/negative-cases.json"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-program-run/v1",
+          "oracleAuthority": "BM_MESH_M0_M4_FROZEN_INDEPENDENT_GEOMETRY_ORACLE_AND_PRODUCTION_MESH_CONTRACT"
+        }
+      ],
+      "passCriteria": [
+        "the governed staged runner exits zero",
+        "M0 through M4 form one contiguous authorized PASS prefix",
+        "each selected mesh stage retains its own audit record and evidence",
+        "all frozen benchmark definitions and producer-policy custody inputs are hash-bound",
+        "no expected value is generated from observed production output",
+        "release and temperature authority remain false"
+      ]
     }
   ],
   "futureQueue": [
-    {"caseId": "B02", "title": "2D continuum engineering response — bending, shear, hole and lug progression", "activation": "AFTER_B01_PASS"},
-    {"caseId": "B03", "title": "Thin-shell patch and bending — authoritative route plus explicitly non-production method checks", "activation": "AFTER_B02_PASS"},
-    {"caseId": "B04", "title": "Trunnion footprint — load distribution and shell-result custody", "activation": "AFTER_B03_PASS"},
-    {"caseId": "B05", "title": "Foundation and pipe-section analytical screening", "activation": "AFTER_B04_PASS"},
-    {"caseId": "B06", "title": "Governance negative suite — unsupported, singular, stale, temperature and release fail-closed cases", "activation": "AFTER_B05_PASS"}
+    {
+      "caseId": "B03",
+      "title": "Thin-shell patch and bending — authoritative route plus explicitly non-production method checks",
+      "activation": "AFTER_B02_PASS"
+    },
+    {
+      "caseId": "B04",
+      "title": "Trunnion footprint — load distribution and shell-result custody",
+      "activation": "AFTER_B03_PASS"
+    },
+    {
+      "caseId": "B05",
+      "title": "Foundation and pipe-section analytical screening",
+      "activation": "AFTER_B04_PASS"
+    },
+    {
+      "caseId": "B06",
+      "title": "Governance negative suite — unsupported, singular, stale, temperature and release fail-closed cases",
+      "activation": "AFTER_B05_PASS"
+    }
   ]
 }

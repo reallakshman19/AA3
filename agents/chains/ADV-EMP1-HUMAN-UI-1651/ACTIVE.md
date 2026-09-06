@@ -11,8 +11,8 @@ WORK_ITEM_MODE: EXCLUSIVE
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0027
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0027.md
+ENDPOINT: EP-0028
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0028.md
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
 CUSTODY_STATE: HELD
@@ -22,10 +22,10 @@ PR_1675_MERGE_COMMIT: 11f655e71a81b0d7ebef42e99792482b434e60db
 PREDECESSOR_REPAIR_PR: 1696
 PREDECESSOR_REPAIR_PR_STATUS: CLOSED_UNMERGED_FAILED_EXECUTABLE_VALIDATION
 CURRENT_REPAIR_PR: 1701
-CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
+CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_MERGE_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
 CURRENT_PR_FIXED_MATERIAL_HEAD: 7f81c19a236fc6075a26ed3fccfece808406c7a6
-CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: fa81fcbc27d145e06af546f3d8a3002925de0acf
+CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: 7bdd1dc73a52a67de2ffbfe1afd25644adc24c08
 CURRENT_PR_MERGEABLE_AT_STATUS_CHECK: TRUE
 CURRENT_PR_MERGEABLE_STATE_AT_STATUS_CHECK: CLEAN
 CURRENT_PR_REVIEWS_AT_STATUS_CHECK: 0
@@ -46,16 +46,17 @@ LATEST_MATERIAL_HEAD: 7f81c19a236fc6075a26ed3fccfece808406c7a6
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-013.md
 CURRENT_MATERIAL_LEG: NONE
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0025.md
-ENGINEERING_STATE: LEG_013_SOURCE_COMPLETE_EXECUTABLE_REOBSERVATION_PENDING
+ENGINEERING_STATE: OWNER_MERGE_AUTHORIZED_POST_MERGE_RECONCILIATION_PENDING
 WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
-WRITE_AUTHORITY_REASON: no new exact-head executable/product failure exists; LEG-013 remains frozen pending external full-repository Node/Chromium/Playwright/Stage-17 and human-factor validation
+WRITE_AUTHORITY_REASON: no new material work is authorized; Owner explicitly authorized merge while exact-head executable/human validation remains NOT_RUN
 AUTO_STATE: NOT_APPLICABLE
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
-MERGE_AUTHORIZATION_DISPOSITION: PR_1675_AUTHORIZATION_CONSUMED; NO_AUTHORIZATION_FOR_PR_1701_OR_SUCCESSOR
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
+MERGE_AUTHORIZATION_DISPOSITION: OWNER_EXPLICIT_COMMAND_2026_09_06_MERGE_PR_1701
 
+OWNER_MERGE_COMMAND: MERGE
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_PROGRESSION_STATUS: CONSUMED_BY_EP_0027_NO_PATCH_RECONCILIATION
+OWNER_PROGRESSION_STATUS: PENDING_POST_MERGE_RECONCILIATION
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
 QUESTION_SET_STATUS: CURRENT
@@ -67,18 +68,18 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560757230
 RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560758060
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0028_PUBLICATION
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
 
 ROADMAP: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
-ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED; section 4.1 sequencing debt addressed by LEG-011/LEG-012; LEG-013 changes validation carrier only; EP-0027 is no-patch reconciliation
+ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED; section 4.1 sequencing debt addressed by LEG-011/LEG-012; LEG-013 changes validation carrier only; EP-0027 no-patch reconciliation; EP-0028 records Owner merge authorization
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 VALIDATION_HISTORICAL_LEG011: FAIL_EXACT_HEAD_CHROMIUM_2_OF_2_PLUS_STAGE17_STALE_GATE
@@ -108,6 +109,7 @@ LEG012_CONTROLLER_CONTRACT: import A -> normal controller/store A execution -> r
 STAGE17_TEST_ALIGNMENT: stale public-product pre-promotion expectation updated to current bounded gamma5 authority; authority source unchanged
 LEG013_SCOPE: cross-platform fail-fast exact-head validation runner + project-local Chromium preflight + EP-0025 PowerShell/POSIX guide only
 EP0027_DISPOSITION: NO_PATCH; raw GitHub PR state clean/mergeable; post-basis drift remains unrelated; no executable defect exists to justify LEG-014
+EP0028_DISPOSITION: OWNER_MERGE_AUTHORIZED; NOT_RUN validation remains NOT_RUN; proceed-next reserved for post-merge reconciliation
 
 ACCEPTANCE_TASK_001: SOURCE_RETAINED_LIVE_FINAL_PENDING
 ACCEPTANCE_TASK_002: SOURCE_RETAINED_PRESSURE_5X2_LIVE_FINAL_PENDING
@@ -118,6 +120,6 @@ ACCEPTANCE_TASK_005: PROTECTED_AUTHORITY_PRESERVED_BY_LEG013_DIFF_INSPECTION
 BENCHMARK_CAUX: retained 8/8 within frozen 3%; worst relative 2.0355862430856293% at Cu; worst absolute 26.786740343133943 kPa at Du; governing Du/Du agreement; comparison evidence only, not global WRC/code/release authority
 BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / no invented expected values, version or tolerance
 
-AUTHORITY_BOUNDARY: LEG-013 changes scripts/validation documentation only; EP-0027 adds relay/checkpoint state only; no production src, WRC/Pressure mechanics, bounded-route registry/authority, retained benchmark source/tolerance, roadmap, workflow YAML, code-compliance, production authorization, release authority or LAFEA.3+ mechanics
-CURRENT_BLOCKER: full exact-head LEG-013 executable qualification is pending. No source or integration patch is justified until admissible exact-head execution produces a real failure.
-EXACT_NEXT_ACTION: external verifier checks out fixed material head 7f81c19a236fc6075a26ed3fccfece808406c7a6, follows MANUAL-EP-0025, installs project-local Chromium if preflight requires it, runs `node scripts/emp1-issue1651-executable-validation.mjs`, stops on any nonzero result, and only after complete executable PASS proceeds to desktop/narrow structured audits, CAUx physical Enter/Space and three screenshots. Evidence intake is read-only and does not require another Owner progression command.
+AUTHORITY_BOUNDARY: Owner merge authorization does not alter WRC/Pressure mechanics, route/source/benchmark authority, code/release authority, workflow YAML, or validation truth.
+CURRENT_BLOCKER: none to Owner-authorized merge. Exact-head executable/human validation debt remains open and must not be relabeled PASS.
+EXACT_NEXT_ACTION: publish EP-0028 to Issue control plane, transition Draft to Ready only if required, merge PR #1701 with expected-head guard, then reconcile resulting main under the already-issued `proceed next` command.

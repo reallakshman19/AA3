@@ -4,13 +4,13 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0021
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0021.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0021.md
+ACTIVE_ENDPOINT: EP-0022
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0022.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0022.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-LAST_COMPLETED_MATERIAL_LEG: LEG-011
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-011.md
-MATERIAL_LEG_HEAD: ec55d5c22f54dc74b3ef0665ce29929a09bc30c2
+LAST_COMPLETED_MATERIAL_LEG: LEG-012
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-012.md
+MATERIAL_LEG_HEAD: 8310d58838bd9057a799e115a5a25bc0081f175e
 CURRENT_MATERIAL_LEG: NONE
 
 PREDECESSOR_PR: 1662
@@ -20,7 +20,7 @@ PR: 1663
 PR_STATUS: OPEN_DRAFT
 BRANCH: engineering/bm-mesh-1652-m2-data
 BASE_BRANCH: main
-PR_HEAD_AT_LAST_EXTERNAL_RECONCILIATION: ec55d5c22f54dc74b3ef0665ce29929a09bc30c2
+PR_HEAD_AT_LAST_EXTERNAL_RECONCILIATION: 8310d58838bd9057a799e115a5a25bc0081f175e
 ISSUE_BASIS_MAIN: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 MAIN_HEAD: 2126f2c45e9a77debedf5ad0cabfafc426fca095
 POST_BASIS_DRIFT: PRODUCTION_MULTIPATCH_SCOPE_RECONCILED_IN_BENCHMARK
@@ -31,23 +31,23 @@ REQUIRED_CHECKS: NONE_OBSERVED_AT_LAST_CHECK
 ACTIONS_RUNS: 0_AT_LAST_CHECK
 STATUS_CONTEXTS: 0_AT_LAST_CHECK
 
-ENGINEERING_STATE: TASK_005_OPEN_AUTHORIZED_EXACT_CODE_DEFINITIONS
+ENGINEERING_STATE: TASK_005_COMPLETE_PROTECTED_TASK_006_M3_HT_M4_BLOCKERS
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
-WRITE_AUTHORITY: OWNER_PROGRESSION_BOUNDED_BENCHMARK_MATERIAL
+WRITE_AUTHORITY: READ_ONLY_AT_PROTECTED_BOUNDARY
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 through bounded benchmark-only TASK-005 negative-case definitions and required source-custody pins. Production source/geometry kernels, mesh-quality/convergence thresholds, solver/compiler mechanics, B02, TECH-13, workflows, roadmaps, benchmark-program registration, M3 shell-thickness fixture authority, M4 physics, release/trust/temperature authority remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 benchmark material through completed TASK-005. Benchmark-program registration, production source/thresholds, M3 shell-thickness fixture authority, M4 physics/solver/convergence, workflows, roadmaps, release/trust/temperature and merge authority remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 14
+CUSTODY_EPOCH: 15
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
-DEPENDENCIES: PR #1663 remains unmerged; issue #1535 production-route authority remains separate; B02 and TECH-13 remain separate; M3 shell thickness and M4 physics/solver authority unresolved; benchmark-program registration remains protected
+DEPENDENCIES: PR #1663 remains unmerged; M3 shell thickness unresolved; M4 physics/solver authority unresolved; benchmark-program registration protected
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
@@ -63,7 +63,7 @@ ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT_WITH_TASK_001_AND_M2_PREWORK_MERGED
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0021
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0022
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549970395
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549969638
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5551802004
@@ -76,20 +76,16 @@ QUESTION_PACK_ACTION: RETAINED_NOT_REFRESHED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
-OWNER_QUALIFICATION_BASELINE_DISCOVERY: COMPLETE
-OWNER_QUALIFICATION_BASELINE_SOURCE: issue #1652 + governing roadmaps; no separate Owner Q-set baseline
-OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
-
-TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 STATIC_IMPLEMENTED_AUTHORITY_BLOCKED_M3_HT_M4; TASK-005 OPEN_AUTHORIZED_EXACT_CODE_DEFINITIONS; TASK-006 OPEN_STAGED_PROTECTED_REGISTRATION; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: LEG-006 geometry/oracle frozen; LEG-007 ladders/probes frozen; LEG-008 source pins repaired; LEG-009 runner/manifest; LEG-010 continuum M3 distributions; LEG-011 production multipatch M2/M3 repair; exact TASK-005 rejection surfaces resolved
+TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 STATIC_IMPLEMENTED_AUTHORITY_BLOCKED_M3_HT_M4; TASK-005 CLOSED_FROZEN_EXACT_CODE_DEFINITIONS; TASK-006 OPEN_STAGED_PROTECTED_REGISTRATION; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: LEG-006 geometry/oracle frozen; LEG-007 ladders/probes frozen; LEG-008 custody repair; LEG-009 runner; LEG-010 M3 continuum distributions; LEG-011 production multipatch repair; LEG-012 exact-code negative definitions
 BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-002 IMPLEMENTED_STATIC_NOT_RUN; BM-003 IMPLEMENTED_STATIC_NOT_RUN; BM-004 IMPLEMENTED_STATIC_NOT_RUN; BM-005 NON_THICKNESS_STATIC_IMPLEMENTED_THICKNESS_AUTHORITY_BLOCKED; BM-006 PROBE_IDENTITIES_FROZEN_PHYSICS_UNRESOLVED_NOT_RUN
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_LEG_011_STATIC / LEG_012_NOT_STARTED
+HANDOVER_VALIDATION_STATUS: PASS_LEG_012_STATIC / PROTECTED_BLOCKER_REACHED
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: TRUE
 
-CURRENT_BLOCKER: none for bounded LEG-012 negative definitions. M3 h/t, M4 physics/solver and benchmark-program registration remain protected.
-LEG_DIAGNOSIS: production multipatch scope is now correctly represented. TASK-005 exact rejection codes are grounded in existing production/request primitives and can be frozen without source mutation.
-EXACT_NEXT_ACTION: perform LEG-012 limited to `validation/lafea-benchmark-data/MESH/governance/negative-cases.json` plus only necessary MESH source-registry additions pinning the domain-first request contract and mapped-mesh primitive. Define over-ceiling, unauthorized family, explicit invalid mapped-Q8 topology and noncoincident seam exact-code cases. Do not mutate `src/**`, runner, thresholds, solver/compiler, workflows, roadmaps, program registration, release or temperature authority. Do not merge PR #1663 without explicit Owner merge authorization.
+CURRENT_BLOCKER: protected benchmark-program registration plus unresolved M3 shell-thickness and M4 physics/solver authority.
+LEG_DIAGNOSIS: TASK-005 exact-code definitions are frozen. All remaining issue actions cross authority explicitly protected by EP-0022.
+EXACT_NEXT_ACTION: await explicit Owner authority for TASK-006 registration, M3 governed shell-thickness fixture, M4 frozen physics/response plus solver/convergence execution, or PR #1663 merge. Do not self-authorize any protected boundary. Do not create or refresh qualification questions unless the Owner explicitly asks.

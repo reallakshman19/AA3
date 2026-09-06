@@ -11,8 +11,12 @@ import {
 } from '../../core/non-fea-enrichment/index.js';
 import { openFittingWeightDialog } from '../load-calc-fitting-weight-dialog.js';
 import { buildFittingWeightReviewRows } from '../load-calc-fitting-weight-review.js';
+import {
+  NON_FEA_ZERO_MASS_WAIVER_PATH,
+} from '../engineering-loads/non-fea-zero-mass-waiver.js';
 import { buildLoadCalcMasterEnrichmentProposals } from '../load-calc-master-candidates.js';
 import { masterDataController } from '../master-data-controller.js';
+import { projectDataEntry } from '../project-data/project-data-contract.js';
 import { projectDataStore } from '../project-data/project-data-store.js';
 import { WorkspaceState } from '../workspace-state.js';
 import { nonFeaEnrichmentStore } from './non-fea-enrichment-store.js';
@@ -373,20 +377,52 @@ function reviewFittingWeights(documentRef, onChanged) {
     documentRef,
     dataset,
     masters: masterDataController.getMasterData(),
-    onAccept: (records) => {
+    onAccept: (records, waivers = []) => {
+      if (waivers.length > 0) applyZeroMassWaivers(waivers);
       records.forEach((record) => nonFeaEnrichmentStore.stageProposal({
         proposalId: record.recordId,
         rationale: `Reviewer selected ${record.evidence.selectedTypeDesc} from ${record.evidence.candidateCount} catalogue candidate(s) for ${record.evidence.componentDescription || record.selectorKey}.`,
         record,
       }));
+      const waiverNote = waivers.length > 0
+        ? ` Recorded ${waivers.length} zero-mass waiver(s) in Project Data.`
+        : '';
       if (records.length > 0) {
         nonFeaEnrichmentStore.setMessage(
-          `Staged ${records.length} fitting-weight proposal(s). Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked". ${validateInputCauseMessage(records)}`,
+          `Staged ${records.length} fitting-weight proposal(s). Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked". ${validateInputCauseMessage(records)}${waiverNote}`,
         );
+      } else if (waiverNote) {
+        nonFeaEnrichmentStore.setMessage(waiverNote.trim());
       }
       onChanged?.();
     },
   });
+}
+
+/**
+ * Records zero-mass waivers as approved Project Data.
+ *
+ * Project Data, not the enrichment sidecar: a waiver is a project decision
+ * about a component, not exact evidence discovered in a source or a master, and
+ * putting it in the sidecar would make it look like the latter. It merges into
+ * any existing map so waiving one fitting never clears another.
+ */
+function applyZeroMassWaivers(waivers) {
+  const entry = projectDataEntry(projectDataStore.getProfile(), NON_FEA_ZERO_MASS_WAIVER_PATH);
+  const current = entry && typeof entry.value === 'object' && entry.value !== null ? entry.value : {};
+  const next = { ...current };
+  waivers.forEach(({ entityId, justification }) => {
+    next[entityId] = { justification, waivedBy: 'Fitting weight review' };
+  });
+  projectDataStore.update(
+    NON_FEA_ZERO_MASS_WAIVER_PATH,
+    next,
+    {
+      source: 'Reviewer zero-mass waiver',
+      locator: 'Component weight review — waived as carrying no weighable mass',
+    },
+    true,
+  );
 }
 
 function rebind(sourceModel) {

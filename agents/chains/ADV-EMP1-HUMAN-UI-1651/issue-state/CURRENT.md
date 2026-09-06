@@ -31,6 +31,8 @@ SUPPORTING_VALIDATION_PR_HEAD: c106d489fa125e75f02843d84034f6324357fa7b
 SUPPORTING_VALIDATION_PR_CHANGED_FILES: 4
 SUPPORTING_VALIDATION_PR_STATUS_CONTEXTS: 0
 SUPPORTING_VALIDATION_PR_WORKFLOW_RUNS: 0
+NONCANONICAL_HANDOVER_PR: 1684
+NONCANONICAL_HANDOVER_PR_DISPOSITION: OWNER_REJECTED_AS_NOVICE_ARTIFACT_NO_TAKEOVER
 PREVIOUS_PR: 1660
 PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
 PREVIOUS_PR_MERGE_COMMIT: 4436dc3c3590d1afd40ba20f74380f442fb32935
@@ -49,7 +51,7 @@ CURRENT_MATERIAL_LEG: NONE
 - TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE COMPLETE. PR #1681 gives static acceptance PASS retaining 5 identities × Internal/External = 10 governed cells. Sample-loaded live confirmation remains pending.
 - TASK-003 | Replace append-only waterfall with two-column/equivalent architecture. | LEG-009 owner screenshots = UX FAIL. LEG-010 source complete. PR #1681 gives supporting PASS evidence for Review/LAFEA.2 presentation coherence, but both structured viewport audits explicitly return `FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION`; full human-factor acceptance remains pending sample-loaded rerun.
 - TASK-004 | CAUx staged integration/hardening. | SOURCE COMPLETE. PR #1681 gives supporting browser observations only; full sample-loaded acceptance remains pending. CAUx/PV Elite numerical/source authority unchanged.
-- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND EP-0017. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
+- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND CURRENT OWNER CUSTODY CLARIFICATION. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
 
 ## LEG-010 material boundary
 
@@ -101,6 +103,22 @@ NOT A SUBSTITUTE: [SIMULATED] Load EMP.1.A demonstration source
 
 `src/workspace/lafea-workbench-view.js` renders these as distinct actions. The complete qualification-sample action must be used before the structured audit. `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })` does not load the qualification sample; it only adds `P-EXTERNAL` to an already-present LAFEA.1 document when needed.
 
+## Owner custody clarification
+
+Owner instruction observed:
+
+```text
+no take over, you will do. that was a novice agent text! proceed
+```
+
+Durable interpretation:
+
+- no takeover is requested or authorized;
+- the current custodian continues this chain;
+- PR #1684 is a novice-generated supplemental documentation artifact and is not a baton, successor chain, acceptance authority, or merge authority;
+- `proceed` is not one of the three normal Owner progression commands, so it does not open a fresh material engineering leg;
+- this clarification changes custody/control-plane interpretation only.
+
 ## Validation truth
 
 - source/diff/protected-path custody: PASS for presentation-only boundary;
@@ -130,8 +148,9 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
 COMMON_PROTOCOL_STATUS: CURRENT
-OWNER_TEXT_OBSERVED: `proceed next`
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_TEXT_OBSERVED: `no take over, you will do. that was a novice agent text! proceed`
+OWNER_PROGRESSION_COMMAND: NONE
+OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
 OWNER_MERGE_COMMAND: NONE
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
@@ -153,6 +172,6 @@ HANDOVER_VALIDATION_EVIDENCE: three static PASS results + supporting coherence o
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: complete EP-0015 with the exact **`[SIMULATED] Load complete EMP.1 qualification sample`** action before invoking the audit. Focused Playwright remains environment-blocked. PR #1675 merge is Owner-only and unauthorized; PR #1681 is evidence-only and unauthorized.
+CURRENT_BLOCKER: current custodian continues, but external sample-loaded localhost validation remains required. Focused Playwright remains environment-blocked. PR #1675 merge is Owner-only and unauthorized; PR #1681 is evidence-only and unauthorized. PR #1684 is non-canonical novice documentation and carries no custody/acceptance/merge authority.
 
-EXACT_NEXT_ACTION: checkout `dc2df7a8a8b26feea26d29dbf0741794f788cfac`, start localhost, enter EMPIRICAL -> EMP.1, click **`[SIMULATED] Load complete EMP.1 qualification sample`** (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Acceptance requires both returned objects' own `status` = `PASS_CURRENT_VIEWPORT_DOM_OBSERVATION` with `failures=[]`, the CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.
+EXACT_NEXT_ACTION: current custodian continues. Checkout `dc2df7a8a8b26feea26d29dbf0741794f788cfac`, start localhost, enter EMPIRICAL -> EMP.1, click **`[SIMULATED] Load complete EMP.1 qualification sample`** (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Acceptance requires both returned objects' own `status` = `PASS_CURRENT_VIEWPORT_DOM_OBSERVATION` with `failures=[]`, the CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.

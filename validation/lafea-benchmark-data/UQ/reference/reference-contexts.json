@@ -1,0 +1,52 @@
+{
+  "schema": "lafea-uq-reference-contexts/v1",
+  "issue": 1673,
+  "stage": "REFERENCE_ENGINE_VERIFICATION",
+  "contexts": [
+    {
+      "contextId": "UQ-REF-E-INVERSE-01",
+      "title": "Reference-only lognormal elastic-modulus propagation through B02A inverse-E tip-deflection oracle",
+      "authorityClass": "REFERENCE_BENCHMARK_ONLY",
+      "purpose": "qualify UQ/statistical machinery against an analytically solvable reference problem without asserting production-population applicability",
+      "sourcePriorId": "SRC-UQ-PRIOR-JCSS-STRUCTURAL-STEEL-E",
+      "deterministicMechanicsRef": "validation/lafea-b02-definitions/B02A-nonuniform-bending.json",
+      "referenceStatisticalExecutionAuthorized": true,
+      "productionStatisticalExecutionAuthorized": false,
+      "productionPopulationApplicability": false,
+      "productionApplicabilityBlocker": "ENGINEERING_POPULATION_APPLICABILITY_REQUIRED",
+      "uncertainInputs": [
+        {
+          "inputId": "UQ-REF-IN-ELASTIC-MODULUS",
+          "quantity": "elasticModulus",
+          "canonicalUnit": "MPa",
+          "distributionFamily": "LOGNORMAL",
+          "arithmeticMean": 200000,
+          "coefficientOfVariation": 0.03,
+          "sourcePriorId": "SRC-UQ-PRIOR-JCSS-STRUCTURAL-STEEL-E",
+          "referenceOnly": true
+        }
+      ],
+      "fixedInputs": {
+        "poissonRatio": 0.3,
+        "geometry": "B02A frozen deterministic geometry",
+        "load": "B02A frozen deterministic load",
+        "boundaryConditions": "B02A frozen deterministic restraints",
+        "temperature": "NOT_APPLICABLE_TO_REFERENCE_CASE"
+      },
+      "response": {
+        "quantityId": "TIP_DEFLECTION_MAGNITUDE",
+        "canonicalUnit": "mm",
+        "nominalElasticModulusMPa": 200000,
+        "nominalResponseMm": 2.0156,
+        "exactRelation": "D(E) = D0 * E0 / E",
+        "relationBasis": "B02A bending and shear deflection terms are both proportional to 1/E when nu is fixed and G = E/(2*(1+nu))"
+      },
+      "rules": [
+        "The reference context is not evidence that B02A production material is structural steel.",
+        "Reference statistical execution may exercise UQ machinery only inside this isolated context.",
+        "No result from this reference context may activate production uncertainty-model or correlation fields.",
+        "No production Pf, beta, code allowable, design decision, release or temperature authority may be inferred from this context."
+      ]
+    }
+  ]
+}

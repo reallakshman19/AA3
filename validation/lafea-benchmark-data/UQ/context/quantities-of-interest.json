@@ -1,0 +1,130 @@
+{
+  "schema": "lafea-uq-context/v1",
+  "issue": 1673,
+  "parentBenchmarkIssue": 1653,
+  "productionMeshDependencyIssue": 1652,
+  "stage": "U0",
+  "definitionState": "CONTEXT_FROZEN_TARGET_AUTHORITY_PENDING",
+  "deterministicBasis": {
+    "engineeringLevel": "LINEAR_2D_CONTINUUM_T3_T6_Q8",
+    "resultSchema": "local-continuum-result/v1",
+    "formulations": ["PLANE_STRESS", "PLANE_STRAIN", "PLANE_STRAIN_BBAR"],
+    "canonicalUnits": {
+      "length": "mm",
+      "force": "N",
+      "stress": "MPa",
+      "modulus": "MPa",
+      "strain": "dimensionless"
+    },
+    "sourceRefs": [
+      "src/core/local-continuum/constants.js",
+      "src/core/lafea-meshing/mesh-convergence-framework.js"
+    ]
+  },
+  "claimBoundary": {
+    "currentMaximumClaim": "DETERMINISTICALLY_BENCHMARK_QUALIFIED_FOR_GOVERNED_BM_S_SCOPE",
+    "statisticalReliabilityQualified": false,
+    "productionMeshStatisticalClaimAuthorized": false,
+    "governingReliabilityStandard": null,
+    "consequenceClass": null,
+    "numericReliabilityTargetAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "observationRules": {
+    "physicalLocationRequiredForLocalFieldQoI": true,
+    "nodeIdAloneMayDefinePhysicalProbe": false,
+    "rawSingularPeakAccepted": false,
+    "aggregationMustBeDeclared": true,
+    "loadCaseIdentityRequired": true,
+    "resultQualificationMustBeAccepted": true
+  },
+  "quantitiesOfInterest": [
+    {
+      "qoiId": "UQ-L3-SELECTED-DISPLACEMENT",
+      "domain": "LAFEA.3",
+      "producerSemantic": "selected physical-coordinate displacement from an accepted local-continuum-result/v1",
+      "canonicalUnit": "mm",
+      "observationLocation": "FROZEN_PHYSICAL_COORDINATE_PROBE_REQUIRED",
+      "aggregation": "DECLARED_COMPONENT_OR_VECTOR_MAGNITUDE",
+      "decisionRole": "UNCERTAINTY_REPORTING_AND_VALIDATION_CANDIDATE",
+      "reliabilityBearing": false,
+      "reliabilityCandidate": true,
+      "targetAuthorityState": "GOVERNING_LIMIT_AND_RELIABILITY_STANDARD_REQUIRED"
+    },
+    {
+      "qoiId": "UQ-L3-RETAINED-STRESS-COMPONENT",
+      "domain": "LAFEA.3",
+      "producerSemantic": "retained element/integration-point stress component from an accepted local-continuum-result/v1",
+      "canonicalUnit": "MPa",
+      "observationLocation": "FROZEN_ELEMENT_AND_RETAINED_INTEGRATION_POINT_OR_PHYSICAL_PROBE_REQUIRED",
+      "aggregation": "NO_UNDECLARED_NODAL_SMOOTHING_OR_RAW_PEAK_MAXIMUM",
+      "decisionRole": "UNCERTAINTY_REPORTING_AND_VALIDATION_CANDIDATE",
+      "reliabilityBearing": false,
+      "reliabilityCandidate": true,
+      "targetAuthorityState": "GOVERNING_RESISTANCE_MODEL_AND_RELIABILITY_STANDARD_REQUIRED"
+    },
+    {
+      "qoiId": "UQ-L3-RETAINED-VON-MISES",
+      "domain": "LAFEA.3",
+      "producerSemantic": "retained formulation-correct von Mises equivalent stress from an accepted local-continuum-result/v1",
+      "canonicalUnit": "MPa",
+      "observationLocation": "FROZEN_ELEMENT_AND_RETAINED_INTEGRATION_POINT_OR_PHYSICAL_PROBE_REQUIRED",
+      "aggregation": "DECLARED_LOCATION_SET_ONLY_NO_RAW_SINGULAR_PEAK_ACCEPTANCE",
+      "decisionRole": "STRENGTH_LIMIT_STATE_CANDIDATE",
+      "reliabilityBearing": false,
+      "reliabilityCandidate": true,
+      "targetAuthorityState": "CODE_ALLOWABLE_OR_RESISTANCE_MODEL_REQUIRED"
+    },
+    {
+      "qoiId": "UQ-L3-STRAIN-ENERGY",
+      "domain": "LAFEA.3",
+      "producerSemantic": "global retained physical strain energy for an accepted load case",
+      "canonicalUnit": "N*mm",
+      "observationLocation": "GLOBAL_LOAD_CASE",
+      "aggregation": "SCALAR_PER_LOAD_CASE",
+      "decisionRole": "DETERMINISTIC_VERIFICATION_AND_NUMERICAL_UNCERTAINTY_DIAGNOSTIC",
+      "reliabilityBearing": false,
+      "reliabilityCandidate": false,
+      "targetAuthorityState": "NOT_APPLICABLE"
+    },
+    {
+      "qoiId": "UQ-L3-SUPPORT-REACTION",
+      "domain": "LAFEA.3",
+      "producerSemantic": "retained constrained-DOF support reaction component from R = K u - F",
+      "canonicalUnit": "N",
+      "observationLocation": "FROZEN_CONSTRAINED_DOF_OR_DECLARED_SUPPORT_RESULTANT",
+      "aggregation": "DECLARED_COMPONENT_OR_RESULTANT",
+      "decisionRole": "DETERMINISTIC_EQUILIBRIUM_VERIFICATION_AND_UQ_DIAGNOSTIC",
+      "reliabilityBearing": false,
+      "reliabilityCandidate": false,
+      "targetAuthorityState": "NOT_APPLICABLE"
+    }
+  ],
+  "explicitExclusions": [
+    {
+      "quantity": "RAW_SINGULAR_PEAK_STRESS",
+      "reason": "UNACCEPTED_CONVERGENCE_QUANTITY_AND_NO_STRESS_SINGULARITY_ACCEPTANCE"
+    },
+    {
+      "quantity": "CODE_DEMAND_CAPACITY_RATIO",
+      "reason": "CURRENT_LAFEA3_AUTHORITY_INCLUDES_NO_CODE_COMPLIANCE"
+    },
+    {
+      "quantity": "BUCKLING_CAPACITY",
+      "reason": "CURRENT_LAFEA3_AUTHORITY_INCLUDES_NO_BUCKLING"
+    },
+    {
+      "quantity": "FATIGUE_DAMAGE_OR_LIFE",
+      "reason": "CURRENT_LAFEA3_AUTHORITY_INCLUDES_NO_FATIGUE"
+    },
+    {
+      "quantity": "FRACTURE_OR_CRACK_CAPACITY",
+      "reason": "CURRENT_LAFEA3_AUTHORITY_INCLUDES_NO_CRACK_OR_FRACTURE"
+    },
+    {
+      "quantity": "WELD_STRESS",
+      "reason": "CURRENT_LAFEA3_AUTHORITY_INCLUDES_NO_WELD_STRESS"
+    }
+  ]
+}

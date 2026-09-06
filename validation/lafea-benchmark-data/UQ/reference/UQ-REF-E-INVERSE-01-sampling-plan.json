@@ -1,0 +1,53 @@
+{
+  "schema": "lafea-uq-reference-sampling-plan/v1",
+  "issue": 1673,
+  "caseId": "UQ-REF-E-INVERSE-01",
+  "definitionState": "FROZEN_BEFORE_SAMPLER_EXECUTION",
+  "authorityClass": "REFERENCE_BENCHMARK_ONLY",
+  "productionStatisticalExecutionAuthorized": false,
+  "activeProductionNumericStochasticSourceCountExpected": 0,
+  "randomGenerator": {
+    "algorithm": "XORSHIFT32",
+    "seedUint32": 1673005,
+    "uniformMapping": "(uint32 + 0.5) / 2^32",
+    "normalTransform": "BOX_MULLER_COS_SIN_PAIR",
+    "sameSeedReplayMustMatchExactly": true,
+    "differentSeedMustChangeSummary": true
+  },
+  "sampling": {
+    "sampleCounts": [4096, 16384, 65536, 262144],
+    "prefixNested": true,
+    "finalSampleCount": 262144,
+    "sampleStandardDeviationDenominator": "N_MINUS_1",
+    "empiricalQuantileEstimator": "HYNDMAN_FAN_TYPE_7_LINEAR_INTERPOLATION",
+    "quantileProbabilities": [0.05, 0.5, 0.95]
+  },
+  "propagation": {
+    "input": "E = exp(logMeanE + logSigmaE * Z)",
+    "response": "D = K / E",
+    "productionFeaExecutionAllowed": false,
+    "productionOutputMayGenerateExpectedValues": false
+  },
+  "acceptance": {
+    "finalNormalizedErrorMaximum": 5,
+    "normalizedMetrics": ["MEAN", "STANDARD_DEVIATION", "P05", "P50", "P95"],
+    "meanStandardError": "sd_oracle / sqrt(N)",
+    "standardDeviationStandardError": "sqrt((mu4 - variance^2) / (4*N*variance)) using exact lognormal fourth central moment",
+    "quantileStandardError": "sqrt(p*(1-p)/(N*f(q_p)^2)) using exact lognormal density at the oracle quantile",
+    "monotonicRawErrorReductionRequired": false,
+    "allGeneratedValuesMustBeFinitePositive": true,
+    "sameSeedReplayExactSummaryRequired": true,
+    "differentSeedSummaryDifferenceRequired": true,
+    "productionAuthorityMustRemainFalse": true
+  },
+  "authority": {
+    "referenceSamplerExecutionAuthorized": true,
+    "productionStatisticalExecutionAuthorized": false,
+    "productionSensitivityAuthorized": false,
+    "reliabilityTargetAuthorized": false,
+    "codeQualificationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "productionMeshUqQualified": false
+  }
+}

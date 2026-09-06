@@ -1,0 +1,65 @@
+{
+  "schema": "lafea-uq-source-selection-requirements/v1",
+  "issue": 1673,
+  "stage": "U1",
+  "definitionState": "CANDIDATE_SOURCE_RETAINED_APPLICABILITY_BLOCKED",
+  "activeNumericStochasticSourceCount": 0,
+  "candidateReferencePriorCount": 1,
+  "statisticalExecutionAuthorized": false,
+  "inputSelectionRequirements": [
+    {
+      "inputId": "UQ-IN-L3-ELASTIC-MODULUS",
+      "requiredContext": ["material family", "material grade/specification", "product form", "manufacturing/heat-lot population", "temperature/environment", "test-method or source-population basis"],
+      "candidateSourceIds": ["SRC-UQ-PRIOR-JCSS-STRUCTURAL-STEEL-E"],
+      "currentContextState": "MATERIAL_IDENTITY_UNSPECIFIED_IN_B02A",
+      "activationEligible": false,
+      "blocker": "CANDIDATE_POPULATION_APPLICABILITY_NOT_ESTABLISHED"
+    },
+    {
+      "inputId": "UQ-IN-L3-POISSON-RATIO",
+      "requiredContext": ["material family", "grade/specification", "temperature/environment", "measurement/source population"],
+      "candidateSourceIds": [],
+      "currentContextState": "NO_NUMERIC_STOCHASTIC_SOURCE_RETAINED",
+      "activationEligible": false,
+      "blocker": "SOURCE_BACKED_POISSON_RATIO_VARIABILITY_REQUIRED"
+    },
+    {
+      "inputId": "UQ-IN-L3-THICKNESS",
+      "requiredContext": ["nominal product form", "fabrication/manufacturing route", "governing dimensional tolerance class or measured lot data", "inspection/acceptance basis"],
+      "candidateSourceIds": [],
+      "currentContextState": "NO_TOLERANCE_CLASS_OR_MEASURED_POPULATION_IDENTIFIED",
+      "activationEligible": false,
+      "blocker": "SOURCE_BACKED_THICKNESS_VARIABILITY_REQUIRED"
+    },
+    {
+      "inputId": "UQ-IN-L3-GEOMETRY-XY",
+      "requiredContext": ["fabrication route", "dimension identity", "tolerance/measurement population", "spatial correlation basis where applicable"],
+      "candidateSourceIds": [],
+      "currentContextState": "NO_DIMENSIONAL_POPULATION_IDENTIFIED",
+      "activationEligible": false,
+      "blocker": "SOURCE_BACKED_GEOMETRIC_VARIABILITY_REQUIRED"
+    },
+    {
+      "inputId": "UQ-IN-L3-TRACTION-PRESSURE",
+      "requiredContext": ["physical load source", "reference period", "operating scenario", "measurement or code load model", "load correlation basis"],
+      "candidateSourceIds": [],
+      "currentContextState": "B02A_TRACTION_IS_SYNTHETIC_DETERMINISTIC_BENCHMARK_LOAD",
+      "activationEligible": false,
+      "blocker": "PHYSICAL_LOAD_POPULATION_REQUIRED"
+    },
+    {
+      "inputId": "UQ-IN-L3-PRESCRIBED-DISPLACEMENT",
+      "requiredContext": ["restraint/support physical system", "installation tolerance or imposed-motion population", "measurement/source basis"],
+      "candidateSourceIds": [],
+      "currentContextState": "B02A_RESTRAINT_IS_IDEALIZED_DETERMINISTIC_BOUNDARY",
+      "activationEligible": false,
+      "blocker": "PHYSICAL_BOUNDARY_VARIABILITY_REQUIRED"
+    }
+  ],
+  "candidateSourceRules": [
+    "A candidate prior may be numerically retained before applicability is established, but it must remain separate from active uncertainty-model fields.",
+    "Matching a deterministic benchmark nominal or mean is not an applicability criterion.",
+    "Source selection must be based on engineering population identity, not on which prior yields a preferred response or reliability result.",
+    "If the physical context is synthetic or unspecified, statistical execution remains unauthorized and the source-selection gap is retained explicitly."
+  ]
+}

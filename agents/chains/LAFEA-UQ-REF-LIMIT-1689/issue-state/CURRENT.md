@@ -9,10 +9,10 @@ DEPENDENCY_PR: 1686
 CHAIN_ID: LAFEA-UQ-REF-LIMIT-1689
 UPDATED_AT: 2026-09-06
 COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
-ISSUE_CHAIN_ROOT_COMMENT_ID: PENDING
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: PENDING
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
-ISSUE_HANDOVER_SYNC_STATUS: OUT_OF_SYNC_PENDING_INITIAL_PUBLICATION
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5557594927
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5557595866
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557596775
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ## Reference-engine lineage
 
@@ -71,4 +71,4 @@ QUESTION_SET_STATUS: CURRENT
 - release and temperature authority false.
 
 CURRENT_BLOCKER: DEPENDENCY_PR_1686_MERGE_OR_EXPLICIT_STACK_AUTHORITY_REQUIRED
-EXACT_NEXT_ACTION: synchronize prework to #1689 and remain read-only. After #1686 is merged or explicit stacked-PR authority is supplied, a fresh recognized Owner progression is required for the first material leg.
+EXACT_NEXT_ACTION: remain read-only. After #1686 is merged or explicit stacked-PR authority is supplied, a fresh recognized Owner progression is required for the first material leg.

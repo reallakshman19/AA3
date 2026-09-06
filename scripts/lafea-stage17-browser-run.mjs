@@ -65,6 +65,7 @@ runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);
 runPlaywright(['e2e/emp1-human-presentation-tokens.spec.js']);
 runPlaywright(['e2e/emp1-analytical-layout.spec.js']);
+runPlaywright(['e2e/emp1-presentation-coherence.spec.js']);
 runPlaywright(['e2e/emp1-benchmark-evidence.spec.js']);
 
 // Test-only UI08 execution carrier: this uses the same real Vite production
@@ -90,6 +91,7 @@ runPlaywright([
   'e2e/lafea-empirical-grouped-edit.spec.js',
   'e2e/emp1-human-presentation-tokens.spec.js',
   'e2e/emp1-analytical-layout.spec.js',
+  'e2e/emp1-presentation-coherence.spec.js',
   'e2e/emp1-benchmark-evidence.spec.js',
   'e2e/lafea3-sample-mesh.spec.js',
   'e2e/lafea-shell-sample-mesh.spec.js',

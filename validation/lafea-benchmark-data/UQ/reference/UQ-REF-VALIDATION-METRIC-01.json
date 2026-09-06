@@ -1,0 +1,62 @@
+{
+  "schema": "lafea-uq-reference-validation-metric/v1",
+  "issue": 1694,
+  "parentIssue": 1673,
+  "dependencyIssue": 1692,
+  "caseId": "UQ-REF-VALIDATION-METRIC-01",
+  "scope": "REFERENCE_BENCHMARK_ONLY",
+  "referenceValidationMetricExecutionAuthorized": true,
+  "productionStatisticalExecutionAuthorized": false,
+  "activeProductionNumericStochasticSourceCount": 0,
+  "productionSensitivityAuthorized": false,
+  "productionValidationAcceptanceAuthorized": false,
+  "productionReliabilityTargetAuthority": "NONE",
+  "b03ActivationAuthorized": false,
+  "programReleaseAuthority": false,
+  "programTemperatureAuthority": false,
+  "productionApplicabilityBlocker": "ENGINEERING_POPULATION_APPLICABILITY_REQUIRED",
+  "universalZAcceptanceThreshold": null,
+  "positiveCase": {
+    "modelValue": { "value": 102, "unit": "REFERENCE_QOI" },
+    "testValue": { "value": 100, "unit": "REFERENCE_QOI" },
+    "components": [
+      { "id": "U-TEST", "role": "TEST_MEASUREMENT", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 0.75, "varianceContributionKey": "VAR-TEST" },
+      { "id": "U-NUM", "role": "NUMERICAL", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 0.5, "varianceContributionKey": "VAR-NUM" },
+      { "id": "U-INPUT", "role": "INPUT_PROPAGATION", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 1.0, "varianceContributionKey": "VAR-INPUT" },
+      { "id": "U-MODEL", "role": "MODEL_FORM", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 1.25, "varianceContributionKey": "VAR-MODEL" }
+    ],
+    "oracle": {
+      "signedError": 2,
+      "varianceSum": 3.375,
+      "validationStandardUncertainty": 1.8371173070873836,
+      "normalizedAbsoluteErrorZ": 1.0886621079036347,
+      "zApplicability": "APPLICABLE"
+    }
+  },
+  "expandedUncertaintyControl": {
+    "component": {
+      "id": "U-EXPANDED-CONTROL",
+      "role": "MODEL_FORM",
+      "unit": "REFERENCE_QOI",
+      "basis": "EXPANDED",
+      "value": 2.0,
+      "coverageFactorK": 2.0,
+      "coverageStatement": "synthetic reference expanded uncertainty; nominal coverage approximately 95 percent",
+      "varianceContributionKey": "VAR-EXPANDED-CONTROL"
+    },
+    "expectedStandardUncertainty": 1.0,
+    "retainExpandedValue": 2.0,
+    "retainCoverageFactorK": 2.0
+  },
+  "zeroUncertaintyControl": {
+    "expectedValidationStandardUncertainty": 0,
+    "expectedZ": null,
+    "expectedZApplicability": "NOT_APPLICABLE_ZERO_UNCERTAINTY"
+  },
+  "signReversalControl": {
+    "expectedSignedError": -2,
+    "expectedNormalizedAbsoluteErrorZ": 1.0886621079036347
+  },
+  "negativeCaseCount": 22,
+  "nextBoundary": "RECONCILE_REFERENCE_VALIDATION_METRIC_PASS_TO_PARENT_1673_AND_PLAN_REFERENCE_CALIBRATION_BIAS_CASE"
+}

@@ -109,9 +109,9 @@ export function normalizeUncertaintyComponent(component, expectedUnit, path = '$
   }
 
   if (basis === 'EXPANDED') {
-    const coverageFactorK = finiteNumber(component.coverageFactorK, `${path}.coverageFactorK`);
-    if (!(coverageFactorK > 0)) {
-      fail('INVALID_COVERAGE_FACTOR', `${path}.coverageFactorK`, 'coverage factor k must be positive');
+    const coverageFactorK = component.coverageFactorK;
+    if (typeof coverageFactorK !== 'number' || !Number.isFinite(coverageFactorK) || !(coverageFactorK > 0)) {
+      fail('INVALID_COVERAGE_FACTOR', `${path}.coverageFactorK`, 'coverage factor k must be finite and positive');
     }
     const coverageStatement = nonEmptyString(component.coverageStatement, `${path}.coverageStatement`);
     return {

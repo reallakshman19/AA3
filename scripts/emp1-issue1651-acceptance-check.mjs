@@ -18,9 +18,11 @@ const paths = Object.freeze({
   benchmarkStatic: 'scripts/emp1-benchmark-evidence-ui-check.mjs',
   benchmark: 'e2e/emp1-benchmark-evidence.spec.js',
   carrier: 'scripts/lafea-stage17-browser-run.mjs',
+  validationCarrier: 'scripts/emp1-issue1651-executable-validation.mjs',
+  browserPreflight: 'scripts/lib/project-local-playwright-browser.mjs',
   manualAudit: 'scripts/emp1-manual-browser-audit.js',
   manualAuditStatic: 'scripts/emp1-manual-browser-audit-check.mjs',
-  manualGuide: 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0015.md',
+  manualGuide: 'agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0025.md',
 });
 
 const source = Object.fromEntries(await Promise.all(Object.entries(paths).map(async ([key, path]) => [
@@ -58,8 +60,8 @@ for (const required of [
 assert.ok(source.pressureStatic.includes('PRESSURE'),
   'static governed-table qualification must retain Pressure coverage');
 
-// EP-0022 / LEG-011: the complete qualification sample must establish A through
-// the normal controller/store run path before B/C, and must fail closed before B
+// LEG-011/012: the complete qualification sample must establish A through the
+// normal controller/store run path before B/C, and must fail closed before B
 // when A cannot become current and qualified. The factory may not inject its own
 // private A execution into runtime custody.
 for (const required of [
@@ -185,6 +187,39 @@ for (const path of [
 }
 assert.ok(source.carrier.includes(paths.sampleOrchestrationStatic),
   `Stage-17 carrier missing ${paths.sampleOrchestrationStatic}`);
+for (const required of [
+  'inspectProjectLocalChromium',
+  'lafea-stage17-browser-preflight/v1',
+  'withProjectLocalPlaywrightEnv',
+]) assert.ok(source.carrier.includes(required), `Stage-17 browser preflight contract missing: ${required}`);
+
+// LEG-013: one cross-platform entrypoint must preserve the exact five Node gates,
+// focused qualification browser falsifier, Stage-17 and fail-closed browser-env
+// distinction. The wrapper coordinates evidence only; it creates no engineering
+// authority and does not replace the underlying gate outputs.
+for (const required of [
+  'emp1-issue1651-executable-validation/v1',
+  'inspectProjectLocalChromium',
+  paths.sampleOrchestrationStatic,
+  paths.layoutStatic,
+  paths.manualAuditStatic,
+  'scripts/emp1-issue1651-acceptance-check.mjs',
+  'scripts/emp1-public-product-check.mjs',
+  paths.sampleOrchestration,
+  paths.carrier,
+  'PASS_EXECUTABLE_EXACT_HEAD_GATE_SEQUENCE',
+  'FAIL_EXECUTABLE_GATE_SEQUENCE',
+  'humanFactorMayProceed: false',
+]) assert.ok(source.validationCarrier.includes(required),
+  `LEG-013 executable validation carrier missing: ${required}`);
+for (const required of [
+  "PLAYWRIGHT_BROWSERS_PATH: '0'",
+  'PLAYWRIGHT_LOCAL_CHROMIUM_MISSING',
+  'PASS_BROWSER_ENVIRONMENT_PREFLIGHT',
+  '$env:PLAYWRIGHT_BROWSERS_PATH = "0"; npx playwright install chromium',
+  'PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium',
+]) assert.ok(source.browserPreflight.includes(required),
+  `LEG-013 project-local browser preflight missing: ${required}`);
 
 // Deterministic human-observed fallback mirrors the robust task-console
 // acceptance while explicitly refusing to manufacture automated browser PASS.
@@ -227,19 +262,26 @@ for (const required of [
 ]) assert.ok(source.manualAudit.includes(required), `manual robust-console acceptance mirror missing: ${required}`);
 assert.ok(source.manualAuditStatic.includes('PASS_STATIC_SPLIT_CONSOLE_MANUAL_BROWSER_AUDIT_CONTRACT'));
 for (const required of [
+  'Windows PowerShell',
+  'node scripts/emp1-issue1651-executable-validation.mjs',
+  'PLAYWRIGHT_LOCAL_CHROMIUM_MISSING',
+  'PASS_EXECUTABLE_EXACT_HEAD_GATE_SEQUENCE',
   'PASS_CURRENT_VIEWPORT_DOM_OBSERVATION',
   'Work / Basis / Evidence',
   'Review & Evidence',
-  'must not promote the blocked Playwright suite to PASS',
+  'Do not proceed to human-factor acceptance',
 ]) assert.ok(source.manualGuide.includes(required), `manual robust-console guide missing: ${required}`);
 
 // Closure remains presentation/test evidence only with no calculation-core or
 // workflow-YAML authority mutation.
 assert.equal(source.carrier.includes('.github/workflows/'), false);
+assert.equal(source.validationCarrier.includes('.github/workflows/'), false);
+assert.equal(source.validationCarrier.includes('../src/core/'), false);
+assert.equal(source.browserPreflight.includes('../src/core/'), false);
 assert.equal(source.manualAudit.includes('../src/core/'), false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-issue1651-acceptance-check/v5',
+  schema: 'emp1-issue1651-acceptance-check/v6',
   status: 'PASS_STATIC_ROBUST_SPLIT_CONSOLE_ACCEPTANCE_MANIFEST_EXECUTABLE_BROWSER_GATES_RETAINED',
   issue: 1651,
   recoveryIssue: 1664,
@@ -275,6 +317,14 @@ console.log(JSON.stringify({
     keyboardDisclosure: true,
     tableSemantics: true,
     engineeringUseAuthorized: false,
+  },
+  validationCarrier: {
+    path: paths.validationCarrier,
+    projectLocalChromiumPreflight: true,
+    fiveNodeGatesRetained: true,
+    focusedPlaywrightRetained: true,
+    stage17Retained: true,
+    crossPlatform: true,
   },
   manualEvidencePath: {
     helper: paths.manualAudit,

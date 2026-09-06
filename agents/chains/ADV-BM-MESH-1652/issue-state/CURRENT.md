@@ -3,7 +3,7 @@
 CHAIN_ID: ADV-BM-MESH-1652
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0023
+CURRENT_ENDPOINT: EP-0024
 
 ## Original task / acceptance ledger
 
@@ -12,7 +12,7 @@ TASK-002 | Freeze M2 geometry and cited closed-form oracle. | CLOSED_FROZEN_ARTI
 TASK-003 | Define mesh ladders and physical probes. | CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED | LEG-007 definitions; LEG-008 custody repair
 TASK-004 | Implement M0–M4 staged runner. | STATIC_IMPLEMENTED_AUTHORITY_BLOCKED_M3_HT_M4 | LEG-009 runner; LEG-010 distributions; LEG-011 production multipatch repair; h/t and M4 authority remain blocked
 TASK-005 | Define exact-code negative cases. | CLOSED_FROZEN_EXACT_CODE_DEFINITIONS | LEG-012 freezes four governed exact-code definitions
-TASK-006 | Register BM-MESH in benchmark program. | AUTHORIZED_IN_PROGRESS | Owner `proceed next` at 2026-09-06T04:57:33Z releases registration only via EP-0023
+TASK-006 | Register BM-MESH in benchmark program. | CLOSED_REGISTERED | LEG-013 registers BM-MESH while preserving live-main B02 and `activeCaseId=B02`
 TASK-007 | Keep release and temperature authority false. | SATISFIED_CURRENTLY | no authority mutation
 
 ## Input ledger
@@ -30,7 +30,7 @@ INPUT-018 | M3 non-thickness ladder/quality inputs. | AVAILABLE_STATIC | all fou
 INPUT-019 | LAFEA.4 multipatch production midsurface contract. | AVAILABLE_PRODUCTION_PINNED_S016 | exact two-patch seam class
 INPUT-020 | LAFEA.4 multipatch production mesh core. | AVAILABLE_PRODUCTION_PINNED_S017 | seam welding/ownership/quality evidence
 INPUT-021 | TASK-005 governed rejection surfaces. | FROZEN_DEFINITIONS | LEG-012
-INPUT-022 | Live-main benchmark program at `f8d051c989c8a0627db7560f996baf72987775d4`. | AVAILABLE_MUST_PRESERVE | B02 is registered and `activeCaseId=B02`; branch registry is older B01-only state
+INPUT-022 | Live-main benchmark program at `f8d051c989c8a0627db7560f996baf72987775d4`. | RECONCILED_IN_LEG_013 | B02 and `activeCaseId=B02` preserved while BM-MESH is appended
 
 ## Benchmark / oracle ledger
 
@@ -40,6 +40,7 @@ BM-003 | M1 determinism. | IMPLEMENTED_STATIC_NOT_RUN | in-process/cross-process
 BM-004 | M2 independent geometry oracle. | IMPLEMENTED_STATIC_NOT_RUN | continuum and multipatch geometry/oracles wired to production producers
 BM-005 | M3 quality distribution ladder. | NON_THICKNESS_STATIC_IMPLEMENTED_THICKNESS_AUTHORITY_BLOCKED | all four ladders wired; h/t unresolved
 BM-006 | M4 producer-mesh solver convergence. | PROBE_IDENTITIES_FROZEN_PHYSICS_UNRESOLVED_NOT_RUN | solver/compiler and physics remain protected
+BM-MESH | benchmark-program registration. | REGISTERED_READY_NOT_ACTIVE_NOT_RUN | LEG-013; active program case remains B02
 
 ## Material history
 
@@ -55,6 +56,7 @@ LEG-009 | `5ff8e9fbe9868f2d56036da0d1cb396f1a8c3fb6` | staged runner + fail-clos
 LEG-010 | `1c50ca724277dd0e7f980f330eabefdb81e709b3` | LAFEA.3 M3 distributions/refinement checks
 LEG-011 | `ec55d5c22f54dc74b3ef0665ce29929a09bc30c2` | production multipatch M2/M3 repair + S-016/S-017 custody
 LEG-012 | `8310d58838bd9057a799e115a5a25bc0081f175e` | exact-code negative definitions + S-018/S-019 custody
+LEG-013 | `474eb8b633e2afabf8a4773cfb5e17bd8a44b0ae` | BM-MESH benchmark-program registration preserving live-main B02
 
 ## TASK-005 frozen definitions
 
@@ -82,17 +84,17 @@ PREDECESSOR_PR: #1662 MERGED at `80f335b750a13a06741a787106949bada1ad7f37`
 PR: #1663
 PR_STATUS: OPEN_DRAFT_UNMERGED
 BRANCH: engineering/bm-mesh-1652-m2-data
-LAST_MATERIAL_HEAD: 8310d58838bd9057a799e115a5a25bc0081f175e
-CURRENT_ENDPOINT: EP-0023
+LAST_MATERIAL_HEAD: 474eb8b633e2afabf8a4773cfb5e17bd8a44b0ae
+CURRENT_ENDPOINT: EP-0024
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
 ## Current diagnosis
 
-TASK-006 registration is now explicitly owner-authorized. The branch copy of `validation/lafea-benchmark-program/program.json` predates the companion B02 registration already present on live main. The registration leg must therefore semantically preserve live-main B02 and `activeCaseId=B02` while appending BM-MESH; replacing the file from the stale branch version would be a regression.
+TASK-006 is complete. BM-MESH is a registered READY benchmark-program case but is not the active case; B02 remains active, matching live main. Registration does not infer execution success.
 
-Registration does not imply execution PASS. M3 full h/t remains blocked by missing governed shell thickness and M4 remains blocked by missing physics/response and solver/convergence authority.
+Full M3 remains blocked on the missing governed LAFEA.4 shell thickness required for the 0.5t-2t check. M4 remains blocked because material, loads, restraints, loadCaseId, requested response quantity, recovery/acceptance and solver/convergence execution authority are not frozen.
 
 ## Exact next action
 
-LEG-013: change only `validation/lafea-benchmark-program/program.json`, preserving live-main B02 and `activeCaseId=B02`, append case `BM-MESH` bound to `scripts/lafea-mesh-benchmark-run.mjs --stage M4` and the frozen MESH definitions, and retain release/temperature authority false. Then reconcile TASK-006. Do not mutate production source, thresholds, workflows, roadmaps, M3/M4 fixture authority, or merge PR #1663.
+Stop at the protected boundary. Await explicit Owner authority for one of: governed LAFEA.4 shell-thickness fixture for M3 h/t; frozen M4 material/load/support/loadCase/response/recovery plus solver/convergence execution; or PR #1663 merge. Do not self-authorize these boundaries.

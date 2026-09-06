@@ -1,17 +1,17 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0016
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0017
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0017_COMMENT_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557073742
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557074702
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING
 PR: 1675
 PR_STATUS: OPEN_DRAFT
 PR_BRANCH: agent/emp1-1651-split-console-leg009
@@ -37,7 +37,7 @@ PREVIOUS_PR_MERGE_COMMIT: 4436dc3c3590d1afd40ba20f74380f442fb32935
 POST_MERGE_RECONCILIATION_PR: 1668
 POST_MERGE_RECONCILIATION_PR_STATUS: MERGED
 POST_MERGE_RECONCILIATION_MERGE_COMMIT: f8d051c989c8a0627db7560f996baf72987775d4
-ACTIVE_ENDPOINT: EP-0016
+ACTIVE_ENDPOINT: EP-0017
 LAST_COMPLETED_MATERIAL_LEG: LEG-010
 MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
 MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-010.md
@@ -49,7 +49,7 @@ CURRENT_MATERIAL_LEG: NONE
 - TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE COMPLETE. PR #1681 gives static acceptance PASS retaining 5 identities × Internal/External = 10 governed cells. Sample-loaded live confirmation remains pending.
 - TASK-003 | Replace append-only waterfall with two-column/equivalent architecture. | LEG-009 owner screenshots = UX FAIL. LEG-010 source complete. PR #1681 gives supporting PASS evidence for Review/LAFEA.2 presentation coherence, but both structured viewport audits explicitly return `FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION`; full human-factor acceptance remains pending sample-loaded rerun.
 - TASK-004 | CAUx staged integration/hardening. | SOURCE COMPLETE. PR #1681 gives supporting browser observations only; full sample-loaded acceptance remains pending. CAUx/PV Elite numerical/source authority unchanged.
-- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND EP-0016. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
+- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND EP-0017. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
 
 ## LEG-010 material boundary
 
@@ -72,7 +72,7 @@ narrow = [Work] [Basis] [Evidence], one pane at a time
 
 ## EP-0016 validation evidence intake
 
-PR #1681 is validation-only: one Markdown report plus three image artifacts. It does not contain the LEG-010 implementation source from PR #1675.
+PR #1681 is validation-only: one Markdown report plus three image artifacts. It does not contain LEG-010 implementation source from PR #1675.
 
 Accepted exact-head evidence at `dc2df7a8a8b26feea26d29dbf0741794f788cfac`:
 
@@ -85,16 +85,21 @@ Not accepted as PASS:
 
 - desktop audit own status = `FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION`;
 - narrow audit own status = `FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION`;
-- later `PASS*` table labels and broad summary wording do not override structured FAIL statuses;
+- later `PASS*` labels/broad summary wording do not override structured FAIL statuses;
 - PR #1681 status contexts/workflow runs = 0/0; zero is not PASS.
 
-### Failure isolation
+## EP-0017 validation-prerequisite disambiguation
 
-`MANUAL-EP-0015.md` is correct: it requires loading the normal EMP.1 qualification sample before invoking the manual audit.
+No new sample-loaded evidence has appeared in PR #1681, and no LEG-011/product patch is justified.
 
-`runEmp1ManualBrowserAudit({ seedQualificationPressure: true })` only adds `P-EXTERNAL` to an already-available LAFEA.1 document when needed. It does not load the qualification sample. Therefore PR #1681 reflects an operator/procedure deviation, not a proven product or audit-harness defect.
+Read-only source tracing resolves the exact EP-0015 prerequisite:
 
-No LEG-011 and no product patch are justified from #1681.
+```text
+REQUIRED: [SIMULATED] Load complete EMP.1 qualification sample
+NOT A SUBSTITUTE: [SIMULATED] Load EMP.1.A demonstration source
+```
+
+`src/workspace/lafea-workbench-view.js` renders these as distinct actions. The complete qualification-sample action must be used before the structured audit. `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })` does not load the qualification sample; it only adds `P-EXTERNAL` to an already-present LAFEA.1 document when needed.
 
 ## Validation truth
 
@@ -103,7 +108,7 @@ No LEG-011 and no product patch are justified from #1681.
 - Review/LAFEA.2 coherence: supporting PASS observation;
 - desktop structured EP-0015 audit: FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION;
 - narrow structured EP-0015 audit: FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION;
-- required sample-loaded desktop+narrow rerun: NOT_RUN;
+- required sample-loaded desktop+narrow rerun using the exact complete qualification sample action: NOT_RUN;
 - required passing-run desktop default/readiness-open/narrow screenshots: NOT_RUN;
 - trusted CAUx Enter/Space acceptance observation: not sufficient to close acceptance from #1681 alone;
 - focused Playwright including `e2e/emp1-presentation-coherence.spec.js`: BLOCKED_ENVIRONMENT / NOT_RUN;
@@ -144,10 +149,10 @@ MERGE_AUTHORIZED: FALSE
 MERGE_AUTHORIZATION_DISPOSITION: NO_AUTHORIZATION_FOR_PR_1675_OR_PR_1681
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: FAIL
-HANDOVER_VALIDATION_EVIDENCE: three static PASS results + supporting coherence observation accepted; both structured viewport audits remain FAIL because the required qualification sample was not loaded
+HANDOVER_VALIDATION_EVIDENCE: three static PASS results + supporting coherence observation accepted; both structured viewport audits remain FAIL because the complete qualification sample prerequisite was not satisfied
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: complete EP-0015 exactly as written with the normal qualification sample loaded before the audit. Focused Playwright remains environment-blocked. PR #1675 merge is Owner-only and unauthorized; PR #1681 is evidence-only and unauthorized.
+CURRENT_BLOCKER: complete EP-0015 with the exact **`[SIMULATED] Load complete EMP.1 qualification sample`** action before invoking the audit. Focused Playwright remains environment-blocked. PR #1675 merge is Owner-only and unauthorized; PR #1681 is evidence-only and unauthorized.
 
-EXACT_NEXT_ACTION: checkout `dc2df7a8a8b26feea26d29dbf0741794f788cfac`, start localhost, enter EMPIRICAL -> EMP.1, load the normal qualification sample, run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Acceptance requires both returned objects' own `status` = `PASS_CURRENT_VIEWPORT_DOM_OBSERVATION` with `failures=[]`, the CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.
+EXACT_NEXT_ACTION: checkout `dc2df7a8a8b26feea26d29dbf0741794f788cfac`, start localhost, enter EMPIRICAL -> EMP.1, click **`[SIMULATED] Load complete EMP.1 qualification sample`** (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Acceptance requires both returned objects' own `status` = `PASS_CURRENT_VIEWPORT_DOM_OBSERVATION` with `failures=[]`, the CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.

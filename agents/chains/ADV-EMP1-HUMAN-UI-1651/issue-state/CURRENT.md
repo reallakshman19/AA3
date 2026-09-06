@@ -1,17 +1,17 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0017
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0018
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0018_COMMENT_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557291832
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557292405
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING
 PR: 1675
 PR_STATUS: OPEN_DRAFT
 PR_BRANCH: agent/emp1-1651-split-console-leg009
@@ -32,6 +32,7 @@ SUPPORTING_VALIDATION_PR_CHANGED_FILES: 4
 SUPPORTING_VALIDATION_PR_STATUS_CONTEXTS: 0
 SUPPORTING_VALIDATION_PR_WORKFLOW_RUNS: 0
 NONCANONICAL_HANDOVER_PR: 1684
+NONCANONICAL_HANDOVER_PR_STATUS: CLOSED_UNMERGED
 NONCANONICAL_HANDOVER_PR_DISPOSITION: OWNER_REJECTED_AS_NOVICE_ARTIFACT_NO_TAKEOVER
 PREVIOUS_PR: 1660
 PREVIOUS_PR_STATUS: MERGED_BY_OWNER_COMMAND
@@ -39,7 +40,7 @@ PREVIOUS_PR_MERGE_COMMIT: 4436dc3c3590d1afd40ba20f74380f442fb32935
 POST_MERGE_RECONCILIATION_PR: 1668
 POST_MERGE_RECONCILIATION_PR_STATUS: MERGED
 POST_MERGE_RECONCILIATION_MERGE_COMMIT: f8d051c989c8a0627db7560f996baf72987775d4
-ACTIVE_ENDPOINT: EP-0017
+ACTIVE_ENDPOINT: EP-0018
 LAST_COMPLETED_MATERIAL_LEG: LEG-010
 MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
 MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-010.md
@@ -51,7 +52,7 @@ CURRENT_MATERIAL_LEG: NONE
 - TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE COMPLETE. PR #1681 gives static acceptance PASS retaining 5 identities × Internal/External = 10 governed cells. Sample-loaded live confirmation remains pending.
 - TASK-003 | Replace append-only waterfall with two-column/equivalent architecture. | LEG-009 owner screenshots = UX FAIL. LEG-010 source complete. PR #1681 gives supporting PASS evidence for Review/LAFEA.2 presentation coherence, but both structured viewport audits explicitly return `FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION`; full human-factor acceptance remains pending sample-loaded rerun.
 - TASK-004 | CAUx staged integration/hardening. | SOURCE COMPLETE. PR #1681 gives supporting browser observations only; full sample-loaded acceptance remains pending. CAUx/PV Elite numerical/source authority unchanged.
-- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND CURRENT OWNER CUSTODY CLARIFICATION. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
+- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED THROUGH LEG-010 AND EP-0018 CUSTODY CLARIFICATION. No calculation, route-registry, benchmark-source, roadmap, workflow-YAML or release-authority mutation.
 
 ## LEG-010 material boundary
 
@@ -72,9 +73,7 @@ readiness/technical custody = bounded overlay, zero primary-console growth
 narrow = [Work] [Basis] [Evidence], one pane at a time
 ```
 
-## EP-0016 validation evidence intake
-
-PR #1681 is validation-only: one Markdown report plus three image artifacts. It does not contain LEG-010 implementation source from PR #1675.
+## Validation evidence retained
 
 Accepted exact-head evidence at `dc2df7a8a8b26feea26d29dbf0741794f788cfac`:
 
@@ -90,20 +89,16 @@ Not accepted as PASS:
 - later `PASS*` labels/broad summary wording do not override structured FAIL statuses;
 - PR #1681 status contexts/workflow runs = 0/0; zero is not PASS.
 
-## EP-0017 validation-prerequisite disambiguation
-
-No new sample-loaded evidence has appeared in PR #1681, and no LEG-011/product patch is justified.
-
-Read-only source tracing resolves the exact EP-0015 prerequisite:
+## Exact EP-0015 prerequisite
 
 ```text
 REQUIRED: [SIMULATED] Load complete EMP.1 qualification sample
 NOT A SUBSTITUTE: [SIMULATED] Load EMP.1.A demonstration source
 ```
 
-`src/workspace/lafea-workbench-view.js` renders these as distinct actions. The complete qualification-sample action must be used before the structured audit. `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })` does not load the qualification sample; it only adds `P-EXTERNAL` to an already-present LAFEA.1 document when needed.
+`runEmp1ManualBrowserAudit({ seedQualificationPressure: true })` does not load the qualification sample; it only adds `P-EXTERNAL` to an already-present LAFEA.1 document when needed.
 
-## Owner custody clarification
+## EP-0018 owner custody clarification
 
 Owner instruction observed:
 
@@ -115,9 +110,9 @@ Durable interpretation:
 
 - no takeover is requested or authorized;
 - the current custodian continues this chain;
-- PR #1684 is a novice-generated supplemental documentation artifact and is not a baton, successor chain, acceptance authority, or merge authority;
+- PR #1684 is a novice-generated documentation artifact, is closed unmerged, and is not a baton, successor chain, acceptance authority, or merge authority;
 - `proceed` is not one of the three normal Owner progression commands, so it does not open a fresh material engineering leg;
-- this clarification changes custody/control-plane interpretation only.
+- this endpoint changes custody/control-plane interpretation only.
 
 ## Validation truth
 
@@ -128,7 +123,7 @@ Durable interpretation:
 - narrow structured EP-0015 audit: FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION;
 - required sample-loaded desktop+narrow rerun using the exact complete qualification sample action: NOT_RUN;
 - required passing-run desktop default/readiness-open/narrow screenshots: NOT_RUN;
-- trusted CAUx Enter/Space acceptance observation: not sufficient to close acceptance from #1681 alone;
+- trusted CAUx Enter/Space acceptance observation: NOT_RUN / insufficient to close acceptance;
 - focused Playwright including `e2e/emp1-presentation-coherence.spec.js`: BLOCKED_ENVIRONMENT / NOT_RUN;
 - `npm run check:imports`, build, `git diff --check`: NOT_RUN for LEG-010 unless separately evidenced;
 - zero status contexts/workflow runs are not PASS.
@@ -172,6 +167,6 @@ HANDOVER_VALIDATION_EVIDENCE: three static PASS results + supporting coherence o
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: current custodian continues, but external sample-loaded localhost validation remains required. Focused Playwright remains environment-blocked. PR #1675 merge is Owner-only and unauthorized; PR #1681 is evidence-only and unauthorized. PR #1684 is non-canonical novice documentation and carries no custody/acceptance/merge authority.
+CURRENT_BLOCKER: current custodian continues, but external sample-loaded localhost validation remains required. Focused Playwright remains environment-blocked. PR #1675 merge is Owner-only and unauthorized; PR #1681 is evidence-only and unauthorized. PR #1684 is closed unmerged and non-canonical.
 
 EXACT_NEXT_ACTION: current custodian continues. Checkout `dc2df7a8a8b26feea26d29dbf0741794f788cfac`, start localhost, enter EMPIRICAL -> EMP.1, click **`[SIMULATED] Load complete EMP.1 qualification sample`** (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Acceptance requires both returned objects' own `status` = `PASS_CURRENT_VIEWPORT_DOM_OBSERVATION` with `failures=[]`, the CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.

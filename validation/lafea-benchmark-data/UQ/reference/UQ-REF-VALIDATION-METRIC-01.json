@@ -11,6 +11,9 @@
   "productionSensitivityAuthorized": false,
   "productionValidationAcceptanceAuthorized": false,
   "productionReliabilityTargetAuthority": "NONE",
+  "b03ActivationAuthorized": false,
+  "programReleaseAuthority": false,
+  "programTemperatureAuthority": false,
   "productionApplicabilityBlocker": "ENGINEERING_POPULATION_APPLICABILITY_REQUIRED",
   "universalZAcceptanceThreshold": null,
   "positiveCase": {

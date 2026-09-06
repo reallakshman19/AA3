@@ -1,0 +1,20 @@
+# LEG-011 authority adoption
+
+CHAIN: ADV-EMP1-HUMAN-UI-1651
+WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
+OWNER_PROGRESSION_COMMAND: proceed next
+OWNER_PROGRESSION_STATUS: CONSUMED_BY_LEG_011
+COMMON_PROTOCOL: engineering-pr-delivery-v2
+COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
+COMMON_PROTOCOL_STATUS: CURRENT
+PROJECT_MAIN_BASIS: 8eefaf0d1b9effdcd395dbd54a0b027bc43f308c
+ROADMAP: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
+QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
+QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
+QUESTION_SET_STATUS: CURRENT
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
+MATERIAL_LEG: LEG-011
+DEFECT: QUALIFICATION_SAMPLE_ORCHESTRATION_SEQUENCE_DEFECT
+AUTHORIZED_SCOPE: repair complete-sample A->B->C orchestration through normal controller/store execution path and add bounded regression falsifiers.
+PROTECTED: no WRC/Pressure mechanics, route registry, benchmark authority/tolerance, roadmap, workflow YAML, code/release authority, or production authorization mutation.

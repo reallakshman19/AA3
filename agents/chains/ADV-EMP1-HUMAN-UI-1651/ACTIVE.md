@@ -8,95 +8,72 @@ COMMON_PROTOCOL_STATUS: CURRENT
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 WORK_ITEM_MODE: EXCLUSIVE
-AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
-TASK: EMP.1 human-engineering UI hardening for issue #1651.
+TASK: EMP.1 human-engineering UI hardening for issue #1651
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0019
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0019.md
-PR: 1675
-PR_STATUS: OPEN_DRAFT
-BRANCH: agent/emp1-1651-split-console-leg009
-PR_BASE: main
-MATERIAL_BASE_MAIN: f8d051c989c8a0627db7560f996baf72987775d4
-MAIN_HEAD_OBSERVED: bae94200c1cbe064a7d0735032741e964514ea0d
-MAIN_DRIFT_SOURCE: PR_1674_ISSUE_1673
-MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_OVERLAP_WITH_EMP1_CHAIN
-PR_RELATION_TO_CURRENT_MAIN: DIVERGED_AHEAD_68_BEHIND_67
-MERGEABILITY: MERGEABLE
-REVIEWS: 1
-REVIEW_STATES: COMMENTED
-UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: NONE_OBSERVED
-STATUS_CONTEXTS_AT_PR_HEAD: 0
-PR_WORKFLOW_RUNS_AT_PR_HEAD: 0
-SUPPORTING_VALIDATION_PR: 1681
-SUPPORTING_VALIDATION_PR_STATUS: OPEN_DRAFT_SUPPORTING_EVIDENCE_ONLY
-SUPPORTING_VALIDATION_PR_HEAD: c106d489fa125e75f02843d84034f6324357fa7b
-SUPPORTING_VALIDATION_PR_STATUS_CONTEXTS: 0
-SUPPORTING_VALIDATION_PR_WORKFLOW_RUNS: 0
-NONCANONICAL_HANDOVER_PR: 1684
-NONCANONICAL_HANDOVER_PR_STATUS: CLOSED_UNMERGED
-NONCANONICAL_HANDOVER_PR_DISPOSITION: OWNER_REJECTED_AS_NOVICE_ARTIFACT_NO_TAKEOVER
-LATEST_MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
-LAST_COMPLETED_MATERIAL_LEG: LEG-010
-CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-010.md
-ENGINEERING_STATE: LEG_010_ROBUST_PRESENTATION_SOURCE_COMPLETE_SAMPLE_LOADED_REOBSERVATION_PENDING
+ENDPOINT: EP-0023
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0023.md
+ACTIVE_CUSTODIAN: GPT-5.6 Sol
+CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
 CUSTODY_STATE: HELD
-QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
-WRITE_AUTHORITY_REASON: static gates/key coherence are supported, but both structured viewport audits remain FAIL because the complete qualification sample was not loaded
+
+MERGED_IMPLEMENTATION_PR: 1675
+PR_1675_MERGE_COMMIT: 11f655e71a81b0d7ebef42e99792482b434e60db
+CURRENT_REPAIR_PR: 1696
+CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_FAILED_EXECUTABLE_VALIDATION_NOT_MERGE_AUTHORIZED
+CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg011
+MATERIAL_BASE_MAIN: 8eefaf0d1b9effdcd395dbd54a0b027bc43f308c
+MAIN_HEAD_OBSERVED: 687b9ff3b8884031e4776f031af7a739f29eb2c8
+MAIN_DRIFT_FROM_MATERIAL_BASE: AHEAD_34_BEHIND_0
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_LAFEA_UQ_REFERENCE_VALIDATION_AND_CALIBRATION_NO_EMP1_OVERLAP
+
+LAST_COMPLETED_MATERIAL_LEG: LEG-011
+LATEST_MATERIAL_HEAD: dfc7e0f90fdd15dc1bf8e48b462b612b27bfbf5f
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-011.md
+CURRENT_MATERIAL_LEG: NONE
+ENGINEERING_STATE: LEG_011_FROZEN_EXECUTABLE_FAIL_SAMPLE_FACTORY_PREIMPORT_MISMATCH
+WRITE_AUTHORITY: READ_ONLY_PENDING_FRESH_OWNER_PROGRESSION
+WRITE_AUTHORITY_REASON: exact-head Chromium execution disproved LEG-011; next source repair requires fresh recognized Owner progression
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-MERGE_AUTHORIZATION_DISPOSITION: NO_AUTHORIZATION_FOR_PR_1675_OR_PR_1681
-AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
-ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 23
-CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
-COORDINATION_STATE: EP0019_UNRELATED_MAIN_DRIFT_RECONCILED_SAMPLE_LOADED_RERUN_PENDING
-POST_BASIS_DRIFT: UNRELATED_NO_OVERLAP; main advanced by merged PR #1674 for work item #1673; no EMP.1 material/protected-path overlap; PR #1675 remains mergeable
-ISSUE_BASIS_ID: IB-0001
-ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
-ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0019
-ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557583672
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-PARENT_ISSUE: 1651
-RECOVERY_CHILD_ISSUE: 1664
-RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557584570
-OWNER_TEXT_OBSERVED: `no take over, you will do. that was a novice agent text! proceed`
-OWNER_PROGRESSION_COMMAND: NONE
-OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
+MERGE_AUTHORIZATION_DISPOSITION: PR_1675_AUTHORIZATION_CONSUMED; NO_AUTHORIZATION_FOR_PR_1696_OR_SUCCESSOR
+
+OWNER_PROGRESSION_COMMAND: PROCEED_NEXT_CONSUMED_BY_LEG_011
 OWNER_MERGE_COMMAND: NONE
-ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
-ROADMAP_REVIEW_STATUS: COMPLETE
-ROADMAP_ALIGNMENT: ROADMAP_STATUS_STALE_BUT_SCOPE_ALIGNED
-ROADMAP_MUTATION_AUTHORITY: NONE
-QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
-QUALIFICATION_PROFILE_VERSION: 2
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
-QUESTION_SET_FILE: agents/qualifications/ADV-EMP1-HUMAN-UI-1651/QS-ADV-EMP1-HUMAN-UI-1651-0006-questions.md
 QUESTION_SET_STATUS: CURRENT
 QUESTION_PACK_ACTION: REUSED
 QUESTION_DISPLAY: HIDE
+QUALIFICATION_STATE: NOT_REQUIRED
 TAKEOVER_QUALIFICATION_READY: TRUE
-HANDOVER_CONTENT_READY: TRUE
+
+ISSUE_BASIS_ID: IB-0001
+ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0023
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5559165022
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5559166393
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+PARENT_ISSUE: 1651
+RECOVERY_CHILD_ISSUE: 1664
+
+VALIDATION_STATIC_LEG011: PASS_4_OF_4_AT_DFC7E0F9
+VALIDATION_PLAYWRIGHT_LEG011: FAIL_2_OF_2_REAL_CHROMIUM
+VALIDATION_PLAYWRIGHT_FAILURE: EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED_BEFORE_SAMPLE_RETURN; A_B_RUN_INPUT_ABSENT
+VALIDATION_STAGE17_LEG011: FAIL_BASELINE_STALE_PUBLIC_PRODUCT_ASSERTION
+VALIDATION_STAGE17_DETAIL: actual BOUNDED_LOCAL_CORRELATION_AVAILABLE vs expected BLOCKED_LOCAL_CORRELATION at emp1-public-product-check.mjs:67
+VALIDATION_HUMAN_FACTOR: NOT_RUN_AFTER_FIX_BECAUSE_COMPLETE_SAMPLE_PREREQUISITE_STILL_FAILS
 HANDOVER_VALIDATION_STATUS: FAIL
-HANDOVER_VALIDATION_EVIDENCE: PR #1681 supplies three static Node PASS results and supporting Review/LAFEA.2 coherence evidence; both structured viewport audit objects return FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION because the complete qualification sample prerequisite was not satisfied
-CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION_PASS_OBSERVED: three focused Node/static checks PASS at fixed material head dc2df7a8a8b26feea26d29dbf0741794f788cfac; key presentation-coherence observation is supporting PASS evidence
-VALIDATION_LIVE_UX: LEG009_FAIL; LEG010_PARTIAL_SUPPORTING_REOBSERVATION; FULL_SAMPLE_LOADED_ACCEPTANCE_PENDING
-VALIDATION_FAILED_LEG010: desktop structured audit FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION; narrow structured audit FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION
-VALIDATION_NOT_RUN_LEG010: exact complete-sample-loaded rerun; passing screenshot set; focused Playwright; check:imports; build; git diff --check unless separately evidenced
-VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN; zero status contexts/workflows are not PASS
-VALIDATION_PROTOCOL_DIAGNOSIS: exact prerequisite is `[SIMULATED] Load complete EMP.1 qualification sample`; `[SIMULATED] Load EMP.1.A demonstration source` is distinct and is not a substitute. `seedQualificationPressure` only adds P-EXTERNAL to an existing LAFEA.1 document.
-AUTHORITY_BOUNDARY: no LEG-011; no product/engineering/workflow source change; no rebase/merge-from-main mutation under current Owner text.
-CURRENT_BLOCKER: external sample-loaded localhost rerun remains required. PR #1675 merge is Owner-only and not authorized; PR #1681 is supporting evidence only and also has no merge authorization. PR #1684 is closed and non-canonical.
-EXACT_NEXT_ACTION: current custodian continues. Checkout dc2df7a8a8b26feea26d29dbf0741794f788cfac, start localhost, enter EMPIRICAL -> EMP.1, click `[SIMULATED] Load complete EMP.1 qualification sample` (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Accept only each object's own status. Closeout requires both PASS_CURRENT_VIEWPORT_DOM_OBSERVATION with failures=[], CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.
+
+DEFECT_CLASSIFICATION: QUALIFICATION_SAMPLE_FACTORY_RAW_VS_NORMALIZED_A_SOURCE_MISMATCH
+DEFECT_DIAGNOSIS: createEmp1WorkbenchQualificationSample executes raw A through executeLafeaStage, which retains normalized execution.source, then passes the original raw A document to refreshEmp1BSourceEvidence; the refresh seam requires semantic equality and can throw EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED before the factory returns, so the LEG-011 controller sequence is never reached.
+STAGE17_CLASSIFICATION: independent stale baseline gate; current bounded gamma5 registry is registered=true and engineeringUseAuthorized=true while emp1-public-product-check still asserts historical blocked/unregistered state.
+
+AUTHORITY_BOUNDARY: no WRC/Pressure mechanics, route registry, benchmark source/tolerance/authority, roadmap, workflow YAML, code/release authority or production authorization change is justified by this evidence.
+
+CURRENT_BLOCKER: executable repair failure is diagnosed; PR #1696 must not merge. Human-factor acceptance cannot resume until the sample factory returns a valid normalized A/B/C source bundle and focused Playwright passes.
+EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then branch from current main 687b9ff3b8884031e4776f031af7a739f29eb2c8 (or later observed main), normalize qualification A through the public LAFEA.1 workbench normalizer before execute/refresh, preserve source-only factory output, align stale public-product test expectations to current bounded-route authority without changing authority, rerun static + focused Playwright + Stage-17, freeze a new material leg, and only after executable PASS resume desktop/narrow/CAUx human observation.

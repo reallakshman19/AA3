@@ -52,6 +52,7 @@ const checks = [
   ['Load Calc current-system Run cutover', 'scripts/load-calc-current-common-input-run-routing-check.mjs'],
   ['READY Common Input system Run authorization', 'scripts/non-fea-empirical-run-authorization-check.mjs'],
   ['Zero-mass waiver contract', 'scripts/non-fea-zero-mass-waiver-check.mjs'],
+  ['Zero-mass waiver method selection', 'scripts/non-fea-zero-mass-waiver-selection-check.mjs'],
   ['Current Common Input empirical mass projection', 'scripts/current-common-input-empirical-mass-projection-check.mjs'],
   ['Issue 1321 hand-calculation mass/support parity', 'scripts/current-common-input-handcalc-mass-support-parity-check.mjs'],
   ['Current Common Input effective gravity/load basis', 'scripts/current-common-input-gravity-load-basis-check.mjs'],

@@ -1,0 +1,93 @@
+{
+  "schema": "lafea-mesh-negative-cases/v1",
+  "benchmarkId": "BM-MESH",
+  "definitionTask": "TASK-005",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+  "assertionPolicy": "EXACT_ERROR_CODE_NOT_MESSAGE_REGEX",
+  "authority": {
+    "class": "BENCHMARK_ONLY_NEGATIVE_INPUT_DEFINITION",
+    "productionSourceModified": false,
+    "productionBehaviorInvented": false,
+    "solverOrCompilerExecutionAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "cases": [
+    {
+      "negativeCaseId": "MESH-NEG-OVER-CEILING",
+      "issueClass": "OVER_CEILING_REQUEST",
+      "stageId": "LAFEA.3",
+      "productionBoundary": "produceLafeaAnalysisMeshEvidence",
+      "inputDefinition": {
+        "geometryCaseId": "M2-UNIT-SQUARE-01",
+        "elementFamily": "T3",
+        "globalTargetSize": 1,
+        "profileSource": "GOVERNED_MESH_PROFILE_DEFAULTS",
+        "requestLimits": {
+          "maximumNodes": 1,
+          "maximumElements": 1,
+          "maximumEstimatedDofs": 2
+        },
+        "requirePlanDispositionBeforePublication": "BLOCK",
+        "exactProducedCountsAuthoritative": false
+      },
+      "expectedErrorCode": "LAFEA_MESH_GENERATION_RESOURCE_LIMIT_EXCEEDED",
+      "sourceRefs": ["S-002"],
+      "note": "The negative constrains request ceilings; it does not predeclare the producer's exact node or element count."
+    },
+    {
+      "negativeCaseId": "MESH-NEG-UNAUTHORIZED-LAFEA3-FAMILY",
+      "issueClass": "UNBOUND_FAMILY",
+      "stageId": "LAFEA.3",
+      "productionBoundary": "createLafeaMeshGenerationIntentV2",
+      "inputDefinition": {
+        "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+        "reason": "A LAFEA.4 shell family is deliberately requested from the LAFEA.3 intent contract."
+      },
+      "expectedErrorCode": "LAFEA_MESH_GENERATION_V2_ELEMENT_FAMILY_NOT_AUTHORIZED",
+      "sourceRefs": ["S-018"]
+    },
+    {
+      "negativeCaseId": "MESH-NEG-NON-FOUR-SIDED-MAPPED-Q8",
+      "issueClass": "NON_FOUR_SIDED_MAPPED_Q8_REQUEST",
+      "stageId": "LAFEA.3",
+      "productionBoundary": "mappedTransfiniteMesh",
+      "inputDefinition": {
+        "mode": "EXPLICIT_MAPPED_Q8_PRIMITIVE_WITNESS",
+        "boundaryChainPointCounts": {
+          "bottom": 3,
+          "top": 5,
+          "left": 3,
+          "right": 3
+        },
+        "requiredCornerCoincidence": "PRESERVE_WHERE_CHAIN_LENGTHS_ALLOW",
+        "automaticProducerInvocation": false
+      },
+      "expectedErrorCode": "MAPPED_MESH_TOPOLOGY_MISMATCH",
+      "sourceRefs": ["S-019"],
+      "semanticQualification": {
+        "automaticProducerFallbackIsValid": true,
+        "automaticProducerMustRejectThisClass": false,
+        "note": "The bound automatic Q8 producer may reject mapped eligibility and validly fall back to unstructured all-Q8 generation. This exact-code negative therefore exercises the production mapped primitive itself and must not be interpreted as a required automatic-producer rejection."
+      }
+    },
+    {
+      "negativeCaseId": "MESH-NEG-NONCONFORMING-MULTIPATCH-SEAM",
+      "issueClass": "NON_CONFORMING_SEAM",
+      "stageId": "LAFEA.4",
+      "productionBoundary": "createLafeaMultiPatchShellMidsurfaceGeometry",
+      "inputDefinition": {
+        "baseGeometryCaseId": "M2-TWO-PATCH-SHELL-01",
+        "mutation": "DECLARE_PATCH_A_NON_SHARED_OUTER_EDGE_AS_THE_SEAM_AGAINST_PATCH_B_SHARED_LEFT_EDGE",
+        "retainTwoRectangularPatches": true,
+        "benchmarkSideNodeMergeAllowed": false
+      },
+      "expectedErrorCode": "LAFEA_SHELL_MULTIPATCH_SEAM_NOT_COINCIDENT_OPPOSITE",
+      "sourceRefs": ["S-016"]
+    }
+  ],
+  "executionDisposition": "DEFINITION_ONLY_NOT_RUN_IN_LEG_012",
+  "releaseQualified": false,
+  "temperatureAuthorityGranted": false
+}

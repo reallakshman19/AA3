@@ -57,6 +57,7 @@ const checks = [
   ['Engineering unit equivalence', 'scripts/non-fea-unit-equivalence-check.mjs'],
   ['Load-source governed length unit', 'scripts/non-fea-load-source-length-unit-check.mjs'],
   ['Source attribute aliases', 'scripts/non-fea-source-attribute-alias-check.mjs'],
+  ['Zero-mass off-route contributions', 'scripts/non-fea-zero-mass-off-route-check.mjs'],
   ['Synthetic pipe run attributes', 'scripts/non-fea-auto-generated-pipe-run-attribute-check.mjs'],
   ['Module bindings', 'scripts/non-fea-module-binding-check.mjs'],
   ['Current Common Input empirical mass projection', 'scripts/current-common-input-empirical-mass-projection-check.mjs'],

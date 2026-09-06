@@ -20,7 +20,9 @@
     {"sourceId":"S-012","role":"meshConvergenceFramework","path":"src/core/lafea-meshing/mesh-convergence-framework.js","blobSha":"c06ebf7006b76b38de8c416f659152396d34976e"},
     {"sourceId":"S-013","role":"continuumPhysicalProbeContract","path":"src/workspace/lafea-continuum-physical-probe.js","blobSha":"f1991fc17f0e799933917601b78c7a89af196df1"},
     {"sourceId":"S-014","role":"benchmarkMeshLadderDefinitions","path":"validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json","blobSha":"7be1e34b9e35c35f27be4aae49dfc441090fad4b"},
-    {"sourceId":"S-015","role":"benchmarkFixedPhysicalProbeDefinitions","path":"validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json","blobSha":"32436222284374cd94bad09ba4980ce64a0d28e8"}
+    {"sourceId":"S-015","role":"benchmarkFixedPhysicalProbeDefinitions","path":"validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json","blobSha":"32436222284374cd94bad09ba4980ce64a0d28e8"},
+    {"sourceId":"S-016","role":"lafea4MultiPatchMidsurfaceContract","path":"src/workspace/lafea-shell-multipatch-midsurface-contract.js","blobSha":"45158697eb552688f71b68ce09c9e33869f263f2"},
+    {"sourceId":"S-017","role":"lafea4MultiPatchMeshProducer","path":"src/workspace/lafea-shell-multipatch-mesh-core.js","blobSha":"b54063378d8265e5d5905975368b8094c251b8e7"}
   ],
   "trace": {
     "LAFEA.3": {
@@ -31,7 +33,9 @@
       "canonicalMeshContract": "S-006"
     },
     "LAFEA.4": {
-      "producer": "S-004",
+      "singlePatchProducer": "S-004",
+      "multiPatchMidsurfaceContract": "S-016",
+      "multiPatchProducer": "S-017",
       "topologyAdapter": "S-005",
       "producerEngine": "S-003",
       "canonicalMeshContract": "S-006"

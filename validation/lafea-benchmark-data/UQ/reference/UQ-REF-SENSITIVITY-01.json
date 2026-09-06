@@ -1,0 +1,103 @@
+{
+  "schema": "lafea-uq-reference-sensitivity/v1",
+  "issue": 1692,
+  "parentIssue": 1673,
+  "dependencyIssue": 1689,
+  "caseId": "UQ-REF-SENSITIVITY-01",
+  "definitionState": "FROZEN_BEFORE_EXECUTION",
+  "authorityClass": "REFERENCE_BENCHMARK_ONLY",
+  "productionOutputUsedToChooseDefinition": false,
+  "variableIds": ["X1", "X2", "X3"],
+  "inputModel": {
+    "dependency": "INDEPENDENT_SYNTHETIC_REFERENCE_ONLY",
+    "distributions": [
+      {"variableId": "X1", "family": "UNIFORM", "minimum": -1, "maximum": 1},
+      {"variableId": "X2", "family": "UNIFORM", "minimum": -1, "maximum": 1},
+      {"variableId": "X3", "family": "UNIFORM", "minimum": -1, "maximum": 1}
+    ]
+  },
+  "additiveCase": {
+    "model": {
+      "intercept": 0,
+      "linearTerms": [
+        {"variableId": "X1", "coefficient": 1},
+        {"variableId": "X2", "coefficient": 2},
+        {"variableId": "X3", "coefficient": 4}
+      ],
+      "interactionTerms": []
+    },
+    "analyticalOracle": {
+      "variance": 7,
+      "morris": {
+        "mu": {"X1": 1, "X2": 2, "X3": 4},
+        "muStar": {"X1": 1, "X2": 2, "X3": 4},
+        "sigma": {"X1": 0, "X2": 0, "X3": 0},
+        "rankingDescending": ["X3", "X2", "X1"]
+      },
+      "sobolFirstOrder": {"X1": 0.047619047619047616, "X2": 0.19047619047619047, "X3": 0.7619047619047619},
+      "sobolTotal": {"X1": 0.047619047619047616, "X2": 0.19047619047619047, "X3": 0.7619047619047619},
+      "pairInteractionX1X2": 0
+    }
+  },
+  "interactionCase": {
+    "model": {
+      "intercept": 0,
+      "linearTerms": [
+        {"variableId": "X1", "coefficient": 1},
+        {"variableId": "X2", "coefficient": 2},
+        {"variableId": "X3", "coefficient": 4}
+      ],
+      "interactionTerms": [
+        {"variableIds": ["X1", "X2"], "coefficient": 3}
+      ]
+    },
+    "analyticalOracle": {
+      "varianceComponents": {"X1": 0.3333333333333333, "X2": 1.3333333333333333, "X3": 5.333333333333333, "X1:X2": 1},
+      "variance": 8,
+      "sobolFirstOrder": {"X1": 0.041666666666666664, "X2": 0.16666666666666666, "X3": 0.6666666666666666},
+      "sobolPairInteractions": {"X1:X2": 0.125},
+      "sobolTotal": {"X1": 0.16666666666666666, "X2": 0.2916666666666667, "X3": 0.6666666666666666}
+    }
+  },
+  "morrisPlan": {
+    "delta": 0.5,
+    "trajectoryCount": 4,
+    "basePoint": {"X1": -0.75, "X2": -0.75, "X3": -0.75},
+    "trajectoryOrders": [
+      ["X1", "X2", "X3"],
+      ["X3", "X2", "X1"],
+      ["X2", "X1", "X3"],
+      ["X2", "X3", "X1"]
+    ]
+  },
+  "sobolPlan": {
+    "estimator": "JANSEN_COMPLEMENT_FIRST_AND_TOTAL",
+    "prng": "XORSHIFT32",
+    "seedUint32": 1692001,
+    "finalSampleCount": 262144,
+    "blockCount": 32,
+    "samplesPerBlock": 8192,
+    "semanticDrawBinding": "CANONICAL_VARIABLE_ID",
+    "pairInteractionEstimator": "MEAN_OF_ST_MINUS_S_FOR_X1_AND_X2"
+  },
+  "acceptance": {
+    "analyticReconstructionRelativeTolerance": 1e-12,
+    "morrisAbsoluteTolerance": 1e-12,
+    "finalNormalizedErrorMaximum": 5,
+    "requirePositiveBlockStandardErrorForStochasticMetrics": true,
+    "requireSameSeedReplayExact": true,
+    "requireDifferentSeedSummaryChanged": true,
+    "requireConsistentPermutationExact": true,
+    "requireInconsistentOrderFailClosed": true,
+    "monotonicRawErrorReductionRequired": false
+  },
+  "authority": {
+    "referenceSensitivityExecutionAuthorized": true,
+    "productionStatisticalExecutionAuthorized": false,
+    "productionSensitivityAuthorized": false,
+    "productionReliabilityTargetAuthorized": false,
+    "codeQualificationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  }
+}

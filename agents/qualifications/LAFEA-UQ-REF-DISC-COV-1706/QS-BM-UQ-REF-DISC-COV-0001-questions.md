@@ -2,7 +2,8 @@
 
 STATUS: CURRENT
 SCOPE: QSCOPE-1706-LAFEA-UQ-REFERENCE-DISC-COV
-DISPLAY: SHOW
+DISPLAY: SUPPRESSED_BY_OWNER_COMMAND
+DISPLAY_BASIS: `merge, proceed next, no Qs`
 
 ## Q1 — Production Trace
 Trace `frozen factor marginal + frozen discrepancy marginal + frozen synthetic covariance + deterministic model IDs/values -> component variance terms -> covariance cross-term -> combined moments -> reference interval -> post-construction diagnostics`. Holdout observations cannot generate marginals, covariance/rho, expected moments, or interval oracle.
@@ -17,4 +18,4 @@ Only synthetic reference correlated propagation may eventually be authorized. Pr
 Future positive evidence must independently reconstruct covariance matrix `[[0.0004,0.018],[0.018,9]]`, determinant `0.003276`, exact cross-terms `[3.96,5.04,6.3,7.92]`, total variances `[17.8,21.88,27.55,36.28]`, means, SDs, intervals and residuals frozen in IB-0001. Controls must include `rho=0` exact reduction to #1704, covariance-sign causality, consistent semantic permutation, zero-discrepancy-SD covariance compatibility, and zero-combined-uncertainty `NOT_APPLICABLE`. Fail-closed evidence must cover non-symmetric/inconsistent/non-PD covariance, `|rho|>=1`, unsupported sources/distributions/plans, semantic/provenance defects, holdout-derived parameters, missing reference authority, and all production-authority leakage channels. Falsifier: expected covariance effects generated from the implementation under test or fitted from holdout observations are invalid qualification evidence.
 
 ## Q5 — Next Contribution / Minimal Patch
-Current WRITE_AUTHORITY is READ_ONLY. PR #1705 must merge, or the Owner must explicitly grant stacked authority, before this dependency is resolved; material still requires a fresh recognized progression. One future bounded leg may add only the frozen correlated reference fixture, narrow covariance-aware analytical combine/checker utility, reduction/invariance/causality controls, structured fail-closed cases, and append-only custody. No production registry/distribution, solver/mesh/recovery, benchmark sequencing, Owner-roadmap mutation, code/design-basis authority, B03, reliability target, release, temperature, production coverage target/tolerance, or production oracle mutation is authorized.
+PR #1705 is merged as `8da6ae56f6f8632892ec532fbfe2534552355374`; Owner command `merge, proceed next, no Qs` authorizes exactly one bounded material LEG-001 after public endpoint synchronization. The leg may add only the frozen correlated reference fixture, narrow covariance-aware analytical combine/checker utility, reduction/invariance/causality controls, structured fail-closed cases, and append-only custody. No production registry/distribution, solver/mesh/recovery, benchmark sequencing, Owner-roadmap mutation, code/design-basis authority, B03, reliability target, release, temperature, production coverage target/tolerance, or production oracle mutation is authorized.

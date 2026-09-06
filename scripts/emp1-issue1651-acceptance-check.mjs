@@ -12,6 +12,7 @@ const paths = Object.freeze({
   pressureStatic: 'scripts/emp1-governed-vector-table-check.mjs',
   layoutStatic: 'scripts/emp1-analytical-layout-check.mjs',
   layout: 'e2e/emp1-analytical-layout.spec.js',
+  coherence: 'e2e/emp1-presentation-coherence.spec.js',
   benchmarkStatic: 'scripts/emp1-benchmark-evidence-ui-check.mjs',
   benchmark: 'e2e/emp1-benchmark-evidence.spec.js',
   carrier: 'scripts/lafea-stage17-browser-run.mjs',
@@ -25,22 +26,21 @@ const source = Object.fromEntries(await Promise.all(Object.entries(paths).map(as
   await readFile(resolve(root, path), 'utf8'),
 ])));
 
-// TASK-001: split-console disclosure must not shrink raw-token coverage. The
-// browser spec visits every inspector tab, both route capabilities and every
-// evidence tab; explicit technical/raw regions remain the only exemptions.
+// TASK-001: task-contextual disclosure must not shrink raw-token coverage. The
+// browser spec traverses every selectable Inspector domain for every professional
+// task, both route capabilities and every retained evidence view.
 for (const required of [
   "'emp1-benchmark-evidence-panel'",
   '[data-emp1-raw-technical="true"]',
   '[data-lafea-raw-json="true"]',
   'machineUnderscore',
   'machineDotted',
-  "[data-role=\"emp1-inspector-tab\"]",
+  'for (const taskId of TASKS)',
+  '[data-role="emp1-inspector-tab"]:visible',
   "[data-role=\"emp1-c-route-capability-tab\"]",
   "[data-role=\"emp1-evidence-tab\"]",
-  'for (let index = 0; index < inspectorCount; index += 1)',
-  'for (let index = 0; index < evidenceCount; index += 1)',
   'scanVisibleLeaks',
-]) assert.ok(source.rawTokens.includes(required), `raw-token split-console coverage missing: ${required}`);
+]) assert.ok(source.rawTokens.includes(required), `raw-token task-console coverage missing: ${required}`);
 
 // TASK-002: exact Pressure 5 x 2 governed custody remains unchanged.
 for (const required of [
@@ -56,9 +56,9 @@ for (const required of [
 assert.ok(source.pressureStatic.includes('PRESSURE'),
   'static governed-table qualification must retain Pressure coverage');
 
-// TASK-003 / recovery #1664 revision 2: split-console acceptance is viewport
-// bounded composition, one supporting inspector domain, bounded evidence, and
-// narrow mode substitution rather than stacked desktop panes.
+// TASK-003 / recovery #1664 robust revision: presentation selection is the UI
+// source of truth; Inspector content is contextual; deep custody is overlay/on-
+// demand; evidence remains bounded; narrow modes substitute rather than stack.
 for (const required of [
   'emp1-analytical-layout/v2',
   'emp1-split-console/v1',
@@ -74,9 +74,12 @@ for (const required of [
   "['WORK', 'BASIS', 'EVIDENCE']",
   "['PRESSURE', 'LOAD_CASES']",
   "['REFERENCE_POINTS']",
+  'BOOTSTRAP_ONLY_AFTER_EXPLICIT_TASK_SELECTION',
+  'unrelatedInspectorAuthorityRejected: true',
+  'reviewBackingCardHidden: true',
   'EMP1_ANALYTICAL_LAYOUT_SURFACE_DUPLICATE',
   'EMP1_ANALYTICAL_LAYOUT_SURFACE_KEYS_MISMATCH',
-]) assert.ok(source.layoutStatic.includes(required), `split-console static evidence missing: ${required}`);
+]) assert.ok(source.layoutStatic.includes(required), `robust split-console static evidence missing: ${required}`);
 
 for (const required of [
   'data-emp1-split-console',
@@ -97,10 +100,25 @@ for (const required of [
   'data-emp1-console-mode="WORK"',
   'data-emp1-console-mode="BASIS"',
   'data-emp1-console-mode="EVIDENCE"',
-  "toBeHidden()",
   'analyticalScrollWidth',
   'analyticalClientWidth',
 ]) assert.ok(source.layout.includes(required), `split-console browser falsifier missing: ${required}`);
+
+for (const required of [
+  'professional task remains presentation source of truth across backing-stage rerenders',
+  "toHaveText('Backing calculation stage')",
+  "toHaveText('1 · Basis & Source')",
+  "toHaveAttribute('data-backing-stage-id', 'LAFEA.2')",
+  "toHaveAttribute('data-emp1-professional-task', 'REVIEW_EVIDENCE')",
+  "toHaveAttribute('data-emp1-console-mode', 'EVIDENCE')",
+  "toBeHidden()",
+  'shellBottom',
+  'evidenceToggleBottom',
+  'shellScrollHeight',
+  'lanesTop',
+  "data-emp1-inspector-view=\"boundedCorrelation\"",
+  "not.toHaveAttribute('open', '')",
+]) assert.ok(source.coherence.includes(required), `screenshot-derived UX falsifier missing: ${required}`);
 
 // TASK-004: benchmark remains authority-safe and is explicitly opened from the
 // bounded evidence console before browser assertions execute.
@@ -128,48 +146,57 @@ for (const required of [
   'REFERENCE_NOT_AVAILABLE',
 ]) assert.ok(source.benchmarkStatic.includes(required), `benchmark static evidence missing: ${required}`);
 
-// Existing Stage-17 carrier still owns all focused browser families.
-for (const path of [paths.rawTokens, paths.pressure, paths.layout, paths.benchmark]) {
+// Existing Stage-17 carrier still owns every focused EMP.1 browser family.
+for (const path of [paths.rawTokens, paths.pressure, paths.layout, paths.coherence, paths.benchmark]) {
   assert.ok(source.carrier.includes(path), `Stage-17 carrier missing ${path}`);
 }
 
-// Deterministic human-observed fallback mirrors the split-console acceptance
-// while explicitly refusing to manufacture automated browser PASS.
+// Deterministic human-observed fallback mirrors the robust task-console
+// acceptance while explicitly refusing to manufacture automated browser PASS.
 for (const required of [
-  'emp1-manual-browser-audit/v3',
+  'emp1-manual-browser-audit/v4',
   'scanAllSplitConsoleViews',
+  'for (const taskId of WORKFLOW_TASKS',
   'presentation.rawTokenLeaks.none',
   'pressure.rows.5',
   'pressure.governedCells.10',
   'layout.splitConsole.enabled',
   'layout.taskShell.loadsActive',
   'layout.workflow.details.closed',
+  'layout.workflow.selectionMatchesTask',
+  'layout.workflow.details.overlayNoGrowth',
   'layout.loads.inputGroups.exact',
-  'layout.inspector.selectedAtMostOne',
+  'layout.inspector.loadsContextOnly',
+  'layout.inspector.headerContained',
   'layout.evidence.selectedAtMostOne',
   'layout.evidence.collapsedByDefault',
   'layout.evidence.hiddenHeight.zero',
   'layout.unselectedEvidence.heightDelta',
   'layout.outerShell.bounded',
+  'layout.outerShell.inViewport',
+  'layout.evidence.affordanceInViewport',
+  'layout.review.afterBackingB.coherent',
   'layout.narrow.workOnly',
   'layout.narrow.basisOnly',
   'layout.narrow.evidenceOnly',
   'routes.capabilities.2',
   'routes.visiblePanel.1',
   'routes.authorityStates.preserved',
+  'routes.inspector.contextual',
+  'routes.deepDetails.closedByDefault',
   'Engineering use not authorized',
   'benchmark.caux.rows.8',
   'benchmark.pvElite.rows.0',
   'browserAcceptanceComplete: false',
   'automatedPlaywrightPassCreated: false',
-]) assert.ok(source.manualAudit.includes(required), `manual split-console acceptance mirror missing: ${required}`);
+]) assert.ok(source.manualAudit.includes(required), `manual robust-console acceptance mirror missing: ${required}`);
 assert.ok(source.manualAuditStatic.includes('PASS_STATIC_SPLIT_CONSOLE_MANUAL_BROWSER_AUDIT_CONTRACT'));
 for (const required of [
   'PASS_CURRENT_VIEWPORT_DOM_OBSERVATION',
-  'scrollHeight <= clientHeight + 1 px',
   'Work / Basis / Evidence',
+  'Review & Evidence',
   'must not promote the blocked Playwright suite to PASS',
-]) assert.ok(source.manualGuide.includes(required), `manual split-console guide missing: ${required}`);
+]) assert.ok(source.manualGuide.includes(required), `manual robust-console guide missing: ${required}`);
 
 // Closure remains presentation/test evidence only with no calculation-core or
 // workflow-YAML authority mutation.
@@ -177,23 +204,29 @@ assert.equal(source.carrier.includes('.github/workflows/'), false);
 assert.equal(source.manualAudit.includes('../src/core/'), false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-issue1651-acceptance-check/v3',
-  status: 'PASS_STATIC_SPLIT_CONSOLE_ACCEPTANCE_MANIFEST_EXECUTABLE_BROWSER_GATES_RETAINED',
+  schema: 'emp1-issue1651-acceptance-check/v4',
+  status: 'PASS_STATIC_ROBUST_SPLIT_CONSOLE_ACCEPTANCE_MANIFEST_EXECUTABLE_BROWSER_GATES_RETAINED',
   issue: 1651,
   recoveryIssue: 1664,
-  rawTokenInspectorRouteEvidenceViewsEnumerated: true,
+  rawTokenTaskInspectorRouteEvidenceViewsEnumerated: true,
   pressureMatrix: { identities: 5, valueColumns: 2, governedCells: 10 },
   splitConsole: {
     professionalSteps: 7,
+    explicitTaskSelectionOwnsPresentation: true,
+    backingStageBootstrapOnly: true,
+    taskContextualInspector: true,
     visibleInspectorMaximum: 1,
     selectedHeavyEvidenceMaximum: 1,
     outerShellOverflowTolerancePx: 1,
+    outerShellMustFitViewport: true,
+    workflowDetailOverlayNoGrowth: true,
     hiddenEvidenceHeightDeltaPx: 1,
     desktopSplit: true,
     narrowModes: ['WORK', 'BASIS', 'EVIDENCE'],
     narrowStackingPermitted: false,
     registeredRouteCapabilities: 2,
     visibleRouteCapabilityPanelsMaximum: 1,
+    routeDetailsClosedByDefault: true,
   },
   benchmark: {
     cauxRows: 8,

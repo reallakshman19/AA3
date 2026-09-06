@@ -1,6 +1,7 @@
 import { createSourcePackageSnapshot } from '../core/shared-piping-model/source-package-snapshot.js';
 import { buildSharedPipingModelFromWorkspaceDataset } from '../core/shared-piping-model/adapters/workspace-dataset-to-shared.js';
 import { projectDataStore } from './project-data/project-data-store.js';
+import { withAdjacentRunAttributes } from './auto-generated-pipe-run-attributes.js';
 import { buildDatasetHierarchy } from './dataset-hierarchy.js';
 import { isPipeType, isSupportType, resolveEntityType, selectionTypeFor } from './dataset-types.js';
 import { extractGeometryEvidence } from './geometry-evidence.js';
@@ -83,7 +84,10 @@ function inferSourceSchema(packageJson) {
 
 function normalizeEntities(entries, sourceModel) {
   const counts = sourceModel.indexes.bySourceEntityId;
-  return entries.map((entry) => normalizeEntity(entry, counts));
+  return withAdjacentRunAttributes(
+    entries.map((entry) => normalizeEntity(entry, counts)),
+    sharedModelOptions(),
+  );
 }
 
 function normalizeEntity({ item, node }, sourceIdIndex) {

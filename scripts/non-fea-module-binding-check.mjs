@@ -52,6 +52,15 @@ const WATCHED = Object.freeze({
     'sameEngineeringUnit',
     'normalizeEngineeringUnit',
   ],
+  'src/workspace/dataset-adapter.js': [
+    'withAdjacentRunAttributes',
+    'buildSharedPipingModelFromWorkspaceDataset',
+    'indexWorkspaceSourcePackage',
+  ],
+  'src/workspace/auto-generated-pipe-run-attributes.js': [
+    'withConfiguredSourceAttributeAliases',
+    'ENGINEERING_PROPERTY_SPECS',
+  ],
   'src/workspace/enrichment/non-fea-enrichment-view.js': [
     'countFittingsAwaitingWeight',
     'projectDataEntry',

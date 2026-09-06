@@ -3,25 +3,25 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0015
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0015_COMMENT_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0015_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5556488626
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0015_SYNC
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5556489378
 PR: 1675
 PR_STATUS: OPEN_DRAFT
 PR_BRANCH: agent/emp1-1651-split-console-leg009
 PR_BASE: main
 PR_BASE_SHA: f8d051c989c8a0627db7560f996baf72987775d4
-PR_HEAD_OBSERVED_PRE_ENDPOINT: dc32519bf07a0c46c501c273ac18363274d3bf66
+PR_HEAD_OBSERVED_PRE_FINAL_SYNC: 5140665f840ab34f1bd9029dcab3846e582b33da
 MAIN_HEAD_OBSERVED: f8d051c989c8a0627db7560f996baf72987775d4
 MERGEABILITY: MERGEABLE
-REVIEWS: 0
-REVIEW_STATES: NONE
+REVIEWS: 1
+REVIEW_STATES: COMMENTED
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NONE_OBSERVED
 STATUS_CONTEXTS_AT_PR_HEAD: 0
@@ -59,7 +59,7 @@ EMP1.B — nominal section screening presented as active work
 
 and could foreground EMP.1.C authority in unrelated task contexts, clip the Inspector navigation, over-expand route detail, let readiness/custody displace the working console, and place the evidence affordance below the useful viewport.
 
-LEG-010 therefore tightens the product contract to:
+LEG-010 tightens the product contract to:
 
 ```text
 PROFESSIONAL WORKFLOW SELECTION = PRESENTATION SOURCE OF TRUTH
@@ -174,4 +174,4 @@ CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
 CURRENT_BLOCKER: LEG-010 needs external localhost/browser re-observation; focused Playwright remains environment-blocked. PR #1675 merge is separately Owner-only and not authorized.
-EXACT_NEXT_ACTION: publish EP-0015 issue checkpoint + update Active handover, then run `MANUAL-EP-0015.md` against fixed material head `dc2df7a8a8b26feea26d29dbf0741794f788cfac`. Return three Node outputs, desktop+narrow audit JSON, CAUx keyboard result, and desktop default/readiness-open/narrow screenshots. No additional source-changing leg is justified until this evidence exposes a concrete defect.
+EXACT_NEXT_ACTION: run `agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/MANUAL-EP-0015.md` against fixed material head `dc2df7a8a8b26feea26d29dbf0741794f788cfac`. Return three Node outputs, desktop+narrow audit JSON, CAUx keyboard result, and desktop default/readiness-open/narrow screenshots. No additional source-changing leg is justified until this evidence exposes a concrete defect.

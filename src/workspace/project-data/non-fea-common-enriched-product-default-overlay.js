@@ -22,6 +22,7 @@ import {
   createNonFeaProductEngineeringDefaultProvider,
   requireProductEngineeringDefaultProfile,
 } from './non-fea-product-engineering-default-profile.js';
+import { sameEngineeringUnit } from './non-fea-unit-equivalence.js';
 
 export const NON_FEA_COMMON_ENRICHED_PRODUCT_DEFAULT_OVERLAY_SCHEMA =
   'non-fea-common-enriched-product-default-overlay/v1';
@@ -319,7 +320,7 @@ export function requireProductDefaultOverlay(value) {
 }
 
 function productDefaultField(record, fieldName, expectedUnit, sourceKey, provider) {
-  if (record.unit !== expectedUnit) {
+  if (!sameEngineeringUnit(record.unit, expectedUnit)) {
     return {
       value: null,
       blocker: issue(

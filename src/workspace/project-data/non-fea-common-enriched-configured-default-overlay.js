@@ -22,6 +22,7 @@ import {
   NON_FEA_CONFIGURED_DEFAULT_SCOPE_PRECEDENCE,
   createNonFeaConfiguredDefaultProvider,
 } from './non-fea-configured-default-provider.js';
+import { sameEngineeringUnit } from './non-fea-unit-equivalence.js';
 
 export const NON_FEA_COMMON_ENRICHED_CONFIGURED_DEFAULT_OVERLAY_SCHEMA =
   'non-fea-common-enriched-configured-default-overlay/v1';
@@ -312,7 +313,7 @@ export function requireConfiguredDefaultOverlay(value) {
 }
 
 function configuredDefaultField(record, fieldName, expectedUnit, sourceKey, provider) {
-  if (record.unit !== expectedUnit) {
+  if (!sameEngineeringUnit(record.unit, expectedUnit)) {
     return {
       value: null,
       blocker: issue(

@@ -25,7 +25,7 @@ CURRENT_REPAIR_PR: 1701
 CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_OWNER_MERGE_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
 CURRENT_PR_FIXED_MATERIAL_HEAD: 7f81c19a236fc6075a26ed3fccfece808406c7a6
-CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: 7bdd1dc73a52a67de2ffbfe1afd25644adc24c08
+CURRENT_PR_RELAY_HEAD_AT_STATUS_CHECK: 5c17e3fd8bbcdacde38c8bdc5dab4f735c2492cc
 CURRENT_PR_MERGEABLE_AT_STATUS_CHECK: TRUE
 CURRENT_PR_MERGEABLE_STATE_AT_STATUS_CHECK: CLEAN
 CURRENT_PR_REVIEWS_AT_STATUS_CHECK: 0
@@ -71,9 +71,9 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560757230
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560758060
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0028_PUBLICATION
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560828301
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560828836
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
@@ -122,4 +122,4 @@ BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / 
 
 AUTHORITY_BOUNDARY: Owner merge authorization does not alter WRC/Pressure mechanics, route/source/benchmark authority, code/release authority, workflow YAML, or validation truth.
 CURRENT_BLOCKER: none to Owner-authorized merge. Exact-head executable/human validation debt remains open and must not be relabeled PASS.
-EXACT_NEXT_ACTION: publish EP-0028 to Issue control plane, transition Draft to Ready only if required, merge PR #1701 with expected-head guard, then reconcile resulting main under the already-issued `proceed next` command.
+EXACT_NEXT_ACTION: transition Draft to Ready only if required, merge PR #1701 with expected-head guard, then reconcile resulting main under the already-issued `proceed next` command.

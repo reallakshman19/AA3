@@ -17,47 +17,13 @@
   "productionApplicabilityBlocker": "ENGINEERING_POPULATION_APPLICABILITY_REQUIRED",
   "universalZAcceptanceThreshold": null,
   "positiveCase": {
-    "modelValue": {
-      "value": 102,
-      "unit": "REFERENCE_QOI"
-    },
-    "testValue": {
-      "value": 100,
-      "unit": "REFERENCE_QOI"
-    },
+    "modelValue": { "value": 102, "unit": "REFERENCE_QOI" },
+    "testValue": { "value": 100, "unit": "REFERENCE_QOI" },
     "components": [
-      {
-        "id": "U-TEST",
-        "role": "TEST_MEASUREMENT",
-        "unit": "REFERENCE_QOI",
-        "basis": "STANDARD",
-        "value": 0.75,
-        "varianceContributionKey": "VAR-TEST"
-      },
-      {
-        "id": "U-NUM",
-        "role": "NUMERICAL",
-        "unit": "REFERENCE_QOI",
-        "basis": "STANDARD",
-        "value": 0.5,
-        "varianceContributionKey": "VAR-NUM"
-      },
-      {
-        "id": "U-INPUT",
-        "role": "INPUT_PROPAGATION",
-        "unit": "REFERENCE_QOI",
-        "basis": "STANDARD",
-        "value": 1.0,
-        "varianceContributionKey": "VAR-INPUT"
-      },
-      {
-        "id": "U-MODEL",
-        "role": "MODEL_FORM",
-        "unit": "REFERENCE_QOI",
-        "basis": "STANDARD",
-        "value": 1.25,
-        "varianceContributionKey": "VAR-MODEL"
-      }
+      { "id": "U-TEST", "role": "TEST_MEASUREMENT", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 0.75, "varianceContributionKey": "VAR-TEST" },
+      { "id": "U-NUM", "role": "NUMERICAL", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 0.5, "varianceContributionKey": "VAR-NUM" },
+      { "id": "U-INPUT", "role": "INPUT_PROPAGATION", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 1.0, "varianceContributionKey": "VAR-INPUT" },
+      { "id": "U-MODEL", "role": "MODEL_FORM", "unit": "REFERENCE_QOI", "basis": "STANDARD", "value": 1.25, "varianceContributionKey": "VAR-MODEL" }
     ],
     "oracle": {
       "signedError": 2,
@@ -91,6 +57,6 @@
     "expectedSignedError": -2,
     "expectedNormalizedAbsoluteErrorZ": 1.0886621079036347
   },
-  "negativeCaseCount": 16,
+  "negativeCaseCount": 22,
   "nextBoundary": "RECONCILE_REFERENCE_VALIDATION_METRIC_PASS_TO_PARENT_1673_AND_PLAN_REFERENCE_CALIBRATION_BIAS_CASE"
 }

@@ -11,8 +11,8 @@ WORK_ITEM_MODE: EXCLUSIVE
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0029
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0029.md
+ENDPOINT: EP-0030
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0030.md
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
 CUSTODY_STATE: HELD
@@ -27,10 +27,15 @@ MERGED_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg012
 MERGED_REPAIR_HEAD: 260d0c6b75c5d94edef33eb095384bf145a47de2
 MERGE_COMMIT: f98d56d4c644b7bb6b79d2302739d12dac720248
 MERGED_INTEGRATION_HEAD: f98d56d4c644b7bb6b79d2302739d12dac720248
+MAIN_HEAD_OBSERVED_AT_EP0030: f98d56d4c644b7bb6b79d2302739d12dac720248
+MAIN_DRIFT_SINCE_EP0029: NONE
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-post-merge-ep0029
 POST_MERGE_RECONCILIATION_PR: 1708
 POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
-POST_MERGE_RECONCILIATION_PR_HEAD_AT_OPEN: 53316b4219b1b614792576fc2170ba276a86a83d
+POST_MERGE_RECONCILIATION_PR_HEAD_AT_EP0030_OBSERVATION: a23c4034dcda252bfe526a267c5247ad6f73b516
+POST_MERGE_RECONCILIATION_PR_MERGEABILITY_AT_EP0030: MERGEABLE_CLEAN
+POST_MERGE_RECONCILIATION_PR_REVIEWS_AT_EP0030: 0
+POST_MERGE_RECONCILIATION_PR_UNRESOLVED_THREADS_AT_EP0030: 0
 POST_MERGE_STATUS_CONTEXTS: 0
 POST_MERGE_PR_WORKFLOW_RUNS: 0
 
@@ -41,7 +46,7 @@ CURRENT_MATERIAL_LEG: NONE
 POST_MERGE_NO_PATCH_DISPOSITION: TRUE
 ENGINEERING_STATE: MERGED_VALIDATION_REOBSERVATION_PENDING
 WRITE_AUTHORITY: READ_ONLY_AWAITING_POST_MERGE_VALIDATION
-WRITE_AUTHORITY_REASON: PR #1701 is merged; no new source defect is established and all remaining merged-head executable/human acceptance evidence is pending
+WRITE_AUTHORITY_REASON: no merged-head executable/product failure is established; remaining acceptance evidence is NOT_RUN
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
@@ -50,7 +55,7 @@ MERGE_AUTHORIZATION_DISPOSITION: PR_1701_OWNER_AUTHORIZATION_CONSUMED_BY_MERGE_F
 OWNER_MERGE_COMMAND: MERGE
 OWNER_MERGE_STATUS: CONSUMED_BY_PR_1701
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_PROGRESSION_STATUS: CONSUMED_BY_EP_0029_POST_MERGE_RECONCILIATION
+OWNER_PROGRESSION_STATUS: CONSUMED_BY_EP_0030_NO_PATCH_EVIDENCE_WAIT
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
 QUESTION_SET_STATUS: CURRENT
@@ -62,18 +67,18 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0029
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0030
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560870606
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560871405
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560954664
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560955426
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
 
 ROADMAP: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
-ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED; LEG-012 source repair merged through PR #1701; LEG-013 validation carrier merged; post-merge acceptance evidence remains pending
+ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED; repair and validation carrier are merged; remaining acceptance debt is merged-head executable and human-factor evidence
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 VALIDATION_HISTORICAL_LEG011: FAIL_EXACT_HEAD_CHROMIUM_2_OF_2_PLUS_STAGE17_STALE_GATE
@@ -102,7 +107,8 @@ DEFECT_PRIMARY_REPAIRED_IN_SOURCE: QUALIFICATION_SAMPLE_FACTORY_RAW_VS_NORMALIZE
 LEG012_FACTORY_CONTRACT: raw A -> public LAFEA.1 normalization -> private A execution -> A/B refresh using same normalized A -> return source-only A/B/C bundle
 LEG012_CONTROLLER_CONTRACT: import A -> normal controller/store A execution -> require QUALIFIED/ACCEPTED -> import B -> typed C binding -> governed EMP.1 run
 LEG013_SCOPE: cross-platform fail-fast exact-head validation runner + project-local Chromium preflight + EP-0025 PowerShell/POSIX guide only
-EP0029_DISPOSITION: NO_PATCH_POST_MERGE_RECONCILIATION; merge succeeded; remaining acceptance debt is executable/human evidence, not a demonstrated source defect
+EP0029_DISPOSITION: NO_PATCH_POST_MERGE_RECONCILIATION; PR #1701 merged; remaining acceptance debt is evidence, not demonstrated source defect
+EP0030_DISPOSITION: NO_PATCH_EVIDENCE_WAIT; no new admissible merged-head evidence; no LEG-014
 
 ACCEPTANCE_TASK_001: SOURCE_RETAINED_LIVE_FINAL_PENDING
 ACCEPTANCE_TASK_002: SOURCE_RETAINED_PRESSURE_5X2_LIVE_FINAL_PENDING
@@ -113,6 +119,6 @@ ACCEPTANCE_TASK_005: PROTECTED_AUTHORITY_PRESERVED_BY_LEG013_DIFF_INSPECTION
 BENCHMARK_CAUX: retained 8/8 within frozen 3%; worst relative 2.0355862430856293% at Cu; worst absolute 26.786740343133943 kPa at Du; governing Du/Du agreement; comparison evidence only, not global WRC/code/release authority
 BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / no invented expected values, version or tolerance
 
-AUTHORITY_BOUNDARY: merged source does not gain new global WRC/code/release authority from merge; CAUx comparison remains non-authorizing; PV Elite remains unavailable; Pressure custody remains 5 identities x 2 value columns.
-CURRENT_BLOCKER: merged-head executable and human-factor acceptance is NOT_RUN. Zero GitHub status contexts/workflow runs are not PASS.
+AUTHORITY_BOUNDARY: merged source does not gain new global WRC/code/release authority from merge; CAUx comparison remains non-authorizing; PV Elite remains unavailable; Pressure custody remains 5 identities x 2 value columns. EP-0030 changes custody only.
+CURRENT_BLOCKER: merged-head executable and human-factor acceptance is NOT_RUN. Zero GitHub reviews/status contexts/workflow runs are not PASS.
 EXACT_NEXT_ACTION: external verifier checks out merged integration head f98d56d4c644b7bb6b79d2302739d12dac720248, installs project-local Chromium if required, runs `node scripts/emp1-issue1651-executable-validation.mjs`, stops on any nonzero result, and only after complete executable PASS proceeds to desktop/narrow structured audits, CAUx physical Enter/Space and three screenshots. A merged-head executable failure becomes a new bounded diagnosis before further material work.

@@ -221,7 +221,11 @@ const source = readFileSync(new URL(
 ), 'utf8');
 assert.match(source, /buildPipingPortTopologyGraph\(model\)/u,
   'projection must normalize topology from the sealed enriched model');
-assert.match(source, /projectEngineeringLoadSources\(model, effectiveTopologyGraph\)/u,
+// The third argument is the governed source length unit: SJSON states no
+// units, so without it every component projects UNIT_BLOCKED. The first two
+// arguments are what this guard exists to pin - the projection is still
+// built from the sealed enriched model and its topology graph.
+assert.match(source, /projectEngineeringLoadSources\(\s*model,\s*effectiveTopologyGraph,/u,
   'projection must normalize model-load geometry from the sealed enriched model');
 assert.match(source, /resolveComponentCaseMass\(component, loadCaseId, compositionProfile\)/u,
   'projection must reuse the established model-load mass resolver');

@@ -8,9 +8,22 @@ import { validatePipingPortTopologyGraph } from '../piping-topology/index.js';
 import { AUDIT_CODES, LOAD_SOURCE_PROJECTION_SCHEMA } from './constants.js';
 import { distanceM, lengthFactorToM, normalizeLengthUnit, pointToMeters } from './units.js';
 
-export function projectEngineeringLoadSources(sharedModel, topologyGraph) {
+/**
+ * @param {object} [options]
+ * @param {string} [options.sourceLengthUnit] Governed length unit for source
+ *   geometry, for models whose own units block does not carry one.
+ *
+ * A shared model normalized from a source that states no units - SJSON is one -
+ * carries units.length "unknown", and every component then projects with no
+ * length factor and is stamped UNIT_BLOCKED. The unit for those models lives in
+ * approved Project Data (sourcesAndUnits.lengthUnit) instead, so a caller
+ * holding that authority passes it here. Omitting it preserves the previous
+ * behaviour exactly: the model's own units still decide.
+ */
+export function projectEngineeringLoadSources(sharedModel, topologyGraph, options = {}) {
   assertInputs(sharedModel, topologyGraph);
-  const lengthUnit = normalizeLengthUnit(sharedModel.units.length);
+  const declaredLengthUnit = stringValue(options.sourceLengthUnit) || sharedModel.units.length;
+  const lengthUnit = normalizeLengthUnit(declaredLengthUnit);
   const factor = lengthFactorToM(lengthUnit);
   const components = sharedModel.components.map((component) => projectComponent(component, lengthUnit, factor))
     .sort((left, right) => left.componentKey.localeCompare(right.componentKey));

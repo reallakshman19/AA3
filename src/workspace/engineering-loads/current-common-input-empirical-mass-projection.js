@@ -5,6 +5,7 @@ import {
 import { createPipingLoadCompositionProfile } from '../../core/model-loads/composition-profile.js';
 import { resolveComponentCaseMass } from '../../core/model-loads/component-mass-resolver.js';
 import { derivePipeLikeFittingWeightEvidence } from '../../core/model-loads/elbow-derived-mass.js';
+import { optionalAuthorizedEmpiricalSourceLengthUnit } from './authorized-empirical-source-axis-binding.js';
 import { projectEngineeringLoadSources } from '../../core/model-loads/load-source-projection.js';
 import { evidenceNumber } from '../../core/model-loads/units.js';
 import { buildPipingPortTopologyGraph } from '../../core/piping-topology/index.js';
@@ -201,7 +202,18 @@ function buildProjectionBasis(commonInput) {
     'authorityContracts.loadPrimitiveSet.semanticHash');
 
   const effectiveTopologyGraph = buildPipingPortTopologyGraph(model);
-  const effectiveLoadSourceProjection = projectEngineeringLoadSources(model, effectiveTopologyGraph);
+  // SJSON states no units, so the shared model carries units.length "unknown"
+  // and every component would project UNIT_BLOCKED. The governed unit is the
+  // approved sourcesAndUnits.lengthUnit. Only the unit is required here: the
+  // up-axis decides which way gravity acts and is not consulted until
+  // distribution, so demanding it would fail closed on a profile that is
+  // complete for this step.
+  const governedLengthUnit = optionalAuthorizedEmpiricalSourceLengthUnit(commonInput.projectDataProfile);
+  const effectiveLoadSourceProjection = projectEngineeringLoadSources(
+    model,
+    effectiveTopologyGraph,
+    { sourceLengthUnit: governedLengthUnit },
+  );
   const compositionProfile = createPipingLoadCompositionProfile();
 
   const inventory = createCommonEnrichedTargetInventory({

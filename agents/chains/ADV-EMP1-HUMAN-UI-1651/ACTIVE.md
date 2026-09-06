@@ -12,8 +12,8 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0021
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0021.md
+ENDPOINT: EP-0022
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0022.md
 MERGED_IMPLEMENTATION_PR: 1675
 PR_1675_STATUS: MERGED_BY_OWNER_COMMAND
 PR_1675_HEAD_AT_MERGE: 661b2b0c0eacb3243e037e5356b6f2188596a3d6
@@ -24,49 +24,43 @@ POST_MERGE_RECONCILIATION_PR: 1690
 POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
 SUPPORTING_VALIDATION_PR: 1681
 SUPPORTING_VALIDATION_PR_STATUS: CLOSED_UNMERGED_STALE_INVALID_STATE_EVIDENCE
-SUPPORTING_VALIDATION_PR_HEAD: 1dead34196fe781c43b20657377a1cd239309503
-SUPPORTING_VALIDATION_PR_LATEST_MUTATION: UNAUTHORIZED_VALIDATION_ONLY
 NONCANONICAL_HANDOVER_PR: 1684
 NONCANONICAL_HANDOVER_PR_STATUS: CLOSED_UNMERGED
-NONCANONICAL_HANDOVER_PR_DISPOSITION: OWNER_REJECTED_AS_NOVICE_ARTIFACT_NO_TAKEOVER
 LATEST_MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
 LAST_COMPLETED_MATERIAL_LEG: LEG-010
 CURRENT_MATERIAL_LEG: NONE
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-010.md
-ENGINEERING_STATE: LEG_010_MERGED_POST_MERGE_VALIDATION_PREREQUISITE_FAILED_RERUN_REQUIRED
+ENGINEERING_STATE: LEG_010_MERGED_QUALIFICATION_SAMPLE_ORCHESTRATION_DEFECT_CONFIRMED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED
-WRITE_AUTHORITY: READ_ONLY_AWAITING_EXTERNAL_VALIDATION
-WRITE_AUTHORITY_REASON: merged source is awaiting correctly prepared sample-loaded human-factor re-observation; latest browser run stayed in WORKSPACE / lacked LAFEA.1 document
+WRITE_AUTHORITY: READ_ONLY_PENDING_OWNER_PROGRESSION
+WRITE_AUTHORITY_REASON: clean post-merge rendered-UI validation exposed a concrete qualification-sample orchestration defect; source repair requires fresh recognized Owner progression
 AUTO_STATE: NOT_APPLICABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 MERGE_AUTHORIZATION_DISPOSITION: PR_1675_AUTHORIZATION_CONSUMED; NO_AUTHORIZATION_FOR_PR_1690_OR_ANY_VALIDATION_PR
-AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
+AUTHORITY_DOMAIN: EMP.1 presentation/information architecture, qualification/demo orchestration and acceptance gates only; engineering mechanics/source/tolerance/route/code/release authority protected.
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
-CUSTODY_EPOCH: 25
+CUSTODY_EPOCH: 26
 CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
-COORDINATION_STATE: EP0021_INVALID_STATE_VALIDATION_REJECTED_CORRECT_RERUN_PENDING
-POST_BASIS_DRIFT: NONE_MATERIAL; #1675 merged and current target is its integrated main merge commit
+COORDINATION_STATE: EP0022_QUALIFICATION_SAMPLE_SEQUENCE_DEFECT_CONFIRMED_AWAITING_OWNER_PROGRESSION
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0021
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0022
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557864537
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5558586739
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557865595
-OWNER_TEXT_OBSERVED: `merge. clearly say what that novice agent should do step by step!`
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5558587650
 OWNER_PROGRESSION_COMMAND: NONE
 OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
 OWNER_MERGE_COMMAND: MERGE_PR_1675_CONSUMED
 ROADMAPS: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_REVIEW_STATUS: COMPLETE
-ROADMAP_ALIGNMENT: ROADMAP_STATUS_STALE_BUT_SCOPE_ALIGNED
+ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED_AND_NOW_CONFIRMS_4_1_SEQUENCE_DEFECT
 ROADMAP_MUTATION_AUTHORITY: NONE
 QUALIFICATION_PROFILE: WRC_LOCAL_STRESS
 QUALIFICATION_PROFILE_VERSION: 2
@@ -79,20 +73,15 @@ QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: FAIL
-HANDOVER_VALIDATION_EVIDENCE: post-merge static checks PASS; desktop returned AUDIT_ERROR because LAFEA.1 unavailable; narrow returned FAIL while app.empirical.active=false / activeViewId=WORKSPACE, so its 18 downstream failures are invalid-state cascade rather than admitted product defects
-CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
-VALIDATION_PASS_OBSERVED: three focused Node/static checks PASS reported at integrated merge commit 11f655e71a81b0d7ebef42e99792482b434e60db; historical Review/LAFEA.2 coherence supporting PASS retained
-VALIDATION_LIVE_UX: LEG009_FAIL; LEG010_MERGED; LATEST_POST_MERGE_BROWSER_RUN_INVALID_PREREQUISITE; FULL_SAMPLE_LOADED_ACCEPTANCE_PENDING
-VALIDATION_FAILED_OR_ERROR_LATEST: desktop=AUDIT_ERROR_EMP1_MANUAL_AUDIT_LAFEA1_DOCUMENT_UNAVAILABLE; narrow=FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION_WITH_APP_IN_WORKSPACE
-VALIDATION_NOT_RUN_LEG010: correctly prepared sample-loaded post-merge desktop+narrow audit; admissible passing screenshot set; valid actual CAUx Enter/Space; focused Playwright; check:imports/build/git diff --check unless separately evidenced
-VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN in custodian environment; novice used separate Linux Chromium but did not establish required application state
-VALIDATION_PROTOCOL_DIAGNOSIS: required prerequisite is rendered UI navigation EMPIRICAL -> EMP.1 plus `[SIMULATED] Load complete EMP.1 qualification sample`; query-parameter guesses and caught sample-load failures are not substitutes
-NOVICE_VALIDATION_BRANCH: claude/emp1-issue-1651-validation-yqgedz
-NOVICE_VALIDATION_BRANCH_HEAD: 1dead34196fe781c43b20657377a1cd239309503
-NOVICE_VALIDATION_BRANCH_RELATION_TO_MERGED_MAIN: DIVERGED_AHEAD_3_BEHIND_158
-NOVICE_VALIDATION_RUNNER: emp1-validation-audit.mjs
-NOVICE_VALIDATION_RUNNER_DISPOSITION: UNAUTHORIZED_AND_NONADMISSIBLE_AS_PRODUCT_SOURCE
-AUTHORITY_BOUNDARY: no LEG-011; no product/engineering/workflow source change justified by latest run.
-CURRENT_BLOCKER: correctly prepared external post-merge localhost validation against main merge commit 11f655e71a81b0d7ebef42e99792482b434e60db. PR #1690 is control-plane-only and not merge-authorized.
-EXACT_NEXT_ACTION: validation runner only: checkout exact merge commit; start app; navigate through rendered UI to EMPIRICAL -> EMP.1; prove EMP.1 active; click complete qualification sample; prove LAFEA.1 document/sample loaded; then import manual-audit=4; run desktop in that prepared state; resize same prepared session to 720x900 without query-param reload; run narrow; navigate Evidence -> Benchmark Evidence and perform real Enter-open/Space-close; return exact outputs and actual screenshots with NO repository mutation.
+CHAIN_HANDOVER_READY: TRUE
+VALIDATION_PASS_OBSERVED: three post-merge static Node checks PASS; historical Review/LAFEA.2 coherence supporting PASS retained
+VALIDATION_LIVE_UX: CLEAN_RENDERED_UI_PREREQUISITE_FAIL_EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED
+VALIDATION_FAILED_OR_ERROR_LATEST: complete-sample action fails before structured audit; EMP.1.A remains empty/not retained; overall input required; local method blocked
+VALIDATION_NOT_RUN_LEG010: correctly loaded desktop+narrow audits; valid CAUx Enter/Space; valid passing screenshot set; focused Playwright in custodian environment; check:imports/build/git diff --check unless separately evidenced
+DEFECT_CLASSIFICATION: QUALIFICATION_SAMPLE_ORCHESTRATION_SEQUENCE_DEFECT
+DEFECT_SOURCE_DIAGNOSIS: controller imports A/B documents and C run input then calls runEmp1Product without first executing/retaining LAFEA.1; sample factory internal A execution is intentionally not returned/injected
+DEFECT_ROADMAP_CONFIRMATION: EMP_TAB_UI_RECOMMENDATIONS.md section 4.1 documents the same clean-tab failure and recommends run/accept A before C
+AUTHORITY_BOUNDARY: no LEG-011 yet; no WRC/Pressure mechanics, retained benchmark authority, route/code/release authority, roadmap or workflow-YAML change
+CURRENT_BLOCKER: source repair is justified but not authorized under the evidence-only turn. PR #1690 remains control-plane-only and not merge-authorized.
+EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then open one bounded material leg to repair complete-sample A->B->C sequencing through the normal controller/store execution path, add positive and fail-closed falsifiers, freeze material, record receipt/endpoint, sync Issues, and stop for external re-observation.

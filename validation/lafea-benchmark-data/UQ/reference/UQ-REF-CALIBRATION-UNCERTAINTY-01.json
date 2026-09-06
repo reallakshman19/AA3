@@ -55,6 +55,6 @@
     "standardDeviation": 0,
     "expectedStandardizedResidualApplicability": "NOT_APPLICABLE_ZERO_FACTOR_UNCERTAINTY"
   },
-  "negativeCaseCount": 31,
+  "negativeCaseCount": 33,
   "nextBoundary": "RECONCILE_REFERENCE_CALIBRATION_UNCERTAINTY_PASS_TO_PARENT_1673_AND_PLAN_NEXT_REFERENCE_CASE"
 }

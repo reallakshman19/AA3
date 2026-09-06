@@ -25,7 +25,9 @@ MERGED_REPAIR_HEAD: 260d0c6b75c5d94edef33eb095384bf145a47de2
 MERGE_COMMIT: f98d56d4c644b7bb6b79d2302739d12dac720248
 MERGED_INTEGRATION_HEAD: f98d56d4c644b7bb6b79d2302739d12dac720248
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-post-merge-ep0029
-POST_MERGE_RECONCILIATION_PR: PENDING_OPEN
+POST_MERGE_RECONCILIATION_PR: 1708
+POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
+POST_MERGE_RECONCILIATION_PR_HEAD_AT_OPEN: 53316b4219b1b614792576fc2170ba276a86a83d
 POST_MERGE_STATUS_CONTEXTS: 0
 POST_MERGE_PR_WORKFLOW_RUNS: 0
 ACTIVE_ENDPOINT: EP-0029
@@ -72,7 +74,7 @@ merged_at=2026-09-06T17:15:50Z
 
 `main` was observed exactly at the merge commit immediately after merge. Post-merge status contexts = 0 and PR-triggered workflow runs = 0; zero does not create PASS.
 
-Direct metadata write to protected `main` was rejected with repository policy `Changes must be made through a pull request.` A successor metadata-only branch `agent/emp1-1651-post-merge-ep0029` was therefore created from the merge commit. No production code or engineering authority is changed by EP-0029.
+Direct metadata write to protected `main` was rejected with repository policy `Changes must be made through a pull request.` A successor metadata-only branch `agent/emp1-1651-post-merge-ep0029` was created from the merge commit and Draft PR #1708 was opened. No production code or engineering authority is changed by EP-0029. The prior merge authorization does not carry to PR #1708.
 
 The remaining validation target is the actual merged integration head `f98d56d4c644b7bb6b79d2302739d12dac720248`, not a moving later metadata relay head.
 

@@ -26,6 +26,11 @@ test('EMP.1 benchmark evidence stays authority-safe while deep CAUx audit detail
   await expect(workflow.locator('[data-role="emp1-benchmark-evidence-panel"]')).toHaveCount(0);
   await expect(panel).toBeHidden();
 
+  const evidenceToggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
+  await expect(evidenceToggle).toHaveAttribute('aria-expanded', 'false');
+  await evidenceToggle.click();
+  await expect(evidenceToggle).toHaveAttribute('aria-expanded', 'true');
+
   const benchmarkTab = analytical.locator(
     '[data-role="emp1-evidence-tab"][data-emp1-evidence-view="benchmarkEvidence"]',
   );

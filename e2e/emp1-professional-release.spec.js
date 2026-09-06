@@ -17,6 +17,10 @@ test('authorized bounded EMP.1 route executes through the real workbench without
   await expect(sample).toBeVisible();
   await sample.click();
 
+  // Execution summary is retained evidence, not permanent page content. Review &
+  // Evidence foregrounds that same governed node without changing execution state.
+  const workflow = workbench.locator('[data-role="emp1-workflow"]');
+  await workflow.getByRole('button', { name: /^7 Review & Evidence/u }).click();
   const summary = workbench.locator('[data-role="emp1-product-execution-summary"]');
   await expect(summary).toBeVisible();
   await expect(summary).toContainText('A 1 · B 1 · prepare C 1 · production C 1');
@@ -34,8 +38,12 @@ test('authorized bounded EMP.1 route executes through the real workbench without
   await expect(professional.getByRole('row').filter({ hasText: 'CODE COMPLIANT' })).toContainText('NO');
   await expect(professional.getByRole('row').filter({ hasText: 'RELEASED' })).toContainText('NO');
 
+  // Switch the bounded evidence console to the current WRC result before checking
+  // its eight-point scope. The result node remains unique in DOM custody.
+  await openEvidenceView(workbench, 'correlationResult');
   const resultCard = workbench.locator('[data-role="emp1-c-result-evidence"]');
   await expect(resultCard).toHaveCount(1);
+  await expect(resultCard).toBeVisible();
   await expect(resultCard).toContainText('Eight-location shell stress trace');
   const governing = resultCard.locator('[data-role="emp1-c-eight-point-governing"]');
   await expect(governing).toHaveCount(1);
@@ -72,6 +80,17 @@ test('authorized bounded EMP.1 route executes through the real workbench without
   expect(evidence.routeAuthorityHash).toEqual(expect.any(String));
   expect(evidence.routeAuthorityHash).toBe(evidence.routeAuthoritySnapshotHash);
 });
+
+async function openEvidenceView(workbench, surfaceId) {
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  const toggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
+  if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+  const tab = analytical.locator(
+    `[data-role="emp1-evidence-tab"][data-emp1-evidence-view="${surfaceId}"]`,
+  );
+  await tab.click();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+}
 
 async function mountEmp1Workbench(page) {
   await page.goto(HOST_URL);

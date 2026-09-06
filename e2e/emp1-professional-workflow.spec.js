@@ -69,10 +69,10 @@ test('current bounded WRC qualification sample produces current local evidence w
 
   await expect(workflow.locator('[data-role="emp1-professional-currentness-notice"]')).toHaveCount(0);
 
-  // Local result evidence is no longer part of the default document waterfall.
-  // Enter the Local Correlation task, which foregrounds the same retained result
-  // and run configuration without creating calculation or route authority.
+  // Local result remains retained but no longer contributes default page height.
+  // Enter Local Correlation, then intentionally open its selected evidence view.
   await workflow.getByRole('button', { name: /^6 Local Correlation/u }).click();
+  await openEvidenceConsole(workbench);
   const cEvidence = workbench.locator('[data-role="emp1-c-result-evidence"]');
   await expect(cEvidence).toBeVisible();
   const governing = workbench.locator('[data-role="emp1-c-eight-point-governing"]');
@@ -97,21 +97,41 @@ test('seven-step route navigation lands on the intended WRC task surface', async
 
   await workflow.getByRole('button', { name: /^4 Load Transfer/u }).click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
+  await openEvidenceView(workbench, 'results');
   await expect(workbench.locator('[data-guided-target="results"]')).toBeInViewport();
 
   await workflow.getByRole('button', { name: /^5 Section Screening/u }).click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
+  await openEvidenceConsole(workbench);
   await expect(workbench.locator('[data-role="lafea-screening-load-custody"]')).toBeInViewport();
   await expect(workbench.locator('[data-role="emp1-analytical-full-width-detail"]'))
     .toHaveAttribute('data-emp1-evidence-view', 'screeningCustody');
 
   await workflow.getByRole('button', { name: /^6 Local Correlation/u }).click();
   await expect(workbench.locator('[data-role="emp1-c-run-configuration"]')).toBeInViewport();
+  await openEvidenceConsole(workbench);
   await expect(workbench.locator('[data-role="emp1-c-result-evidence"]')).toBeVisible();
 
   await workflow.getByRole('button', { name: /^7 Review & Evidence/u }).click();
   await expect(workbench.locator('[data-role="emp1-product-execution-summary"]')).toBeInViewport();
 });
+
+async function openEvidenceConsole(workbench) {
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  const toggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
+  if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+}
+
+async function openEvidenceView(workbench, surfaceId) {
+  await openEvidenceConsole(workbench);
+  const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
+  const tab = analytical.locator(
+    `[data-role="emp1-evidence-tab"][data-emp1-evidence-view="${surfaceId}"]`,
+  );
+  await tab.click();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+}
 
 async function mountEmp1Workbench(page) {
   await page.goto(HOST_URL);

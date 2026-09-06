@@ -10,6 +10,8 @@ const paths = Object.freeze({
   rawTokens: 'e2e/emp1-human-presentation-tokens.spec.js',
   pressure: 'e2e/lafea-empirical-grouped-edit.spec.js',
   pressureStatic: 'scripts/emp1-governed-vector-table-check.mjs',
+  sampleOrchestrationStatic: 'scripts/emp1-qualification-sample-orchestration-check.mjs',
+  sampleOrchestration: 'e2e/emp1-qualification-sample-orchestration.spec.js',
   layoutStatic: 'scripts/emp1-analytical-layout-check.mjs',
   layout: 'e2e/emp1-analytical-layout.spec.js',
   coherence: 'e2e/emp1-presentation-coherence.spec.js',
@@ -55,6 +57,30 @@ for (const required of [
 ]) assert.ok(source.pressure.includes(required), `Pressure acceptance evidence missing: ${required}`);
 assert.ok(source.pressureStatic.includes('PRESSURE'),
   'static governed-table qualification must retain Pressure coverage');
+
+// EP-0022 / LEG-011: the complete qualification sample must establish A through
+// the normal controller/store run path before B/C, and must fail closed before B
+// when A cannot become current and qualified. The factory may not inject its own
+// private A execution into runtime custody.
+for (const required of [
+  'PASS_STATIC_QUALIFICATION_SAMPLE_A_THEN_B_THEN_C_CONTRACT',
+  'NORMAL_CONTROLLER_STORE_RUN',
+  'factoryExecutionInjectionAllowed: false',
+  "this.store.selectStage('LAFEA.1')",
+  'const ranA = this.run()',
+  "EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED",
+]) assert.ok(source.sampleOrchestrationStatic.includes(required),
+  `qualification-sample static sequencing evidence missing: ${required}`);
+for (const required of [
+  'clean complete sample executes and retains A before B/C',
+  'complete sample stops before B/C when A is not current and qualified',
+  "aExecutionStatus: 'QUALIFIED'",
+  "aQualificationState: 'ACCEPTED'",
+  'bDocumentLoaded: false',
+  'runInputLoaded: false',
+  "failureCode: 'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED'",
+]) assert.ok(source.sampleOrchestration.includes(required),
+  `qualification-sample browser falsifier missing: ${required}`);
 
 // TASK-003 / recovery #1664 robust revision: presentation selection is the UI
 // source of truth; Inspector content is contextual; deep custody is overlay/on-
@@ -147,9 +173,18 @@ for (const required of [
 ]) assert.ok(source.benchmarkStatic.includes(required), `benchmark static evidence missing: ${required}`);
 
 // Existing Stage-17 carrier still owns every focused EMP.1 browser family.
-for (const path of [paths.rawTokens, paths.pressure, paths.layout, paths.coherence, paths.benchmark]) {
+for (const path of [
+  paths.rawTokens,
+  paths.pressure,
+  paths.sampleOrchestration,
+  paths.layout,
+  paths.coherence,
+  paths.benchmark,
+]) {
   assert.ok(source.carrier.includes(path), `Stage-17 carrier missing ${path}`);
 }
+assert.ok(source.carrier.includes(paths.sampleOrchestrationStatic),
+  `Stage-17 carrier missing ${paths.sampleOrchestrationStatic}`);
 
 // Deterministic human-observed fallback mirrors the robust task-console
 // acceptance while explicitly refusing to manufacture automated browser PASS.
@@ -204,12 +239,18 @@ assert.equal(source.carrier.includes('.github/workflows/'), false);
 assert.equal(source.manualAudit.includes('../src/core/'), false);
 
 console.log(JSON.stringify({
-  schema: 'emp1-issue1651-acceptance-check/v4',
+  schema: 'emp1-issue1651-acceptance-check/v5',
   status: 'PASS_STATIC_ROBUST_SPLIT_CONSOLE_ACCEPTANCE_MANIFEST_EXECUTABLE_BROWSER_GATES_RETAINED',
   issue: 1651,
   recoveryIssue: 1664,
   rawTokenTaskInspectorRouteEvidenceViewsEnumerated: true,
   pressureMatrix: { identities: 5, valueColumns: 2, governedCells: 10 },
+  qualificationSample: {
+    aExecutedBeforeBAndC: true,
+    aCurrentQualifiedRequired: true,
+    factoryExecutionInjectionAllowed: false,
+    browserFalsifierRetained: true,
+  },
   splitConsole: {
     professionalSteps: 7,
     explicitTaskSelectionOwnsPresentation: true,

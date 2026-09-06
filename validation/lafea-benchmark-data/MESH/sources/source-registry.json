@@ -1,7 +1,7 @@
 {
   "schema": "lafea-mesh-source-registry/v1",
   "benchmarkId": "BM-MESH",
-  "stage": "M2",
+  "stage": "M3",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "baselineTree": "5059890f372e7d885c7e3743bf806826444a6c8e",
   "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
@@ -24,7 +24,11 @@
     {"sourceId":"S-016","role":"lafea4MultiPatchMidsurfaceContract","path":"src/workspace/lafea-shell-multipatch-midsurface-contract.js","blobSha":"45158697eb552688f71b68ce09c9e33869f263f2"},
     {"sourceId":"S-017","role":"lafea4MultiPatchMeshProducer","path":"src/workspace/lafea-shell-multipatch-mesh-core.js","blobSha":"b54063378d8265e5d5905975368b8094c251b8e7"},
     {"sourceId":"S-018","role":"lafea3DomainFirstMeshRequestContract","path":"src/workspace/lafea-domain-first-requests.js","blobSha":"51907e33fcf363e1d84fa491e7124a3c961529a0"},
-    {"sourceId":"S-019","role":"explicitMappedQ8Primitive","path":"src/core/lafea-meshing/mapped-mitc-mesh.js","blobSha":"4ad4740e3853cfec31ea372710713a8e270619f6"}
+    {"sourceId":"S-019","role":"explicitMappedQ8Primitive","path":"src/core/lafea-meshing/mapped-mitc-mesh.js","blobSha":"4ad4740e3853cfec31ea372710713a8e270619f6"},
+    {"sourceId":"S-020","role":"lafea4ShellThicknessBasisContract","path":"src/workspace/lafea-shell-thickness-basis.js","blobSha":"643b73a6c6589cb2b2dbaa2879246d6e3ef057f1"},
+    {"sourceId":"S-021","role":"lafea4ExistingFixtureThicknessSource","path":"scripts/lafea.4-fixtures.mjs","blobSha":"b3e68b24064221a7d35dd1fbb156addfc41667ef"},
+    {"sourceId":"S-022","role":"lafea4ThicknessBasisQualificationWitness","path":"scripts/lafea-tech2-thickness-curvature-check.mjs","blobSha":"31348e942aeca59c17e7c00df3ab4732a60e1cb6"},
+    {"sourceId":"S-023","role":"benchmarkFrozenShellThicknessFixture","path":"validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json","blobSha":"b0e408cee23df76d247a9dc7a7ac2bc49c144094"}
   ],
   "trace": {
     "LAFEA.3": {
@@ -40,7 +44,15 @@
       "multiPatchProducer": "S-017",
       "topologyAdapter": "S-005",
       "producerEngine": "S-003",
-      "canonicalMeshContract": "S-006"
+      "canonicalMeshContract": "S-006",
+      "thicknessBasisContract": "S-020"
+    },
+    "M3-THICKNESS": {
+      "qualityGate": "S-007",
+      "existingFixtureValueSource": "S-021",
+      "basisContract": "S-020",
+      "qualificationWitness": "S-022",
+      "frozenBenchmarkFixture": "S-023"
     },
     "TASK-005": {
       "overCeilingPublication": "S-002",
@@ -54,7 +66,9 @@
     "supportingDesignProposalMayInformLayoutButIsNotExecutionAuthority": true,
     "productionOutputUsedToDefineExpectedValues": false,
     "benchmarkOnlyMeshGeneratorUsed": false,
+    "benchmarkThicknessFixtureOwnerAuthorized": true,
+    "benchmarkThicknessInventedFromUncitedValue": false,
     "productionSourceMutationAuthorized": false
   },
-  "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_REQUIREMENT_CHANGES"
+  "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_OR_M3_THICKNESS_REQUIREMENT_CHANGES"
 }

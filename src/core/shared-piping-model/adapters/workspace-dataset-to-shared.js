@@ -12,6 +12,7 @@ import {
   LOAD_EVIDENCE_SPECS,
   SUPPORT_EVIDENCE_SPECS,
 } from '../property-specs.js';
+import { withConfiguredSourceAttributeAliases } from '../source-attribute-aliases.js';
 import { createSharedPipingModel } from '../shared-piping-model.js';
 import { collectSupportEvidence } from '../support-evidence.js';
 

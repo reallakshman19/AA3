@@ -17,7 +17,12 @@ MERGED_IMPLEMENTATION_PR: 1675
 PR_1675_STATUS: MERGED_BY_OWNER_COMMAND
 PR_1675_HEAD_AT_MERGE: 661b2b0c0eacb3243e037e5356b6f2188596a3d6
 PR_1675_MERGE_COMMIT: 11f655e71a81b0d7ebef42e99792482b434e60db
-MAIN_HEAD_OBSERVED_POST_MERGE: 11f655e71a81b0d7ebef42e99792482b434e60db
+VALIDATION_EVIDENCE_TESTED_HEAD: 11f655e71a81b0d7ebef42e99792482b434e60db
+MAIN_HEAD_OBSERVED: 8eefaf0d1b9effdcd395dbd54a0b027bc43f308c
+MAIN_DRIFT_FROM_TESTED_HEAD: AHEAD_39_BEHIND_0
+MAIN_DRIFT_SOURCE: UQ_REFERENCE_LIMIT_STATE_AND_SENSITIVITY_WORK
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_NO_EMP1_OVERLAP
+MAIN_DRIFT_AFFECTS_DIAGNOSIS: FALSE
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-postmerge-reconciliation-0020
 POST_MERGE_RECONCILIATION_PR: 1690
 POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
@@ -34,14 +39,14 @@ CURRENT_MATERIAL_LEG: NONE
 ## Acceptance ledger
 
 - TASK-001 | Live-DOM raw-machine-token regression gate. | SOURCE MERGED. Full live acceptance remains pending because the complete qualification sample cannot currently establish the required prepared state.
-- TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE MERGED. Post-merge static acceptance reports 5 identities × Internal/External = 10 governed cells PASS; correctly prepared live confirmation remains pending.
+- TASK-002 | Shared identity × value-column renderer; Pressure 5 × 2. | SOURCE MERGED. Static acceptance reports 5 identities × Internal/External = 10 governed cells PASS; correctly prepared live confirmation remains pending.
 - TASK-003 | Replace append-only waterfall with split-console/equivalent architecture. | LEG-010 MERGED. Human-factor re-observation is blocked before structured audit by the complete-sample orchestration failure.
 - TASK-004 | CAUx staged integration/hardening. | SOURCE MERGED. Valid post-merge CAUx Enter/Space and evidence-panel observation remain NOT_RUN because the prerequisite sample fails.
 - TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED. The newly confirmed defect is orchestration-only; no engineering authority mutation is implied.
 
 ## EP-0022 valid prerequisite failure
 
-Target:
+Tested target:
 
 ```text
 11f655e71a81b0d7ebef42e99792482b434e60db
@@ -65,7 +70,7 @@ The resulting UI showed EMP.1.A `EMPTY`, no validated stage source document, cus
 
 ## Source diagnosis
 
-At integrated main, the complete-sample button dispatches `LafeaWorkbenchController.loadEmp1QualificationSample()`.
+At the tested integrated head, the complete-sample button dispatches `LafeaWorkbenchController.loadEmp1QualificationSample()`.
 
 That method currently:
 
@@ -84,6 +89,12 @@ The exact defect is already described in `EMP_TAB_UI_RECOMMENDATIONS.md` §4.1: 
 
 DEFECT_CLASSIFICATION: `QUALIFICATION_SAMPLE_ORCHESTRATION_SEQUENCE_DEFECT`
 
+## Current-main drift reconciliation
+
+After the validation evidence was produced, `main` advanced from `11f655e71a81b0d7ebef42e99792482b434e60db` to `8eefaf0d1b9effdcd395dbd54a0b027bc43f308c`.
+
+The compare is 39 commits ahead / 0 behind. Changed files are limited to separate LAFEA-UQ reference limit-state/sensitivity chains, qualification records, UQ reference JSON, and UQ scripts/libraries. No EMP.1 controller, qualification-sample, split-console, WRC/Pressure, retained benchmark, route registry, roadmap, or workflow-YAML file changed. Therefore the EP-0022 diagnosis remains valid and the next repair, if authorized, should simply base on current main `8eefaf0d...`.
+
 ## Expected repair boundary
 
 A future bounded material leg should:
@@ -101,14 +112,14 @@ A future bounded material leg should:
 ## Validation truth
 
 - implementation #1675: MERGED;
-- three static post-merge Node checks: PASS;
+- three static Node checks: PASS at tested integrated head `11f655e71...`;
 - clean rendered-UI complete-sample prerequisite: FAIL with `EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED`;
 - correctly sample-loaded desktop structured audit: NOT_RUN;
 - correctly sample-loaded narrow structured audit: NOT_RUN;
 - valid post-merge CAUx Enter/Space: NOT_RUN;
 - valid passing screenshot set: NOT_RUN;
 - focused Playwright in custodian environment: BLOCKED_ENVIRONMENT / NOT_RUN;
-- zero status contexts/workflow runs are not PASS.
+- PR #1690 current observed status contexts/workflow runs = 0/0; zero is not PASS.
 
 ## Benchmark / authority ledger
 
@@ -146,6 +157,6 @@ HANDOVER_VALIDATION_STATUS: FAIL
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: a concrete source defect is confirmed, but this turn supplied evidence rather than a recognized Owner progression command. PR #1690 remains control-plane-only and not merge-authorized.
+CURRENT_BLOCKER: a concrete source defect is confirmed, but this turn supplied evidence rather than a recognized Owner progression command. Current main is `8eefaf0d1b9effdcd395dbd54a0b027bc43f308c`; its 39-commit drift from the tested head is unrelated and does not alter the diagnosis. PR #1690 remains control-plane-only and not merge-authorized.
 
-EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then open one bounded material leg to repair the complete-sample A -> B -> governed-C sequencing through the normal controller/store execution path, align positive/negative falsifiers and manual validation, freeze material, record receipt/endpoint, synchronize Issues, then stop for external post-fix re-observation.
+EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then base one bounded material leg on current main `8eefaf0d1b9effdcd395dbd54a0b027bc43f308c` to repair complete-sample A -> B -> governed-C sequencing through the normal controller/store execution path, align positive/negative falsifiers and manual validation, freeze material, record receipt/endpoint, synchronize Issues, then stop for external post-fix re-observation.

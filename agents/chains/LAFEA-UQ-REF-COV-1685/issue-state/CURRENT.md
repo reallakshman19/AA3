@@ -7,10 +7,10 @@ PARENT_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1673
 CHAIN_ID: LAFEA-UQ-REF-COV-1685
 UPDATED_AT: 2026-09-06
 COMMON_PROTOCOL_BASIS: 3e21f0054ab8d80b7fe045e7c105a81643fcbbf7
-ISSUE_CHAIN_ROOT_COMMENT_ID: PENDING
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: PENDING
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
-ISSUE_HANDOVER_SYNC_STATUS: OUT_OF_SYNC_PENDING_INITIAL_PUBLICATION
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5557418057
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5557418871
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557419871
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ## Parent retained evidence
 
@@ -53,5 +53,5 @@ QUESTION_SET_STATUS: CURRENT
 - no solver/mesh/recovery/program/oracle-tolerance/roadmap/workflow change;
 - B03 remains unactivated.
 
-CURRENT_BLOCKER: PREWORK_ISSUE_SYNC_REQUIRED_BEFORE_MATERIAL
-EXACT_NEXT_ACTION: publish/synchronize prework control plane, then implement LEG-001 and stop at exact-head checker execution.
+CURRENT_BLOCKER: NONE_PREWORK_COMPLETE
+EXACT_NEXT_ACTION: implement LEG-001 correlated-Gaussian reference case/utility/checker only, inspect exact material diff, and stop at exact-head checker execution.

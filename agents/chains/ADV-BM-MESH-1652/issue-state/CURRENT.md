@@ -3,37 +3,35 @@
 CHAIN_ID: ADV-BM-MESH-1652
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0025
+CURRENT_ENDPOINT: EP-0026
 
 ## Original task / acceptance ledger
 
 TASK-001 | Governance gate assertion repair and full meshing-chain execution. | CLOSED_PASS_MERGED | Owner exact-head execution PASS; merged via PR #1656 at `2829fe58113237741ea3a1172cdf008e7c7e994a`
 TASK-002 | Freeze M2 geometry and cited closed-form oracle. | CLOSED_FROZEN_ARTIFACTS | LEG-006 material head `ecc7a7608dc204fa79384503c5e81d245020407f`
 TASK-003 | Define mesh ladders and physical probes. | CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED | LEG-007 definitions; LEG-008 custody repair
-TASK-004 | Implement M0–M4 staged runner. | STATIC_IMPLEMENTED_M3_THICKNESS_FIXTURE_PREWORK_M4_BLOCKED | LEG-009 runner; LEG-010 distributions; LEG-011 multipatch repair; EP-0025 authorizes cited h/t thickness fixture freeze only
+TASK-004 | Implement M0–M4 staged runner. | STATIC_IMPLEMENTED_M3_THICKNESS_RUNNER_WIRING_READY_M4_BLOCKED | LEG-009 runner; LEG-010 distributions; LEG-011 multipatch repair; LEG-014 froze cited 1.5 mm shell thickness; LEG-015 is runner wiring
 TASK-005 | Define exact-code negative cases. | CLOSED_FROZEN_EXACT_CODE_DEFINITIONS | LEG-012 freezes four governed exact-code definitions
 TASK-006 | Register BM-MESH in benchmark program. | CLOSED_REGISTERED | LEG-013 registers BM-MESH while preserving live-main B02 and `activeCaseId=B02`
 TASK-007 | Keep release and temperature authority false. | SATISFIED_CURRENTLY | no authority mutation
 
 ## Input ledger
 
-INPUT-001 | Issue Basis main `b4eb0cea9a7a73ddaec86210373ed6f3acb714eb`. | AVAILABLE | immutable basis
-INPUT-002 | Production multipatch evolution. | RECONCILED | LEG-011 exercises qualified production multipatch shell contracts
-INPUT-003..009 | TASK-001 governance/source/quality/producer-binding evidence. | AVAILABLE_PASS | merged
 INPUT-010 | M4 frozen physics fixture authority. | UNRESOLVED | material/load/support/loadCase/response/recovery authority not frozen
 INPUT-011 | Issue #1652 M2 case classes. | AVAILABLE_OWNER_AUTHORITY | frozen in LEG-006
 INPUT-013 | M2 fixture/oracle/source artifacts. | AVAILABLE_FROZEN | LEG-006
 INPUT-014 | TASK-003 ladder/probe authority. | AVAILABLE_FROZEN | LEG-007 definitions; M4 physics fields deferred
-INPUT-015 | Source custody. | AVAILABLE_PINNED_THROUGH_S019 | LEG-012 adds request and mapped-Q8 rejection sources
-INPUT-017 | LAFEA.4 M3 h/t thickness authority. | OWNER_AUTHORIZED_PREWORK | EP-0025 permits a benchmark-only frozen thickness basis only when traced to existing LAFEA.4 source/basis contracts
+INPUT-015 | Source custody. | AVAILABLE_PINNED_THROUGH_S023 | LEG-014 adds thickness basis/source/witness/frozen fixture pins
+INPUT-017 | LAFEA.4 M3 h/t thickness authority. | FROZEN_OWNER_AUTHORIZED | LEG-014 freezes 1.5 mm uniform thickness in `convergence/shell-thickness.json`
 INPUT-018 | M3 non-thickness ladder/quality inputs. | AVAILABLE_STATIC | all four production ladders wired
 INPUT-019 | LAFEA.4 multipatch production midsurface contract. | AVAILABLE_PRODUCTION_PINNED_S016 | exact two-patch seam class
 INPUT-020 | LAFEA.4 multipatch production mesh core. | AVAILABLE_PRODUCTION_PINNED_S017 | seam welding/ownership/quality evidence
 INPUT-021 | TASK-005 governed rejection surfaces. | FROZEN_DEFINITIONS | LEG-012
 INPUT-022 | Live-main benchmark program at `f8d051c989c8a0627db7560f996baf72987775d4`. | RECONCILED_IN_LEG_013 | B02 and `activeCaseId=B02` preserved while BM-MESH is appended
-INPUT-023 | LAFEA.4 thickness basis contract `src/workspace/lafea-shell-thickness-basis.js`. | AVAILABLE_PRODUCTION | source-hash-bound positive thickness basis; rejects mismatched naked injection
-INPUT-024 | LAFEA.4 fixture source `scripts/lafea.4-fixtures.mjs`. | AVAILABLE_EXISTING_FIXTURE | `cylindricalSource` assigns uniform element thickness 1.5
-INPUT-025 | TECH2 thickness witness `scripts/lafea-tech2-thickness-curvature-check.mjs`. | AVAILABLE_QUALIFICATION_WITNESS | asserts `UNIFORM_THICKNESS` and `uniformThickness = 1.5`
+INPUT-023 | LAFEA.4 thickness basis contract. | PINNED_S020 | source-hash-bound positive thickness basis
+INPUT-024 | LAFEA.4 existing fixture value source. | PINNED_S021 | `cylindricalSource` assigns thickness 1.5 to every generated shell element
+INPUT-025 | TECH2 thickness qualification witness. | PINNED_S022 | asserts `UNIFORM_THICKNESS` and 1.5 min/max/uniform thickness
+INPUT-026 | Frozen BM-MESH shell thickness fixture. | PINNED_S023 | blob `b0e408cee23df76d247a9dc7a7ac2bc49c144094`
 
 ## Benchmark / oracle ledger
 
@@ -41,17 +39,12 @@ BM-001 | `npm run check:lafea-meshing`. | PASS_OWNER_EXACT_HEAD_MERGED | full de
 BM-002 | M0 producer conformance. | IMPLEMENTED_STATIC_NOT_RUN | continuum/shell/multipatch production producers wired
 BM-003 | M1 determinism. | IMPLEMENTED_STATIC_NOT_RUN | in-process/cross-process/shuffled inputs wired including multipatch
 BM-004 | M2 independent geometry oracle. | IMPLEMENTED_STATIC_NOT_RUN | continuum and multipatch geometry/oracles wired to production producers
-BM-005 | M3 quality distribution ladder. | THICKNESS_FIXTURE_PREWORK_READY_RUNNER_WIRING_PENDING | all four non-thickness ladders wired; cited 1.5 mm thickness fixture is the active bounded leg
+BM-005 | M3 quality distribution ladder. | THICKNESS_AUTHORITY_FROZEN_RUNNER_WIRING_READY | h/t fixture is frozen; existing runner still contains obsolete missing-thickness blocker
 BM-006 | M4 producer-mesh solver convergence. | PROBE_IDENTITIES_FROZEN_PHYSICS_UNRESOLVED_NOT_RUN | solver/compiler and physics remain protected
 BM-MESH | benchmark-program registration. | REGISTERED_READY_NOT_ACTIVE_NOT_RUN | LEG-013; active program case remains B02
 
 ## Material history
 
-LEG-001 | `3da01c2948230dc349b79ca030fb488fffdf2f61` | mesh-quality panel stale display assertion
-LEG-002 | `a4b3ef17a234f3cce3a20e0da5a0843a0f52b3e0` | curved-shell immediate-Run qualifier repair
-LEG-003 | `8283a9b6e6ee9b8a38f198b7e1dbd9acc6e525b5` | exact source authority + retained two-hole quality block
-LEG-004 | `2e565089e54a7d1f97e5552349ae1a6980c4c1fc` | stop invoking disabled LAFEA.4 product-refinement action
-LEG-005 | `8c86e25a26df1987d0228bf629b6298104fc3b25` | focused B02D-V2 producer-binding checker
 LEG-006 | `ecc7a7608dc204fa79384503c5e81d245020407f` | M2 geometry/oracle/source freeze
 LEG-007 | `a52ce12ebb3ff1683e7db6352a586364e3dbd520` | systematic production-profile ladders + fixed physical probe identities + source custody
 LEG-008 | `1273c409ffd39279cf73c3a280ff019cb275e120` | source-registry S-012/S-013 repair
@@ -60,49 +53,25 @@ LEG-010 | `1c50ca724277dd0e7f980f330eabefdb81e709b3` | LAFEA.3 M3 distributions/
 LEG-011 | `ec55d5c22f54dc74b3ef0665ce29929a09bc30c2` | production multipatch M2/M3 repair + S-016/S-017 custody
 LEG-012 | `8310d58838bd9057a799e115a5a25bc0081f175e` | exact-code negative definitions + S-018/S-019 custody
 LEG-013 | `474eb8b633e2afabf8a4773cfb5e17bd8a44b0ae` | BM-MESH benchmark-program registration preserving live-main B02
-LEG-014 | ACTIVE_PREWORK_EP_0025 | cited LAFEA.4 benchmark thickness fixture freeze
+LEG-014 | `cdec382a695dc4222e01e85cd371bfd12753bd36` | source-cited 1.5 mm LAFEA.4 shell-thickness fixture + S-020..S-023 custody
+LEG-015 | ACTIVE_PREWORK_EP_0026 | wire frozen h/t fixture into staged M3 runner
 
-## M3 thickness source decision
+## M3 thickness authority
 
-The bounded benchmark thickness is `1.5 mm`, not selected from BM-MESH mesh or solver output. The value is inherited from the existing LAFEA.4 `cylindricalSource` fixture, whose elements are uniformly 1.5 thick; the production thickness-basis contract requires source-hash-bound positive values, and the TECH2 witness asserts the resulting classification is `UNIFORM_THICKNESS` with `uniformThickness = 1.5`.
+The frozen value is `1.5 mm`, inherited from existing LAFEA.4 source/basis evidence rather than selected from BM-MESH output. Only that scalar thickness is admitted. Material properties, loads, restraints, loadCaseId, solver response and recovery/acceptance remain excluded.
 
-Only this scalar thickness basis is admitted into BM-MESH M3 h/t qualification. Material properties, loads, restraints, load case, solver response and other source fields are explicitly not imported.
-
-## TASK-005 frozen definitions
-
-NEG-OVER-CEILING | production evidence publication | `LAFEA_MESH_GENERATION_RESOURCE_LIMIT_EXCEEDED`
-NEG-UNBOUND-FAMILY | LAFEA.3 request contract | `LAFEA_MESH_GENERATION_V2_ELEMENT_FAMILY_NOT_AUTHORIZED`
-NEG-NON-4-SIDED-MAPPED-Q8 | explicit mapped primitive | `MAPPED_MESH_TOPOLOGY_MISMATCH` | automatic producer fallback remains valid and is not redefined as rejection
-NEG-NONCONFORMING-SEAM | multipatch midsurface contract | `LAFEA_SHELL_MULTIPATCH_SEAM_NOT_COINCIDENT_OPPOSITE`
-
-## Roadmap ledger
-
-RM-001 | docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31 | OWNER_ROADMAP | PRIMARY | ALIGNED | no mutation
-RM-002 | docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a | PROJECT_ROADMAP | SECONDARY | ALIGNED | no mutation
-
-## Qualification / owner display policy
-
-OWNER_DIRECTIVE: DO_NOT_CREATE_QUESTIONS_UNLESS_EXPLICITLY_ASKED
-EXISTING_QUESTION_SET: agents/qualifications/ADV-BM-MESH-1652/QS-ADV-BM-MESH-1652-0007-questions.md
-QUESTION_SET_ACTION: RETAINED_NOT_REFRESHED
-QUESTION_DISPLAY: HIDE
-TAKEOVER_QUALIFICATION_READY: TRUE
+M3 runner wiring must evaluate actual produced shell element characteristic lengths through the existing `qualifyShellSizeToThicknessRatio` gate with the issue-owned 0.5t-2t band. Production behavior outside the band remains `WARNING`; the benchmark may not convert it into a new BLOCK threshold.
 
 ## PR state
 
-PREDECESSOR_PR: #1662 MERGED at `80f335b750a13a06741a787106949bada1ad7f37`
 PR: #1663
 PR_STATUS: OPEN_DRAFT_UNMERGED_NON_MERGEABLE_AT_LAST_CHECK
 BRANCH: engineering/bm-mesh-1652-m2-data
-LAST_MATERIAL_HEAD: 474eb8b633e2afabf8a4773cfb5e17bd8a44b0ae
-CURRENT_ENDPOINT: EP-0025
+LAST_MATERIAL_HEAD: cdec382a695dc4222e01e85cd371bfd12753bd36
+CURRENT_ENDPOINT: EP-0026
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-## Current diagnosis
-
-The Owner has admitted only the next M3 dependency: a source-cited benchmark shell-thickness fixture. Existing LAFEA.4 source/basis evidence provides a non-invented uniform 1.5 mm value. This leg does not authorize runner execution changes or any M4 physics.
-
 ## Exact next action
 
-Freeze `validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json` at 1.5 mm with explicit source/basis/witness custody, update only the MESH source registry and bucket manifest as required, then reconcile LEG-014. M3 runner wiring remains a subsequent implementation step and no M3 PASS is inferred.
+LEG-015 may change only `scripts/lafea-mesh-benchmark-run.mjs` and `validation/lafea-benchmark-data/MESH/bucket-manifest.json` as necessary to consume and validate the frozen thickness fixture, retain per-element h/t distributions/status counts at all three shell ladder levels, remove the obsolete missing-thickness blocker, and leave M4 fail-closed. Static validation is required; no M3 execution PASS may be claimed unless actually run.

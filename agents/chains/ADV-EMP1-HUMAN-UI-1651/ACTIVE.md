@@ -12,8 +12,8 @@ AGENT_INSTANCE_ID: chatgpt:0b5812d3-4a7d-49b8-99e5-8140ed62e07a
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651.
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0017
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0017.md
+ENDPOINT: EP-0018
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0018.md
 PR: 1675
 PR_STATUS: OPEN_DRAFT
 BRANCH: agent/emp1-1651-split-console-leg009
@@ -33,6 +33,7 @@ SUPPORTING_VALIDATION_PR_HEAD: c106d489fa125e75f02843d84034f6324357fa7b
 SUPPORTING_VALIDATION_PR_STATUS_CONTEXTS: 0
 SUPPORTING_VALIDATION_PR_WORKFLOW_RUNS: 0
 NONCANONICAL_HANDOVER_PR: 1684
+NONCANONICAL_HANDOVER_PR_STATUS: CLOSED_UNMERGED
 NONCANONICAL_HANDOVER_PR_DISPOSITION: OWNER_REJECTED_AS_NOVICE_ARTIFACT_NO_TAKEOVER
 LATEST_MATERIAL_HEAD: dc2df7a8a8b26feea26d29dbf0741794f788cfac
 LAST_COMPLETED_MATERIAL_LEG: LEG-010
@@ -51,20 +52,20 @@ AUTHORITY_DOMAIN: EMP.1 presentation/information architecture and acceptance gat
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_EPOCH: 22
 CUSTODY_OWNER_INSTRUCTION: NO_TAKEOVER_CURRENT_CUSTODIAN_CONTINUES
-COORDINATION_STATE: EP0017_VALIDATION_PREREQUISITE_DISAMBIGUATED_RERUN_PENDING
+COORDINATION_STATE: EP0018_NO_TAKEOVER_RECONCILIATION_PENDING_ISSUE_SYNC
 POST_BASIS_DRIFT: NONE; main unchanged and no new material source opened
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0017
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0018
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5557291832
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0018_COMMENT_SYNC
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
 RECOVERY_CHILD_TITLE: EMP.1 recovery: replace residual waterfall with split-console UI
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5557292405
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING
 OWNER_TEXT_OBSERVED: `no take over, you will do. that was a novice agent text! proceed`
 OWNER_PROGRESSION_COMMAND: NONE
 OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
@@ -94,5 +95,5 @@ VALIDATION_NOT_RUN_LEG010: exact complete-sample-loaded rerun; passing screensho
 VALIDATION_BLOCKED_ENVIRONMENT: focused Playwright remains BLOCKED_ENVIRONMENT / NOT_RUN; zero status contexts/workflows are not PASS
 VALIDATION_PROTOCOL_DIAGNOSIS: exact prerequisite is `[SIMULATED] Load complete EMP.1 qualification sample`; `[SIMULATED] Load EMP.1.A demonstration source` is distinct and is not a substitute. `seedQualificationPressure` only adds P-EXTERNAL to an existing LAFEA.1 document.
 AUTHORITY_BOUNDARY: no LEG-011; no product/engineering/workflow source change.
-CURRENT_BLOCKER: external sample-loaded localhost rerun remains required. PR #1675 merge is Owner-only and not authorized; PR #1681 is supporting evidence only and also has no merge authorization.
+CURRENT_BLOCKER: external sample-loaded localhost rerun remains required. PR #1675 merge is Owner-only and not authorized; PR #1681 is supporting evidence only and also has no merge authorization. PR #1684 is closed and non-canonical.
 EXACT_NEXT_ACTION: current custodian continues. Checkout dc2df7a8a8b26feea26d29dbf0741794f788cfac, start localhost, enter EMPIRICAL -> EMP.1, click `[SIMULATED] Load complete EMP.1 qualification sample` (do not substitute the demonstration-source action), run desktop `runEmp1ManualBrowserAudit({ seedQualificationPressure: true })`, then narrow `runEmp1ManualBrowserAudit()`. Accept only each object's own status. Closeout requires both PASS_CURRENT_VIEWPORT_DOM_OBSERVATION with failures=[], CAUx Enter/Space observation, and desktop default/readiness-open/narrow screenshots.

@@ -23,9 +23,9 @@ CURRENT_REPAIR_PR: 1696
 CURRENT_REPAIR_PR_STATUS: OPEN_DRAFT_FAILED_EXECUTABLE_VALIDATION_NOT_MERGE_AUTHORIZED
 CURRENT_REPAIR_BRANCH: agent/emp1-1651-qualification-sample-leg011
 MATERIAL_BASE_MAIN: 8eefaf0d1b9effdcd395dbd54a0b027bc43f308c
-MAIN_HEAD_OBSERVED: 65a5aa6c29ef533f358e5c4c296318025dfafe9f
-MAIN_DRIFT_FROM_MATERIAL_BASE: AHEAD_18_BEHIND_0
-MAIN_DRIFT_CLASSIFICATION: UNRELATED_LAFEA_UQ_REFERENCE_VALIDATION_NO_EMP1_OVERLAP
+MAIN_HEAD_OBSERVED: 687b9ff3b8884031e4776f031af7a739f29eb2c8
+MAIN_DRIFT_FROM_MATERIAL_BASE: AHEAD_34_BEHIND_0
+MAIN_DRIFT_CLASSIFICATION: UNRELATED_LAFEA_UQ_REFERENCE_VALIDATION_AND_CALIBRATION_NO_EMP1_OVERLAP
 
 LAST_COMPLETED_MATERIAL_LEG: LEG-011
 LATEST_MATERIAL_HEAD: dfc7e0f90fdd15dc1bf8e48b462b612b27bfbf5f
@@ -76,4 +76,4 @@ STAGE17_CLASSIFICATION: independent stale baseline gate; current bounded gamma5 
 AUTHORITY_BOUNDARY: no WRC/Pressure mechanics, route registry, benchmark source/tolerance/authority, roadmap, workflow YAML, code/release authority or production authorization change is justified by this evidence.
 
 CURRENT_BLOCKER: executable repair failure is diagnosed; PR #1696 must not merge. Human-factor acceptance cannot resume until the sample factory returns a valid normalized A/B/C source bundle and focused Playwright passes.
-EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then branch from current main, normalize qualification A through the public LAFEA.1 workbench normalizer before execute/refresh, preserve source-only factory output, align stale public-product test expectations to current bounded-route authority without changing authority, rerun static + focused Playwright + Stage-17, freeze a new material leg, and only after executable PASS resume desktop/narrow/CAUx human observation.
+EXACT_NEXT_ACTION: await fresh Owner `proceed next`; then branch from current main 687b9ff3b8884031e4776f031af7a739f29eb2c8 (or later observed main), normalize qualification A through the public LAFEA.1 workbench normalizer before execute/refresh, preserve source-only factory output, align stale public-product test expectations to current bounded-route authority without changing authority, rerun static + focused Playwright + Stage-17, freeze a new material leg, and only after executable PASS resume desktop/narrow/CAUx human observation.

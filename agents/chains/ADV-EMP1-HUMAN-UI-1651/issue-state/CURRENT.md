@@ -3,11 +3,11 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0028_PUBLICATION
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560757230
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560758060
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560828301
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560828836
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
@@ -126,6 +126,9 @@ fixed material head = 7f81c19a236fc6075a26ed3fccfece808406c7a6
 main = 8da6ae56f6f8632892ec532fbfe2534552355374
 ```
 
+Immutable parent endpoint comment: `5560828301`.
+Recovery checkpoint comment: `5560828836`.
+
 ## Benchmark / authority ledger
 
 - CAUx retained comparison: 8/8 within frozen 3%; worst relative 2.0355862430856293% at Cu; worst absolute 26.786740343133943 kPa at Du; governing reference and EMP.1 both Du; agreement true. Comparison evidence only, not global WRC method/code/release authority.
@@ -164,4 +167,4 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 CURRENT_BLOCKER: none to Owner-authorized merge. Exact-head executable/human validation debt remains open and truthful.
-EXACT_NEXT_ACTION: publish EP-0028 to the Issue control plane; if required transition PR #1701 from Draft to Ready; merge with expected-head guard; reconcile merged `main`; consume the queued `proceed next` as one bounded post-merge progression.
+EXACT_NEXT_ACTION: if required transition PR #1701 from Draft to Ready; merge with expected-head guard; reconcile merged `main`; consume the queued `proceed next` as one bounded post-merge progression.

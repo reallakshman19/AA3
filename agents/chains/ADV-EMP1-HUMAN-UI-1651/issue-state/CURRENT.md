@@ -3,11 +3,11 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0029
 UPDATED_AT: 2026-09-06
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0029_PUBLICATION
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560828301
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560828836
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5560870606
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5560871405
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
@@ -77,6 +77,9 @@ merged_at=2026-09-06T17:15:50Z
 Direct metadata write to protected `main` was rejected with repository policy `Changes must be made through a pull request.` A successor metadata-only branch `agent/emp1-1651-post-merge-ep0029` was created from the merge commit and Draft PR #1708 was opened. No production code or engineering authority is changed by EP-0029. The prior merge authorization does not carry to PR #1708.
 
 The remaining validation target is the actual merged integration head `f98d56d4c644b7bb6b79d2302739d12dac720248`, not a moving later metadata relay head.
+
+Immutable parent endpoint comment: `5560870606`.
+Recovery checkpoint comment: `5560871405`.
 
 ## Benchmark / authority ledger
 

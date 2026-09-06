@@ -2,7 +2,7 @@
  * Browser-native manual audit helper for issue #1651 / recovery #1664.
  *
  * Intended usage from Vite localhost DevTools:
- *   await import('/scripts/emp1-manual-browser-audit.js?manual-audit=3');
+ *   await import('/scripts/emp1-manual-browser-audit.js?manual-audit=4');
  *   await runEmp1ManualBrowserAudit({ seedQualificationPressure: true });
  *
  * This helper observes rendered DOM and changes presentation selection only. It
@@ -16,6 +16,16 @@ const ENGINEER_FACING_ROLES = Object.freeze([
   'emp1-c-result-evidence',
   'emp1-a-engineering-custody',
   'emp1-b-engineering-custody',
+]);
+
+const WORKFLOW_TASKS = Object.freeze([
+  'BASIS_SOURCE',
+  'GEOMETRY',
+  'LOADS',
+  'LOAD_TRANSFER',
+  'SECTION_SCREENING',
+  'LOCAL_CORRELATION',
+  'REVIEW_EVIDENCE',
 ]);
 
 const RAW_BOUNDARY_SELECTOR = [
@@ -203,6 +213,11 @@ async function auditLayout(analytical, checks) {
   const workflow = one(analytical, '[data-role="emp1-workflow"]');
   const modeTabs = qsa(analytical, '[data-role="emp1-console-mode-tab"]');
   const workflowDetails = one(analytical, '[data-role="emp1-workflow-details"]');
+  const activeWorkflow = one(workflow, '[data-role="emp1-professional-step"][aria-current="step"]');
+  const activeTaskTitle = one(primary, '[data-role="emp1-active-task-title"]');
+  const evidenceToggle = one(detail, '[data-role="emp1-evidence-console-toggle"]');
+  const inspectorTabsNode = one(basis, '[data-role="emp1-inspector-tabs"]');
+
   addCheck(checks, 'layout.splitConsole.enabled',
     analytical.dataset.emp1SplitConsole === 'emp1-split-console/v1', analytical.dataset.emp1SplitConsole);
   addCheck(checks, 'layout.taskShell.loadsActive', analytical.dataset.emp1ProfessionalTask === 'LOADS', analytical.dataset.emp1ProfessionalTask);
@@ -211,6 +226,13 @@ async function auditLayout(analytical, checks) {
     { count: qsa(workflow, '[data-role="emp1-professional-step"]').length });
   addCheck(checks, 'layout.workflow.details.closed', workflowDetails?.open === false,
     { open: workflowDetails?.open ?? null });
+  addCheck(checks, 'layout.workflow.selectionMatchesTask',
+    activeWorkflow?.dataset.emp1ProfessionalStep === analytical.dataset.emp1ProfessionalTask,
+    { current: activeWorkflow?.dataset.emp1ProfessionalStep ?? null, task: analytical.dataset.emp1ProfessionalTask });
+  addCheck(checks, 'layout.activeTask.titleMatchesLoads', text(activeTaskTitle) === '3 · Loads', text(activeTaskTitle));
+  const workflowLabels = qsa(workflow, '[data-role="emp1-professional-step"]').map((button) => text(button));
+  addCheck(checks, 'layout.workflow.labels.compact',
+    workflowLabels.length === 7 && workflowLabels.every((label) => !label.includes(' · ')), workflowLabels);
 
   const visibleInputGroups = qsa(analytical, '.lafea-doc-table-section[data-input-group]')
     .filter(visible).map((node) => node.dataset.inputGroup);
@@ -220,8 +242,20 @@ async function auditLayout(analytical, checks) {
 
   const inspectorSurfaces = qsa(basis, '[data-emp1-inspector-view]');
   const selectedInspector = inspectorSurfaces.filter((node) => !node.hidden);
+  const visibleInspectorTabs = qsa(basis, '[data-role="emp1-inspector-tab"]').filter(visible)
+    .map((node) => node.dataset.emp1InspectorView);
   addCheck(checks, 'layout.inspector.selectedAtMostOne', selectedInspector.length === 1,
     selectedInspector.map((node) => node.dataset.emp1LayoutSurface));
+  addCheck(checks, 'layout.inspector.loadsContextOnly',
+    JSON.stringify(visibleInspectorTabs) === JSON.stringify(['engineeringEvidence']), visibleInspectorTabs);
+
+  const basisBox = geometry(basis);
+  const inspectorTabsBox = geometry(inspectorTabsNode);
+  addCheck(checks, 'layout.inspector.headerContained',
+    basisBox && inspectorTabsBox
+      && inspectorTabsBox.top >= basisBox.top - 1
+      && inspectorTabsBox.bottom <= basisBox.bottom + 1,
+    { basis: basisBox, tabs: inspectorTabsBox });
 
   const evidence = qsa(detail, '[data-emp1-evidence-view]');
   const selectedEvidence = evidence.filter((node) => !node.hidden);
@@ -237,10 +271,41 @@ async function auditLayout(analytical, checks) {
 
   const overflowFree = analytical.scrollWidth <= analytical.clientWidth + 1;
   const shellBounded = analytical.scrollHeight <= analytical.clientHeight + 1;
+  const shellBox = geometry(analytical);
+  const evidenceToggleBox = geometry(evidenceToggle);
+  const shellInViewport = Boolean(shellBox) && shellBox.bottom <= window.innerHeight + 1;
   addCheck(checks, 'layout.noHorizontalOverflow', overflowFree,
     { scrollWidth: analytical.scrollWidth, clientWidth: analytical.clientWidth });
   addCheck(checks, 'layout.outerShell.bounded', shellBounded,
     { scrollHeight: analytical.scrollHeight, clientHeight: analytical.clientHeight });
+  addCheck(checks, 'layout.outerShell.inViewport', shellInViewport,
+    { shell: shellBox, viewportHeight: window.innerHeight });
+  addCheck(checks, 'layout.evidence.affordanceInViewport',
+    visible(evidenceToggle) && evidenceToggleBox?.bottom <= window.innerHeight + 1,
+    { visible: visible(evidenceToggle), box: evidenceToggleBox, viewportHeight: window.innerHeight });
+
+  const beforeDisclosure = {
+    shellScrollHeight: analytical.scrollHeight,
+    lanesTop: geometry(lanes)?.top ?? null,
+  };
+  if (workflowDetails) {
+    workflowDetails.open = true;
+    await settle();
+  }
+  const afterDisclosure = {
+    shellScrollHeight: analytical.scrollHeight,
+    lanesTop: geometry(lanes)?.top ?? null,
+    detailBox: geometry(workflowDetails),
+  };
+  addCheck(checks, 'layout.workflow.details.overlayNoGrowth',
+    workflowDetails
+      && Math.abs(afterDisclosure.shellScrollHeight - beforeDisclosure.shellScrollHeight) <= 1
+      && Math.abs((afterDisclosure.lanesTop ?? 0) - (beforeDisclosure.lanesTop ?? 0)) <= 1,
+    { before: beforeDisclosure, after: afterDisclosure });
+  if (workflowDetails) {
+    workflowDetails.open = false;
+    await settle();
+  }
 
   const narrow = window.innerWidth <= 1050;
   const modeObservation = {};
@@ -272,7 +337,6 @@ async function auditLayout(analytical, checks) {
     await selectMode(analytical, 'WORK');
   } else {
     const primaryBox = geometry(primary);
-    const basisBox = geometry(basis);
     addCheck(checks, 'layout.desktop.sideBySide',
       primaryBox && basisBox && primaryBox.right <= basisBox.left + 1,
       { primary: primaryBox, basis: basisBox });
@@ -312,11 +376,50 @@ async function auditLayout(analytical, checks) {
     evidenceOpen: detail?.dataset.emp1EvidenceOpen ?? null,
     consoleMode: analytical.dataset.emp1ConsoleMode,
     visibleInputGroups,
+    visibleInspectorTabs,
     overflowFree,
     shellBounded,
+    shellInViewport,
     pageDepth,
     modeObservation,
   };
+}
+
+async function auditPresentationCoherence(workbench, checks) {
+  let analytical = await selectTask(workbench, 'SECTION_SCREENING');
+  const backingBeforeReview = analytical?.dataset.backingStageId ?? null;
+  analytical = await selectTask(workbench, 'REVIEW_EVIDENCE');
+  const workflow = one(analytical, '[data-role="emp1-workflow"]');
+  const current = one(workflow, '[data-role="emp1-professional-step"][aria-current="step"]');
+  const lanes = one(analytical, '[data-role="emp1-analytical-layout-lanes"]');
+  const transaction = one(analytical, '[data-emp1-layout-surface="transactionSummary"]');
+  const route = one(analytical, '[data-emp1-layout-surface="route"]');
+  const source = one(analytical, '[data-emp1-layout-surface="source"]');
+  const configuration = one(analytical, '[data-emp1-layout-surface="runConfiguration"]');
+  const state = {
+    backingBeforeReview,
+    backingAfterReview: analytical?.dataset.backingStageId ?? null,
+    activeTask: analytical?.dataset.emp1ProfessionalTask ?? null,
+    currentWorkflowTask: current?.dataset.emp1ProfessionalStep ?? null,
+    consoleMode: analytical?.dataset.emp1ConsoleMode ?? null,
+    lanesVisible: visible(lanes),
+    routeVisible: visible(route),
+    sourceVisible: visible(source),
+    configurationVisible: visible(configuration),
+    transactionVisible: visible(transaction),
+  };
+  addCheck(checks, 'layout.review.afterBackingB.coherent',
+    state.backingBeforeReview === 'LAFEA.2'
+      && state.activeTask === 'REVIEW_EVIDENCE'
+      && state.currentWorkflowTask === 'REVIEW_EVIDENCE'
+      && state.consoleMode === 'EVIDENCE'
+      && !state.lanesVisible
+      && !state.routeVisible
+      && !state.sourceVisible
+      && !state.configurationVisible
+      && state.transactionVisible,
+    state);
+  return state;
 }
 
 async function auditRoutes(workbench, checks) {
@@ -329,6 +432,13 @@ async function auditRoutes(workbench, checks) {
   const bounded = one(analytical, '[data-role="emp1-c-bounded-evidence"]');
   const tabs = bounded ? qsa(bounded, '[data-role="emp1-c-route-capability-tab"]') : [];
   const panels = bounded ? qsa(bounded, '[data-role="emp1-c-route-capability-panel"]') : [];
+  const inspectorTabs = qsa(analytical, '[data-role="emp1-inspector-tab"]').filter(visible)
+    .map((node) => node.dataset.emp1InspectorView);
+  const openDeepDetails = bounded ? [
+    ...qsa(bounded, '[data-role="emp1-c-route-detail"]'),
+    ...qsa(bounded, '[data-role="emp1-c-route-limitations"]'),
+    ...qsa(bounded, '[data-role="emp1-c-gamma-domain-detail"]'),
+  ].filter((node) => node.open) : [];
   addCheck(checks, 'routes.capabilities.2', tabs.length === 2 && panels.length === 2,
     { tabs: tabs.length, panels: panels.length });
   addCheck(checks, 'routes.visiblePanel.1', panels.filter(visible).length === 1,
@@ -337,8 +447,15 @@ async function auditRoutes(workbench, checks) {
     panels.some((panel) => panel.dataset.authorized === 'true')
       && panels.some((panel) => panel.dataset.authorized === 'false'),
     panels.map((panel) => ({ routeId: panel.dataset.routeId, authorized: panel.dataset.authorized })));
+  addCheck(checks, 'routes.inspector.contextual',
+    JSON.stringify(inspectorTabs) === JSON.stringify(['boundedCorrelation', 'correlationAvailability', 'settings']),
+    inspectorTabs);
+  addCheck(checks, 'routes.deepDetails.closedByDefault', openDeepDetails.length === 0,
+    openDeepDetails.map((node) => node.dataset.role));
   return {
     count: panels.length,
+    inspectorTabs,
+    openDeepDetails: openDeepDetails.length,
     authorityStates: panels.map((panel) => ({
       routeId: panel.dataset.routeId,
       authorized: panel.dataset.authorized,
@@ -346,29 +463,36 @@ async function auditRoutes(workbench, checks) {
   };
 }
 
-async function scanAllSplitConsoleViews(analytical) {
+async function scanAllSplitConsoleViews(workbench) {
   const scans = [];
-  const inspectorTabs = qsa(analytical, '[data-role="emp1-inspector-tab"]');
-  for (const tab of inspectorTabs) {
-    tab.click();
-    await settle();
-    scans.push({
-      view: `inspector:${tab.dataset.emp1InspectorView}`,
-      leaks: scanRawTokenLeaks(analytical),
-    });
+  for (const taskId of WORKFLOW_TASKS.filter((task) => task !== 'REVIEW_EVIDENCE')) {
+    const analytical = await selectTask(workbench, taskId);
+    if (window.innerWidth <= 1050) await selectMode(analytical, 'BASIS');
+    const inspectorTabs = qsa(analytical, '[data-role="emp1-inspector-tab"]').filter(visible);
+    for (const tab of inspectorTabs) {
+      tab.click();
+      await settle();
+      scans.push({
+        view: `task:${taskId}:inspector:${tab.dataset.emp1InspectorView}`,
+        leaks: scanRawTokenLeaks(analytical),
+      });
+    }
+
+    if (taskId === 'LOCAL_CORRELATION') {
+      const authority = one(analytical,
+        '[data-role="emp1-inspector-tab"][data-emp1-inspector-view="boundedCorrelation"]');
+      authority?.click();
+      await settle();
+      const routeTabs = qsa(analytical, '[data-role="emp1-c-route-capability-tab"]');
+      for (const tab of routeTabs) {
+        tab.click();
+        await settle();
+        scans.push({ view: `route:${tab.dataset.routeId}`, leaks: scanRawTokenLeaks(analytical) });
+      }
+    }
   }
 
-  const authority = one(analytical,
-    '[data-role="emp1-inspector-tab"][data-emp1-inspector-view="boundedCorrelation"]');
-  authority?.click();
-  await settle();
-  const routeTabs = qsa(analytical, '[data-role="emp1-c-route-capability-tab"]');
-  for (const tab of routeTabs) {
-    tab.click();
-    await settle();
-    scans.push({ view: `route:${tab.dataset.routeId}`, leaks: scanRawTokenLeaks(analytical) });
-  }
-
+  const analytical = await selectTask(workbench, 'REVIEW_EVIDENCE');
   if (window.innerWidth <= 1050) await selectMode(analytical, 'EVIDENCE');
   await openEvidenceConsole(analytical);
   const evidenceTabs = qsa(analytical, '[data-role="emp1-evidence-tab"]');
@@ -462,17 +586,18 @@ async function runEmp1ManualBrowserAudit(options = {}) {
   }
   const pressure = workbench ? auditPressure(workbench, checks) : null;
   const layout = analytical ? await auditLayout(analytical, checks) : null;
+  const presentationCoherence = workbench ? await auditPresentationCoherence(workbench, checks) : null;
   const routes = workbench ? await auditRoutes(workbench, checks) : null;
 
-  analytical = workbench && one(workbench, '[data-role="lafea-analytical-calc"]');
-  const scans = analytical ? await scanAllSplitConsoleViews(analytical) : [];
+  const scans = workbench ? await scanAllSplitConsoleViews(workbench) : [];
   const rawTokenLeaks = scans.flatMap((scan) => scan.leaks.map((leak) => ({ view: scan.view, ...leak })));
   addCheck(checks, 'presentation.rawTokenLeaks.none', rawTokenLeaks.length === 0, rawTokenLeaks);
 
+  analytical = workbench && one(workbench, '[data-role="lafea-analytical-calc"]');
   const benchmark = analytical ? await auditBenchmark(analytical, checks) : null;
   const failures = checks.filter((entry) => !entry.pass);
   const result = {
-    schema: 'emp1-manual-browser-audit/v3',
+    schema: 'emp1-manual-browser-audit/v4',
     issue: 1651,
     recoveryIssue: 1664,
     status: failures.length === 0 ? 'PASS_CURRENT_VIEWPORT_DOM_OBSERVATION' : 'FAIL_CURRENT_VIEWPORT_DOM_OBSERVATION',
@@ -481,13 +606,15 @@ async function runEmp1ManualBrowserAudit(options = {}) {
     pressureSeed,
     checks,
     failures,
-    observations: { rawTokenLeaks, pressure, layout, routes, benchmark },
+    observations: { rawTokenLeaks, pressure, layout, presentationCoherence, routes, benchmark },
     manualFollowupRequired: [
       'Run once at desktop width (>1050 px) and once at narrow width (<=1050 px).',
-      'Desktop: confirm Work and Engineering Inspector stay side-by-side inside the bounded console; outer shell scrollHeight must not exceed clientHeight by more than 1 px.',
+      'Desktop: the whole analytical shell and Results & evidence affordance must remain inside the viewport; Work and the task-contextual Inspector stay side-by-side.',
+      'Open Readiness, review and technical custody: it must overlay without moving/compressing the primary console or increasing outer-shell scroll height.',
+      'After Section Screening/backing B, select Review & Evidence: Review must remain the active professional task and backing EMP.1.B must not appear as the active presentation workspace.',
+      'Loads/Basis must not foreground EMP.1.C bounded-route authority; Local Correlation may expose Authority / Availability / Settings only.',
       'Narrow: use Work / Basis / Evidence mode tabs and confirm only one pane is visible at a time; do not accept vertical stacking of desktop panes.',
-      'Local Correlation: confirm exactly two registered capability tabs remain, only one capability panel is visible, and authorized vs comparison-only authority states remain distinct.',
-      'Evidence: confirm the console is collapsed by default on ordinary tasks and opens to one selected evidence view only.',
+      'Local Correlation: confirm exactly two registered capability tabs remain, one capability panel is visible, and route/limitation/curve disclosures are closed by default.',
       'Use keyboard focus on the CAUx disclosure summary: Enter must open; Space must close.',
       'Return desktop JSON, narrow JSON, keyboard observation, and full-page screenshots to the chain custodian.',
     ],
@@ -497,4 +624,4 @@ async function runEmp1ManualBrowserAudit(options = {}) {
 }
 
 globalThis.runEmp1ManualBrowserAudit = runEmp1ManualBrowserAudit;
-console.info('EMP1 split-console manual browser audit loaded. Run: await runEmp1ManualBrowserAudit({ seedQualificationPressure: true })');
+console.info('EMP1 robust split-console manual browser audit loaded. Run: await runEmp1ManualBrowserAudit({ seedQualificationPressure: true })');

@@ -3,15 +3,16 @@
   "bucketId": "MESH",
   "issue": "github:reallaksh19/Advanced_Analysis#1652",
   "benchmarkId": "BM-MESH",
-  "materialLeg": "LEG-011",
-  "state": "STAGED_RUNNER_MULTIPATCH_WIRED_M3_THICKNESS_BLOCKED",
+  "materialLeg": "LEG-014",
+  "state": "M3_THICKNESS_FIXTURE_FROZEN_RUNNER_WIRING_PENDING",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "authority": {
     "benchmarkExecutionAuthorized": true,
     "productionSourceMutationAuthorized": false,
     "thresholdMutationAuthorized": false,
+    "shellThicknessFixtureAuthorityGranted": true,
     "solverOrCompilerExecutionAuthorized": false,
-    "benchmarkRegistrationAuthorized": false,
+    "benchmarkRegistrationAuthorized": true,
     "workflowMutationAuthorized": false,
     "roadmapMutationAuthorized": false,
     "releaseAuthorityGranted": false,
@@ -21,15 +22,16 @@
     "allowed": [
       "Execute registered production continuum, single-patch shell and qualified multipatch shell mesh producers for the frozen M0-M3 observations.",
       "Retain canonical lafea-analysis-mesh/v1 hashes, counts, DOF, conforming seam identity and mesh-quality observations.",
-      "Execute frozen LAFEA.3 and LAFEA.4 L0/L1/L2 production ladders for M3 non-thickness quality distributions and verify genuine refinement plus non-worsening worst metrics.",
+      "Execute frozen LAFEA.3 and LAFEA.4 L0/L1/L2 production ladders for M3 quality distributions and verify genuine refinement plus non-worsening worst metrics.",
+      "Use only the source-cited 1.5 mm uniform shell thickness frozen in convergence/shell-thickness.json for the M3 LAFEA.4 size-to-thickness observation.",
       "Retain per-stage audit records and gate later stages on a contiguous PASS prefix.",
-      "Emit explicit BLOCKED records where owner authority is absent."
+      "Emit explicit BLOCKED records where implementation or owner authority is absent."
     ],
     "forbidden": [
       "Benchmark-authored meshes or benchmark-only mesh adapters defining ladder meshes.",
       "Benchmark-side node merging to manufacture a conforming multi-patch shell seam.",
-      "Production source, threshold, solver/compiler, workflow, registration or roadmap changes.",
-      "Fabricated shell thickness, material, loads, restraints, loadCaseId, response quantities, recovery methods or response acceptance values.",
+      "Production source, threshold, solver/compiler, workflow or roadmap changes.",
+      "Any shell thickness other than the frozen source-cited 1.5 mm M3 fixture, or any fabricated material, loads, restraints, loadCaseId, response quantities, recovery methods or response acceptance values.",
       "Release or temperature authority."
     ]
   },
@@ -133,7 +135,7 @@
     {
       "benchmarkStage": "M3",
       "title": "Quality-gate distributions over systematic refinement",
-      "definitionState": "READY_NON_THICKNESS_BLOCKED_SHELL_THICKNESS",
+      "definitionState": "THICKNESS_FIXTURE_FROZEN_RUNNER_WIRING_PENDING",
       "gateMode": "FAIL_CLOSED",
       "methods": [
         {
@@ -152,12 +154,28 @@
           ],
           "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
           "oracleAuthority": "FROZEN_LADDER_PLUS_EXISTING_PRODUCTION_QUALITY_POLICY_NO_THRESHOLD_MUTATION"
+        },
+        {
+          "methodId": "M3-LAFEA4-SHELL-SIZE-TO-THICKNESS",
+          "authorityClass": "OWNER_FROZEN_THICKNESS_PLUS_PRODUCTION_QUALITY_GATE",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "implementationState": "RUNNER_WIRING_PENDING",
+          "sourceRefs": [
+            "S-007",
+            "S-020",
+            "S-021",
+            "S-022",
+            "S-023"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "EP_0025_FROZEN_1_5_MM_THICKNESS_PLUS_ISSUE_1652_0_5T_TO_2T_BAND"
         }
       ],
       "retainedDistributionMetrics": [
         "ASPECT_RATIO",
         "MINIMUM_ANGLE_DEGREES",
-        "SCALED_JACOBIAN"
+        "SCALED_JACOBIAN",
+        "SHELL_SIZE_TO_THICKNESS_RATIO"
       ],
       "shellAdditionalEvidence": [
         "ADJACENT_SIZE_RATIO",
@@ -165,6 +183,16 @@
         "CONFORMING_SHARED_SEAM"
       ],
       "warpageDisposition": "NOT_APPLICABLE_FOR_CST_DKT_TRI3_QUAD_WARPAGE_METRIC",
+      "thicknessFixture": {
+        "path": "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json",
+        "sourceRef": "S-023",
+        "classification": "BENCHMARK_ONLY_FROZEN_UNIFORM_THICKNESS_FROM_EXISTING_LAFEA4_SOURCE",
+        "uniformThickness": 1.5,
+        "lengthUnit": "mm",
+        "minimumMultiple": 0.5,
+        "maximumMultiple": 2,
+        "outsideBandDisposition": "WARNING"
+      },
       "refinementAcceptance": {
         "requireDistinctMeshHash": true,
         "requireIncreasingNodeCount": true,
@@ -174,8 +202,8 @@
       },
       "declaredBlockers": [
         {
-          "blockerId": "M3-SHELL-THICKNESS-AUTHORITY",
-          "reason": "Shell h/t qualification requires governed shell thickness not frozen by BM-MESH."
+          "blockerId": "M3-THICKNESS-RUNNER-WIRING-PENDING",
+          "reason": "Thickness authority is frozen, but the staged runner has not yet been changed to evaluate per-element characteristic length through qualifyShellSizeToThicknessRatio."
         }
       ]
     },

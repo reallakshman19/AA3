@@ -10,7 +10,7 @@ import {
   resolveNonFeaEnrichment,
 } from '../../core/non-fea-enrichment/index.js';
 import { openFittingWeightDialog } from '../load-calc-fitting-weight-dialog.js';
-import { buildFittingWeightReviewRows, fittingWeightRecordFor } from '../load-calc-fitting-weight-review.js';
+import { buildFittingWeightReviewRows } from '../load-calc-fitting-weight-review.js';
 import { buildLoadCalcMasterEnrichmentProposals } from '../load-calc-master-candidates.js';
 import { masterDataController } from '../master-data-controller.js';
 import { projectDataStore } from '../project-data/project-data-store.js';
@@ -46,59 +46,25 @@ export function renderNonFeaEnrichmentView(container, onChanged) {
   bind(container, sourceModel, derived, onChanged);
 }
 
+/**
+ * Stages master-derived proposals when the user opens the tab, so the review
+ * list is populated without a separate click.
+ *
+ * Staging only. Acceptance stays an explicit reviewer action ("Accept all
+ * unblocked"): a proposal this module generated is still a proposal, and
+ * accepting it on the reviewer's behalf would write master authority into the
+ * sidecar with nobody having looked at it.
+ */
 export function autoStageMasterProposals(onChanged) {
   try {
     const snapshot = nonFeaEnrichmentStore.getSnapshot();
-    const hasMasterEnrichment = snapshot.acceptedRecords.some((r) =>
-      ['PIPE_OUTER_DIAMETER', 'PIPE_WALL_THICKNESS', 'MATERIAL_DENSITY', 'OPERATING_FLUID_DENSITY'].includes(r.fieldId)
-    );
-    if (!hasMasterEnrichment && snapshot.proposals.length === 0) {
-      generateMasterProposals();
-      nonFeaEnrichmentStore.acceptAllProposals();
-      onChanged?.();
-    } else if (snapshot.proposals.length > 0) {
-      nonFeaEnrichmentStore.acceptAllProposals();
-      onChanged?.();
-    }
-  } catch (e) {
-    // Ignore if not ready
-  }
-}
-
-/**
- * Automatically accepts all clear-winner fitting weights (including 0 kg for
- * instruments that have no bore or face-to-face length). Called from the
- * consumer controller after master proposals are staged, so fittings with
- * an unambiguous answer never need a manual dialog visit.
- *
- * Idempotent — already-accepted component keys are skipped by
- * buildFittingWeightReviewRows via the enrichment store.
- */
-export function autoAcceptClearWinnerFittingWeights() {
-  try {
-    const dataset = WorkspaceState.getSnapshot()?.dataset;
-    if (!dataset?.sharedModel) return 0;
-    nonFeaEnrichmentStore.loadSource(dataset.sharedModel.semanticHash || '');
-    const masters = masterDataController.getMasterData();
-    const review = buildFittingWeightReviewRows({ dataset, masters });
-    const clearRows = review.rows.filter((row) => row.clearWinner && row.candidates.length > 0);
-    if (clearRows.length === 0) return 0;
-    clearRows.forEach((row) => {
-      const candidate = row.candidates[0];
-      const record = fittingWeightRecordFor(row, candidate, 0, masters);
-      nonFeaEnrichmentStore.stageProposal({
-        proposalId: record.recordId,
-        rationale: `Auto-accepted clear-winner: ${candidate.typeDesc} — ${candidate.reason || candidate.weightKg + ' kg'}`,
-        record,
-      });
-    });
-    nonFeaEnrichmentStore.acceptAllProposals();
-    return clearRows.length;
+    if (snapshot.acceptedRecords.length > 0 || snapshot.proposals.length > 0) return;
+    generateMasterProposals();
+    onChanged?.();
   } catch {
-    return 0;
+    // The stores are not ready yet; the explicit button remains available.
   }
 }
-
 
 function deriveCurrent(sourceModel, snapshot) {
   if (!sourceModel) return emptyDerived('Load an active shared piping model.');
@@ -123,28 +89,34 @@ function emptyDerived(error) {
   return { sidecar: null, ledger: null, impact: null, projection: null, error };
 }
 
+function countBadge(label, resolved) {
+  const colour = resolved ? '#166534' : '#7f1d1d';
+  return ` <span class="nfe__badge" style="background:${colour};border-color:${colour};margin-left:4px">${escape(label)}</span>`;
+}
+
 function markup(snapshot, derived, sourceModel) {
   const state = !sourceModel ? 'BLOCKED'
     : snapshot.stale ? 'STALE'
       : derived.ledger?.status || (snapshot.proposals.length ? 'REVIEW_REQUIRED' : 'NOT_EVALUATED');
 
+  // Outstanding count is read from the enriched projection, so a fitting whose
+  // weight has been accepted no longer carries one and drops out of the count.
   const dataset = WorkspaceState.getSnapshot()?.dataset;
   let fittingWeightIssues = 0;
-  let mastersCompleted = snapshot.proposals.length > 0 || snapshot.acceptedRecords.length > 0;
   if (dataset?.sharedModel) {
     try {
       const review = buildFittingWeightReviewRows({
         dataset: { ...dataset, sharedModel: derived.projection?.enrichedModel || sourceModel },
-        masters: masterDataController.getMasterData()
+        masters: masterDataController.getMasterData(),
       });
       fittingWeightIssues = review.summary.fittingCount;
-    } catch { }
+    } catch {
+      // Masters or projection not ready; leave the button unbadged.
+    }
   }
-
-  const masterStatus = mastersCompleted ? ' <span class="nfe__badge" style="background:#166534;border-color:#166534;margin-left:4px">✓</span>' : '';
-  const fittingStatus = fittingWeightIssues === 0 
-    ? ' <span class="nfe__badge" style="background:#166534;border-color:#166534;margin-left:4px">✓</span>' 
-    : ` <span class="nfe__badge" style="background:#7f1d1d;border-color:#7f1d1d;margin-left:4px">${fittingWeightIssues}</span>`;
+  const mastersCompleted = snapshot.proposals.length > 0 || snapshot.acceptedRecords.length > 0;
+  const masterStatus = mastersCompleted ? countBadge('✓', true) : '';
+  const fittingStatus = countBadge(fittingWeightIssues === 0 ? '✓' : fittingWeightIssues, fittingWeightIssues === 0);
 
   return `<section class="nfe" data-role="non-fea-enrichment" data-state="${escape(state)}">
     <header class="nfe__header">
@@ -407,15 +379,10 @@ function reviewFittingWeights(documentRef, onChanged) {
         rationale: `Reviewer selected ${record.evidence.selectedTypeDesc} from ${record.evidence.candidateCount} catalogue candidate(s) for ${record.evidence.componentDescription || record.selectorKey}.`,
         record,
       }));
-      try {
-        nonFeaEnrichmentStore.acceptAllProposals();
-        if (records.length > 0) {
-          nonFeaEnrichmentStore.setMessage(
-            `Applied ${records.length} catalogue fitting weight(s) to the enrichment sidecar.`,
-          );
-        }
-      } catch (error) {
-        nonFeaEnrichmentStore.setError(messageOf(error));
+      if (records.length > 0) {
+        nonFeaEnrichmentStore.setMessage(
+          `Staged ${records.length} fitting-weight proposal(s). Nothing is written yet -- review them in Staged proposals below and press "Accept all unblocked". ${validateInputCauseMessage(records)}`,
+        );
       }
       onChanged?.();
     },

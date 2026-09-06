@@ -227,7 +227,11 @@ assert.match(source, /buildPipingPortTopologyGraph\(model\)/u,
 // built from the sealed enriched model and its topology graph.
 assert.match(source, /projectEngineeringLoadSources\(\s*model,\s*effectiveTopologyGraph,/u,
   'projection must normalize model-load geometry from the sealed enriched model');
-assert.match(source, /resolveComponentCaseMass\(component, loadCaseId, compositionProfile\)/u,
+// The fourth argument carries the approved zero-mass waivers, so a component
+// answered by a waiver in the coverage checker is answered here too. The
+// first three are what this guard pins: the established resolver, called
+// with the projected component and its composition profile.
+assert.match(source, /resolveComponentCaseMass\(component, loadCaseId, compositionProfile,/u,
   'projection must reuse the established model-load mass resolver');
 assert.match(source, /derivePipeLikeFittingWeightEvidence\(component, components\)/u,
   'projection must reuse the established same-branch fitting derivation');

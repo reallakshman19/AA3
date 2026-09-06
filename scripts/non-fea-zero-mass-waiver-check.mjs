@@ -125,3 +125,35 @@ for (const helper of ['zeroMassWaiverSuggested']) {
     `${helper} is used by the fitting-weight dialog but never imported`,
   );
 }
+
+// A waiver must answer the component everywhere the same evidence is asked
+// for. The coverage checker reads the approved waiver map; so must the mass
+// resolver, or a waived component clears Validate Input and then blocks
+// execution with MISSING_COMPONENT_MASS - answered in one place, unanswered in
+// another.
+const { resolveComponentCaseMass } = await import('../src/core/model-loads/component-mass-resolver.js');
+const { createPipingLoadCompositionProfile } = await import('../src/core/model-loads/composition-profile.js');
+
+const waivedComponent = {
+  componentKey: 'INST-1',
+  type: 'INST',
+  geometry: { start: null, end: null, center: null, ports: [], applicationPoint: null },
+  engineeringProperties: {},
+  diagnostics: [],
+};
+const composition = createPipingLoadCompositionProfile();
+
+const unwaived = resolveComponentCaseMass(waivedComponent, 'EMPTY', composition);
+assert.equal(unwaived.ok, false, 'without a waiver the component still needs mass evidence');
+
+const waived = resolveComponentCaseMass(waivedComponent, 'EMPTY', composition, { zeroMassWaived: true });
+assert.equal(waived.ok, true, 'a waived component resolves rather than blocking');
+assert.equal(waived.pointMassKg, 0);
+assert.ok(
+  waived.diagnostics.some((row) => row.code === 'EXCLUDED_ZERO_MASS_WAIVER'),
+  'the waiver is recorded distinctly from a gasket exclusion',
+);
+assert.ok(
+  !waived.diagnostics.some((row) => row.code === 'EXCLUDED_NEGLIGIBLE_MASS'),
+  'a waiver is an engineering decision, not a property of the component type',
+);

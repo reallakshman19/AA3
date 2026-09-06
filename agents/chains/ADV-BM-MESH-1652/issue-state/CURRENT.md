@@ -3,7 +3,7 @@
 CHAIN_ID: ADV-BM-MESH-1652
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 ISSUE_BASIS_ID: IB-0001
-CURRENT_ENDPOINT: EP-0022
+CURRENT_ENDPOINT: EP-0023
 
 ## Original task / acceptance ledger
 
@@ -12,7 +12,7 @@ TASK-002 | Freeze M2 geometry and cited closed-form oracle. | CLOSED_FROZEN_ARTI
 TASK-003 | Define mesh ladders and physical probes. | CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED | LEG-007 definitions; LEG-008 custody repair
 TASK-004 | Implement M0–M4 staged runner. | STATIC_IMPLEMENTED_AUTHORITY_BLOCKED_M3_HT_M4 | LEG-009 runner; LEG-010 distributions; LEG-011 production multipatch repair; h/t and M4 authority remain blocked
 TASK-005 | Define exact-code negative cases. | CLOSED_FROZEN_EXACT_CODE_DEFINITIONS | LEG-012 freezes four governed exact-code definitions
-TASK-006 | Register BM-MESH in benchmark program. | OPEN_STAGED_PROTECTED_REGISTRATION | registration authority remains protected until separately admitted
+TASK-006 | Register BM-MESH in benchmark program. | AUTHORIZED_IN_PROGRESS | Owner `proceed next` at 2026-09-06T04:57:33Z releases registration only via EP-0023
 TASK-007 | Keep release and temperature authority false. | SATISFIED_CURRENTLY | no authority mutation
 
 ## Input ledger
@@ -30,6 +30,7 @@ INPUT-018 | M3 non-thickness ladder/quality inputs. | AVAILABLE_STATIC | all fou
 INPUT-019 | LAFEA.4 multipatch production midsurface contract. | AVAILABLE_PRODUCTION_PINNED_S016 | exact two-patch seam class
 INPUT-020 | LAFEA.4 multipatch production mesh core. | AVAILABLE_PRODUCTION_PINNED_S017 | seam welding/ownership/quality evidence
 INPUT-021 | TASK-005 governed rejection surfaces. | FROZEN_DEFINITIONS | LEG-012
+INPUT-022 | Live-main benchmark program at `f8d051c989c8a0627db7560f996baf72987775d4`. | AVAILABLE_MUST_PRESERVE | B02 is registered and `activeCaseId=B02`; branch registry is older B01-only state
 
 ## Benchmark / oracle ledger
 
@@ -82,16 +83,16 @@ PR: #1663
 PR_STATUS: OPEN_DRAFT_UNMERGED
 BRANCH: engineering/bm-mesh-1652-m2-data
 LAST_MATERIAL_HEAD: 8310d58838bd9057a799e115a5a25bc0081f175e
-CURRENT_ENDPOINT: EP-0022
+CURRENT_ENDPOINT: EP-0023
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
 ## Current diagnosis
 
-TASK-005 is complete as a frozen definition task. No live negative-case execution PASS is claimed. The authorized static benchmark paths are implemented through M3 non-thickness evidence, but full M3 h/t remains blocked by missing governed shell thickness and M4 remains blocked by missing physics/response and solver/convergence authority.
+TASK-006 registration is now explicitly owner-authorized. The branch copy of `validation/lafea-benchmark-program/program.json` predates the companion B02 registration already present on live main. The registration leg must therefore semantically preserve live-main B02 and `activeCaseId=B02` while appending BM-MESH; replacing the file from the stale branch version would be a regression.
 
-The only remaining issue action that is otherwise mechanically defined is TASK-006 program registration, but current authority explicitly protects `validation/lafea-benchmark-program/program.json`. PR #1663 merge is also Owner-only.
+Registration does not imply execution PASS. M3 full h/t remains blocked by missing governed shell thickness and M4 remains blocked by missing physics/response and solver/convergence authority.
 
 ## Exact next action
 
-Stop at the reasonable protected blocker. Await explicit Owner authority for one of: TASK-006 BM-MESH program registration; governed LAFEA.4 shell thickness fixture for M3 h/t; frozen M4 material/load/support/loadCase/response/recovery plus solver/convergence execution; or PR #1663 merge. Do not self-authorize these boundaries.
+LEG-013: change only `validation/lafea-benchmark-program/program.json`, preserving live-main B02 and `activeCaseId=B02`, append case `BM-MESH` bound to `scripts/lafea-mesh-benchmark-run.mjs --stage M4` and the frozen MESH definitions, and retain release/temperature authority false. Then reconcile TASK-006. Do not mutate production source, thresholds, workflows, roadmaps, M3/M4 fixture authority, or merge PR #1663.

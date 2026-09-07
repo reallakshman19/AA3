@@ -114,8 +114,10 @@ if (!STAGE_ORDER.includes(requestedLastStage)) {
 }
 const selectedStages = STAGE_ORDER.slice(0, STAGE_ORDER.indexOf(requestedLastStage) + 1);
 const runId = args.runId ?? defaultRunId(exactHeadSha);
+assert.match(runId, /^[A-Za-z0-9][A-Za-z0-9._-]*$/u, 'runId must be a single portable report-directory name.');
 const runDir = path.join(REPORT_ROOT, runId);
-fs.mkdirSync(runDir, { recursive: true });
+fs.mkdirSync(REPORT_ROOT, { recursive: true });
+fs.mkdirSync(runDir);
 
 const stageRecords = [];
 let contiguousPass = true;

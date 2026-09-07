@@ -196,7 +196,7 @@
       "sourceId": "S-032",
       "role": "benchmarkPublicStagedRunner",
       "path": "scripts/lafea-mesh-benchmark-run.mjs",
-      "blobSha": "bf6928d778951df1bdaffc3ca4f3dcd1f7ae06c6"
+      "blobSha": "3a79b7dc911ac78afc0aaed93931a51a032f5189"
     }
   ],
   "trace": {
@@ -258,7 +258,7 @@
     "benchmarkThicknessInventedFromUncitedValue": false,
     "benchmarkM4PhysicsResponseFixtureOwnerAuthorized": true,
     "benchmarkM4PhysicsChosenFromSolverOutput": false,
-    "solverExecutionAuthorizedByRegistry": true,
+    "solverExecutionAuthorizedByRegistry": false,
     "productionSourceMutationAuthorized": false,
     "executionAuthorizationSource": "issue #1652 EP-0030 and Owner 2026-09-07 #1710 implementation request"
   },

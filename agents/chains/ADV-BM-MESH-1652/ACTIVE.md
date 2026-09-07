@@ -4,14 +4,14 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0028
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0028.md
+ACTIVE_ENDPOINT: EP-0029
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0029.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0028.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-LAST_COMPLETED_MATERIAL_LEG: LEG-015
-MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-015.md
-MATERIAL_LEG_HEAD: 93dfab7edd15e0b979e98d40d6779e50a9f1bbe2
-CURRENT_MATERIAL_LEG: LEG-016
+LAST_COMPLETED_MATERIAL_LEG: LEG-016
+MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-016.md
+MATERIAL_LEG_HEAD: b0943ae5dc605af745d60eea0cd955e569c1cae8
+CURRENT_MATERIAL_LEG: NONE
 
 PREDECESSOR_PR: 1662
 PREDECESSOR_PR_STATUS: MERGED
@@ -23,13 +23,13 @@ BASE_BRANCH: main
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: M4_FIXTURE_RESPONSE_FREEZE_AUTHORIZED_SOLVER_EXECUTION_PROTECTED
+ENGINEERING_STATE: M4_PHYSICS_RESPONSE_FROZEN_SOLVER_CONVERGENCE_EXECUTION_PROTECTED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
-WRITE_AUTHORITY: LEG_016_M4_FIXTURE_RESPONSE_DATA_ONLY
+WRITE_AUTHORITY: READ_ONLY_AT_M4_EXECUTION_BOUNDARY
 AUTO_STATE: NOT_APPLICABLE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 benchmark definition and static implementation through M3 plus bounded M4 physics/response/recovery fixture freeze. Solver/compiler execution, convergence-set execution, production source/thresholds, workflows, roadmaps, release/trust/temperature and PR rebase/merge remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 benchmark definition and static implementation through M3 plus frozen M4 physics/response/recovery fixture. M4 runner wiring, solver/compiler and convergence-set execution, production source/thresholds, workflows, roadmaps, release/trust/temperature and PR rebase/merge remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
@@ -43,7 +43,7 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0029
 
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 OWNER_COMMAND_DATE_UTC: 2026-09-07
@@ -51,9 +51,16 @@ OWNER_DIRECTIVE: DO_NOT_CREATE_QUESTIONS_UNLESS_EXPLICITLY_ASKED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
-TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 STATIC_IMPLEMENTED_THROUGH_M3_M4_FIXTURE_FREEZE_IN_PROGRESS; TASK-005 CLOSED_FROZEN_EXACT_CODE_DEFINITIONS; TASK-006 CLOSED_REGISTERED; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: M2 geometry/oracle, ladders/probes, multipatch contracts, exact-code negatives and source-cited M3 thickness are frozen; LEG-016 is authorized to freeze M4 physics/response/recovery only.
-BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-002 IMPLEMENTED_STATIC_NOT_RUN; BM-003 IMPLEMENTED_STATIC_NOT_RUN; BM-004 IMPLEMENTED_STATIC_NOT_RUN; BM-005 READY_STATIC_NOT_RUN; BM-006 FIXTURE_RESPONSE_FREEZE_IN_PROGRESS_SOLVER_NOT_AUTHORIZED; BM-MESH PROGRAM_REGISTERED_NOT_ACTIVE_NOT_RUN
+TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 STATIC_IMPLEMENTED_THROUGH_M3_M4_FIXTURE_FROZEN_EXECUTION_BLOCKED; TASK-005 CLOSED_FROZEN_EXACT_CODE_DEFINITIONS; TASK-006 CLOSED_REGISTERED; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: M2 geometry/oracle, ladders/probes, multipatch contracts, exact-code negatives, M3 thickness, and M4 physics/response/recovery are frozen with source custody through S-030.
+BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-002 IMPLEMENTED_STATIC_NOT_RUN; BM-003 IMPLEMENTED_STATIC_NOT_RUN; BM-004 IMPLEMENTED_STATIC_NOT_RUN; BM-005 READY_STATIC_NOT_RUN; BM-006 PHYSICS_RESPONSE_FROZEN_EXECUTION_NOT_AUTHORIZED_NOT_RUN; BM-MESH PROGRAM_REGISTERED_NOT_ACTIVE_NOT_RUN
 
-CURRENT_BLOCKER: after LEG-016 definition freeze, solver/compiler plus convergence-set execution remain separately protected; PR #1663 rebase/merge remains Owner-only.
-EXACT_NEXT_ACTION: complete LEG-016 data-only M4 fixture/response/recovery freeze and source custody, then stop before solver/convergence execution unless explicitly advanced again.
+HANDOVER_CONTENT_READY: TRUE
+HANDOVER_VALIDATION_STATUS: PASS_LEG_016_DATA_ONLY / M4_EXECUTION_PROTECTED
+CHAIN_HANDOVER_READY: TRUE
+TAKEOVER_QUALIFICATION_READY: TRUE
+HANDOVER_READY: TRUE
+
+CURRENT_BLOCKER: M4 runner wiring plus solver/compiler/convergence-set execution authority; PR #1663 rebase/merge remains separately Owner-only.
+LEG_DIAGNOSIS: LEG-016 froze source-cited M4 physics, response quantities and recovery rules without executing any solver or changing the runner. No M0-M4 runtime PASS is claimed.
+EXACT_NEXT_ACTION: await explicit Owner progression for the M4 execution batch, or separately explicit PR rebase/merge authority. Do not create or refresh qualification questions unless the Owner explicitly asks.

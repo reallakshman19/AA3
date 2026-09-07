@@ -123,6 +123,7 @@ for (const stageId of selectedStages) {
   const stageDir = path.join(runDir, stageId);
   fs.mkdirSync(stageDir, { recursive: true });
   const started = process.hrtime.bigint();
+  /** @type {ReturnType<typeof runStage>} */
   let evidence;
   try {
     evidence = runStage(stageId, contiguousPass);
@@ -141,7 +142,6 @@ for (const stageId of selectedStages) {
   const record = finalizeAuditRecord({
     schema: 'lafea-benchmark-audit-record/v1',
     programId: 'BM-MESH',
-    materialLeg: 'LEG-017',
     runId,
     generatedAt: new Date().toISOString(),
     repository: 'reallaksh19/Advanced_Analysis',
@@ -155,27 +155,34 @@ for (const stageId of selectedStages) {
     },
     caseId: 'MESH',
     stageId,
-    benchmarkStage: stageId,
-    benchmarkClass: 'STAGED_MESH_BENCHMARK',
-    comparisonPolicy: stageComparisonPolicy(stageId),
-    sourceCustody: custody,
-    evidence,
+    methodResults: [{
+      methodId: `BM-MESH-${stageId}`,
+      materialLeg: 'LEG-017',
+      benchmarkClass: 'STAGED_MESH_BENCHMARK',
+      comparisonPolicy: stageComparisonPolicy(stageId),
+      command: [process.execPath, 'scripts/lafea-mesh-benchmark-run.mjs', ...process.argv.slice(2)],
+      sourceCustody: custody,
+      sourceRefHashes: Object.fromEntries([
+        MANIFEST_PATH, REGISTRY_PATH, CASES_PATH, ORACLE_PATH, LADDERS_PATH,
+        PROBES_PATH, THICKNESS_PATH, M4_FIXTURE_PATH,
+      ].map((filePath) => [path.relative(ROOT, filePath).replaceAll('\\', '/'), sha256File(filePath)])),
+      evidence,
+      status: evidence.status,
+      predecessorGateSatisfied: contiguousPass,
+      advancementPolicy: manifest.advancementPolicy,
+      elapsedMs: Number(elapsedMs.toFixed(3)),
+    }],
     caseStatus: evidence.status,
     nextBenchmarkAuthorized: evidence.status === 'PASS' && contiguousPass,
     baselineDisposition: evidence.status === 'PASS' && contiguousPass
       ? 'ELIGIBLE_EXECUTION_BASELINE'
       : 'NOT_ELIGIBLE',
-    stageGate: {
-      predecessorGateSatisfied: contiguousPass,
-      advancementPolicy: manifest.advancementPolicy,
-    },
-    elapsedMs: Number(elapsedMs.toFixed(3)),
     governance: {
       productionOutputGeneratedExpectedValues: false,
       benchmarkAuthoredMeshUsed: false,
       benchmarkSideMeshMutationUsed: false,
       fabricatedPhysicsUsed: false,
-      solverOrCompilerExecuted: evidence.solverExecuted === true,
+      solverOrCompilerExecuted: evidence.solverExecuted ?? (stageId === 'M4' && evidence.status === 'FAIL' ? null : false),
       benchmarkRegistrationGranted: true,
       releaseAuthorityGranted: false,
       temperatureAuthorityGranted: false,

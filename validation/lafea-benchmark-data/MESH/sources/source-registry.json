@@ -196,7 +196,7 @@
       "sourceId": "S-032",
       "role": "benchmarkPublicStagedRunner",
       "path": "scripts/lafea-mesh-benchmark-run.mjs",
-      "blobSha": "4fc6f92e9551e7c99c6d68ccd2f8b71a73c863d7"
+      "blobSha": "bf6928d778951df1bdaffc3ca4f3dcd1f7ae06c6"
     }
   ],
   "trace": {

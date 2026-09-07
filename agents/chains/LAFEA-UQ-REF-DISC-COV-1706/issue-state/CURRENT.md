@@ -1,7 +1,7 @@
 # Current state — BM-UQ-REF-DISC-COV #1706
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1706
 PARENT_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1673
 DEPENDENCY_WORK_ITEM: github:reallaksh19/Advanced_Analysis#1704
@@ -73,13 +73,13 @@ COMMIT_STATUS_CONTEXTS_OBSERVED: 0
 PR_WORKFLOW_RUNS_OBSERVED: 0
 
 ## Qualification / authority
-OWNER_TEXT_OBSERVED: `merge if nor errors, proceed next`
+OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_MERGE_INSTRUCTION: CONDITIONAL_MERGE_IF_NO_ERRORS
 MERGE_PRECONDITION_STATUS: NOT_SATISFIED
 MERGE_PRECONDITION_REASON: qualification PENDING; K7 NOT_RUN; no independent admission/candidate/verifier evidence
 MERGE_EXECUTED: FALSE
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_PROGRESSION_STATUS: CONSUMED_BY_CONDITIONAL_MERGE_GATE_BLOCKER_CHECK
+OWNER_PROGRESSION_STATUS: CONSUMED_BY_ISSUE_SYNC_RECOVERY_AND_QUALIFICATION_BLOCKER_CHECK
 QUALIFICATION_SCOPE_ID: QSCOPE-1706-LAFEA-UQ-REFERENCE-DISC-COV
 QUESTION_SET_ID: QS-BM-UQ-REF-DISC-COV-0002
 QUESTION_SET_FILE: agents/qualifications/LAFEA-UQ-REF-DISC-COV-1706/QS-BM-UQ-REF-DISC-COV-0002-questions.md
@@ -123,4 +123,4 @@ PROGRAM_RELEASE_AUTHORITY: FALSE
 PROGRAM_TEMPERATURE_AUTHORITY: FALSE
 
 CURRENT_BLOCKER: INDEPENDENT_TAKEOVER_QUALIFICATION_REQUIRED_BEFORE_K7_EXECUTION
-EXACT_NEXT_ACTION: independently admit QS-BM-UQ-REF-DISC-COV-0002; a candidate different from the question author answers Q1-Q5 against 831efbf380cba39d3d3f76b3518daf7fa3207941; an independent verifier records PASS/FAIL; only after PASS reconcile live-main drift while READ_ONLY, then run K7 only if authorized and merge only if the Owner's no-errors condition is demonstrably satisfied.
+EXACT_NEXT_ACTION: independently admit QS-BM-UQ-REF-DISC-COV-0002; a candidate different from the question author answers Q1-Q5 against 831efbf380cba39d3d3f76b3518daf7fa3207941; an independent verifier records PASS/FAIL; only after PASS reconcile live-main drift while READ_ONLY, then run K7 only if authorized and merge only if the preserved Owner no-errors condition is demonstrably satisfied.

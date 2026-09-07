@@ -1,0 +1,17 @@
+{
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/lafea-mesh-benchmark-run.mjs",
+    "--stage",
+    "M4",
+    "--expected-head",
+    "b76e33984d3bd33c46e4b81d716c38e34fdb693c",
+    "--run-id",
+    "mesh-1710-final"
+  ],
+  "exactHeadSha": "b76e33984d3bd33c46e4b81d716c38e34fdb693c",
+  "exitCode": 1,
+  "signal": null,
+  "inputClass": "SIMULATED_FROZEN_REPOSITORY_ANALYTICAL_FIXTURES",
+  "engineeringStatus": "FAIL"
+}

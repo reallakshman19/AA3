@@ -1,0 +1,8 @@
+{
+  "schema": "mesh-1710-audit-integrity-check/v1",
+  "status": "PASS",
+  "recordHashesVerified": 5,
+  "failedM3BlocksM4": true,
+  "solverExecutionAfterFailedGate": false,
+  "meshProgrammePass": false
+}

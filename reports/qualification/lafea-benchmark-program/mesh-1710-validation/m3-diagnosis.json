@@ -1,0 +1,145 @@
+{
+  "schema": "mesh-1710-m3-diagnosis/v1",
+  "inputBasis": "[SIMULATED] affine triangle with exact midsides; retained final shell audit",
+  "status": "PASS",
+  "scope": "Diagnostic reproduction only; no benchmark PASS or authority change",
+  "observations": [
+    {
+      "shift": 0,
+      "nodes": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0.5
+        },
+        {
+          "x": 0,
+          "y": 0.5
+        }
+      ],
+      "expectedScaledJacobian": 1,
+      "observedScaledJacobian": 1,
+      "determinants": {
+        "sampleCount": 6,
+        "minimum": 2,
+        "maximum": 2.0000000000000004,
+        "positiveDeterminantRatio": 0.9999999999999998,
+        "nonPositiveSampleCount": 0
+      }
+    },
+    {
+      "shift": 1,
+      "nodes": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0.5
+        },
+        {
+          "x": 0,
+          "y": 0.5
+        },
+        {
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "expectedScaledJacobian": 0.4472135954999579,
+      "observedScaledJacobian": 0.4472135954999579,
+      "determinants": {
+        "sampleCount": 6,
+        "minimum": 2,
+        "maximum": 2.0000000000000004,
+        "positiveDeterminantRatio": 0.9999999999999998,
+        "nonPositiveSampleCount": 0
+      }
+    },
+    {
+      "shift": 2,
+      "nodes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0.5
+        },
+        {
+          "x": 1,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 0.5
+        }
+      ],
+      "expectedScaledJacobian": 0.8944271909999159,
+      "observedScaledJacobian": 0.8944271909999159,
+      "determinants": {
+        "sampleCount": 6,
+        "minimum": 1.9999999999999996,
+        "maximum": 2,
+        "positiveDeterminantRatio": 0.9999999999999998,
+        "nonPositiveSampleCount": 0
+      }
+    }
+  ],
+  "shellMeasuredLengthsMm": [
+    {
+      "levelId": "L0",
+      "minimum": 1.4142135623730951,
+      "median": 1.4142135623730951,
+      "maximum": 1.4142135623730951
+    },
+    {
+      "levelId": "L1",
+      "minimum": 0.3847596460079318,
+      "median": 0.5128082896306996,
+      "maximum": 0.6029006806255569
+    },
+    {
+      "levelId": "L2",
+      "minimum": 0.21710184394945037,
+      "median": 0.2592969607345953,
+      "maximum": 0.3108515430888314
+    }
+  ],
+  "interpretation": "T6 normalized Jacobian uses reference columns and depends on cyclic corner choice even for the same affine triangle. This reproduces a metric limitation; it does not isolate the particular T6 M3 failing elements. Shell actual maximum characteristic length decreases despite worsened worst shape metrics. M3 remains FAIL and M4 BLOCKED.",
+  "productionSourceBasis": "b76e33984d3bd33c46e4b81d716c38e34fdb693c",
+  "diagnosticExecutionHead": "b178164d1"
+}

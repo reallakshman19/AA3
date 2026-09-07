@@ -4,14 +4,14 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-BM-MESH-1652
 MISSION: Implement issue #1652 BM-MESH staged analysis-mesh benchmark shared by LAFEA.3/LAFEA.4 with production-producer, independent-oracle, quality, solver-handoff and audit evidence.
-ACTIVE_ENDPOINT: EP-0027
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0027.md
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0026.md
+ACTIVE_ENDPOINT: EP-0028
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0028.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-BM-MESH-1652/endpoints/EP-0028.md
 MATERIAL_HISTORY_ROOT_BASE: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
 LAST_COMPLETED_MATERIAL_LEG: LEG-015
 MATERIAL_LEG_RECEIPT: agents/chains/ADV-BM-MESH-1652/material-legs/LEG-015.md
 MATERIAL_LEG_HEAD: 93dfab7edd15e0b979e98d40d6779e50a9f1bbe2
-CURRENT_MATERIAL_LEG: NONE
+CURRENT_MATERIAL_LEG: LEG-016
 
 PREDECESSOR_PR: 1662
 PREDECESSOR_PR_STATUS: MERGED
@@ -20,52 +20,40 @@ PR: 1663
 PR_STATUS: OPEN_DRAFT
 BRANCH: engineering/bm-mesh-1652-m2-data
 BASE_BRANCH: main
-ISSUE_BASIS_MAIN: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-MAIN_HEAD_AT_LAST_CHECK: f8d051c989c8a0627db7560f996baf72987775d4
-MERGEABILITY_AT_LAST_CHECK: NOT_MERGEABLE
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: TASK_004_STATIC_IMPLEMENTED_THROUGH_M3_M4_AUTHORITY_BLOCKED
+ENGINEERING_STATE: M4_FIXTURE_RESPONSE_FREEZE_AUTHORIZED_SOLVER_EXECUTION_PROTECTED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_ORIGINATING_CUSTODIAN
-WRITE_AUTHORITY: READ_ONLY_AT_M4_PROTECTED_BOUNDARY
+WRITE_AUTHORITY: LEG_016_M4_FIXTURE_RESPONSE_DATA_ONLY
 AUTO_STATE: NOT_APPLICABLE
 
-AUTHORITY_DOMAIN: BM-MESH issue #1652 benchmark definition, exact-code negatives, program registration and static runner implementation through complete M3. M4 material/load/support/loadCase/response/recovery and solver/convergence execution, production source/thresholds, workflows, roadmaps, release/trust/temperature and PR rebase/merge authority remain protected.
+AUTHORITY_DOMAIN: BM-MESH issue #1652 benchmark definition and static implementation through M3 plus bounded M4 physics/response/recovery fixture freeze. Solver/compiler execution, convergence-set execution, production source/thresholds, workflows, roadmaps, release/trust/temperature and PR rebase/merge remain protected.
 ACTIVE_CUSTODIAN: OPENAI-GPT-5.6-SOL
-AGENT_INSTANCE_ID: chatgpt:b4bb2925-1e01-4ba2-8693-1018b121c5ba
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1652
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 20
 COORDINATION_STATE: SAFE_EXCLUSIVE_NO_COLLISION
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
-COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
 COMMON_PROTOCOL_STATUS: CURRENT
 ROADMAP_MUTATION_AUTHORITY: NONE
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-BM-MESH-1652/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-BM-MESH-1652/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0027
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0028
 
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
+OWNER_COMMAND_DATE_UTC: 2026-09-07
 OWNER_DIRECTIVE: DO_NOT_CREATE_QUESTIONS_UNLESS_EXPLICITLY_ASKED
 QUESTION_DISPLAY: HIDE
 TAKEOVER_QUALIFICATION_READY: TRUE
 
-TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 STATIC_IMPLEMENTED_THROUGH_M3_M4_AUTHORITY_BLOCKED; TASK-005 CLOSED_FROZEN_EXACT_CODE_DEFINITIONS; TASK-006 CLOSED_REGISTERED; TASK-007 SATISFIED_CURRENTLY
-INPUT_STATUS: M2 geometry/oracle, ladders/probes, multipatch contracts, exact-code negatives and source-cited 1.5 mm shell-thickness fixture are frozen and custody-pinned through S-023.
-BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-002 IMPLEMENTED_STATIC_NOT_RUN; BM-003 IMPLEMENTED_STATIC_NOT_RUN; BM-004 IMPLEMENTED_STATIC_NOT_RUN; BM-005 READY_STATIC_NOT_RUN; BM-006 PHYSICS_SOLVER_AUTHORITY_UNRESOLVED_NOT_RUN; BM-MESH PROGRAM_REGISTERED_NOT_ACTIVE_NOT_RUN
+TASK_STATUS: TASK-001 CLOSED_PASS_MERGED; TASK-002 CLOSED_FROZEN_ARTIFACTS; TASK-003 CLOSED_FROZEN_DEFINITIONS_SOURCE_CUSTODY_REPAIRED; TASK-004 STATIC_IMPLEMENTED_THROUGH_M3_M4_FIXTURE_FREEZE_IN_PROGRESS; TASK-005 CLOSED_FROZEN_EXACT_CODE_DEFINITIONS; TASK-006 CLOSED_REGISTERED; TASK-007 SATISFIED_CURRENTLY
+INPUT_STATUS: M2 geometry/oracle, ladders/probes, multipatch contracts, exact-code negatives and source-cited M3 thickness are frozen; LEG-016 is authorized to freeze M4 physics/response/recovery only.
+BENCHMARK_STATUS: BM-001 PASS_OWNER_EXACT_HEAD_MERGED; BM-002 IMPLEMENTED_STATIC_NOT_RUN; BM-003 IMPLEMENTED_STATIC_NOT_RUN; BM-004 IMPLEMENTED_STATIC_NOT_RUN; BM-005 READY_STATIC_NOT_RUN; BM-006 FIXTURE_RESPONSE_FREEZE_IN_PROGRESS_SOLVER_NOT_AUTHORIZED; BM-MESH PROGRAM_REGISTERED_NOT_ACTIVE_NOT_RUN
 
-HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_LEG_015_STATIC / M4_PROTECTED_BLOCKER_REACHED
-CHAIN_HANDOVER_READY: TRUE
-TAKEOVER_QUALIFICATION_READY: TRUE
-HANDOVER_READY: TRUE
-
-CURRENT_BLOCKER: M4 frozen material/load/support/loadCase/response/recovery plus solver/convergence execution authority; PR #1663 rebase/merge remains separately Owner-only.
-LEG_DIAGNOSIS: M3 is fully wired statically, including the owner-frozen 1.5 mm h/t basis through the existing production WARNING gate. No live M0-M3 PASS has been claimed.
-EXACT_NEXT_ACTION: await explicit Owner authority for M4 physics/response plus solver/convergence execution, or explicit PR rebase/merge authority. Do not infer either from the consumed M3 authorization. Do not create or refresh qualification questions unless the Owner explicitly asks.
+CURRENT_BLOCKER: after LEG-016 definition freeze, solver/compiler plus convergence-set execution remain separately protected; PR #1663 rebase/merge remains Owner-only.
+EXACT_NEXT_ACTION: complete LEG-016 data-only M4 fixture/response/recovery freeze and source custody, then stop before solver/convergence execution unless explicitly advanced again.

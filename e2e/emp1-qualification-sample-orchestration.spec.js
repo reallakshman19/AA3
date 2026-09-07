@@ -24,6 +24,10 @@ test('clean complete sample executes and retains A before B/C', async ({ page })
     failureCode: null,
   });
 
+  await expect.poll(async () => String(
+    (await sampleState(page)).emp1ExecutionStatus ?? 'PENDING',
+  )).toMatch(/^(CALCULATED|PREPARED_C_BLOCKED)$/u);
+
   const state = await sampleState(page);
   expect(['CALCULATED', 'PREPARED_C_BLOCKED']).toContain(state.emp1ExecutionStatus);
   expect(state.emp1ExecutionStatus).not.toBe('FAILED');

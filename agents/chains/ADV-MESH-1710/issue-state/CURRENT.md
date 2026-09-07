@@ -6,7 +6,7 @@ ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-07
 PREVIOUS_ISSUE_BASIS: NONE
 CHANGE_AUTHORITY: INITIAL_CAPTURE
 ISSUE_BASIS_STATUS: CURRENT
-CURRENT_ENDPOINT: EP-0002
+CURRENT_ENDPOINT: EP-0004
 
 ## Original task / acceptance ledger
 TASK-001 | Pull current GitHub main and preserve checkout. | PASS | Owner current session

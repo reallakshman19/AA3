@@ -1,0 +1,244 @@
+{
+  "schema": "lafea-mesh-m4-physics-response/v1",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "LEG-016",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+  "authorityEndpoint": "EP-0028",
+  "purpose": "Freeze source-cited solver physics, physical-point response recovery and convergence quantities for the existing BM-MESH production mesh ladders without executing a solver.",
+  "authority": {
+    "ownerAuthorizedFixtureFreeze": true,
+    "solverOrCompilerExecutionAuthorizedInThisLeg": false,
+    "convergenceExecutionAuthorizedInThisLeg": false,
+    "productionOutputUsedToChoosePhysics": false,
+    "solverOutputUsedToChooseResponses": false,
+    "benchmarkMeshUsedToChoosePhysics": false,
+    "productionSourceMutationAuthorized": false,
+    "convergenceLimitOverrideAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "convergencePolicy": {
+    "sourceRef": "S-012",
+    "requiredLevelCount": 3,
+    "benchmarkTemplateExemption": null,
+    "quantities": [
+      {
+        "quantity": "STRAIN_ENERGY",
+        "defaultRelativeChangeLimit": 0.02,
+        "requiredBehavior": "MONOTONIC"
+      },
+      {
+        "quantity": "SELECTED_DISPLACEMENT",
+        "defaultRelativeChangeLimit": 0.01,
+        "requiredBehavior": "MONOTONIC"
+      }
+    ],
+    "limitOverrides": null,
+    "setAcceptance": "qualifyConvergenceSet(histories).accepted === true",
+    "rawSingularPeakStressAllowed": false
+  },
+  "lafea3": {
+    "physicsId": "M4-L3-B01-AFFINE-DIRICHLET-V1",
+    "applicableLadders": ["L3-T3", "L3-T6", "L3-Q8"],
+    "sourceAuthority": {
+      "oracleSourceRef": "S-024",
+      "qualificationWitnessRef": "S-025",
+      "solverContractRef": "S-026",
+      "projectionClass": "DIRICHLET_REPLAY_OF_B01_CLOSED_FORM_AFFINE_FIELD_ON_FROZEN_BM_MESH_GEOMETRY"
+    },
+    "units": {
+      "length": "mm",
+      "force": "N",
+      "stress": "MPa",
+      "modulus": "MPa"
+    },
+    "formulation": "PLANE_STRESS",
+    "material": {
+      "elasticModulus": 200000,
+      "poissonRatio": 0.3,
+      "thickness": 10,
+      "source": "validation/bucket-01/04-t3-patch-oracle.json"
+    },
+    "closedFormField": {
+      "sourceStressSigmaX": 10,
+      "epsilonX": 0.00005,
+      "epsilonY": -0.000015,
+      "gammaXY": 0,
+      "displacementField": {
+        "ux": "0.00005 * x",
+        "uy": "-0.000015 * y"
+      },
+      "sourceStatement": "B01 plane-stress affine oracle: u_x = epsilon_x*x and u_y = epsilon_y*y."
+    },
+    "loadCase": {
+      "loadCaseId": "BM-MESH-M4-L3-AFFINE-DIRICHLET",
+      "boundaryConditionClass": "PRESCRIBE_CLOSED_FORM_DISPLACEMENT_ON_ALL_FROZEN_GEOMETRY_BOUNDARY_NODES",
+      "boundaryMembership": "PHYSICAL_COORDINATE_ON_FROZEN_GEOMETRY_BOUNDARY_NOT_NODE_ID",
+      "interiorNodes": "UNCONSTRAINED_EXCEPT_AS_REQUIRED_BY_CANONICAL_SOLVER_MODEL",
+      "nodalForces": [],
+      "edgeTractions": [],
+      "pressureLoads": [],
+      "bodyForces": [],
+      "temperatureLoads": [],
+      "imposedDisplacementField": {
+        "UX": "0.00005 * x",
+        "UY": "-0.000015 * y"
+      }
+    },
+    "responses": {
+      "strainEnergy": {
+        "quantity": "STRAIN_ENERGY",
+        "recovery": "loadCaseResult.totalStrainEnergy",
+        "units": "N*mm",
+        "analyticalReferences": [
+          {
+            "ladderId": "L3-T3",
+            "geometryCaseId": "M2-L-SHAPE-01",
+            "area": 5,
+            "expectedValue": 0.0125,
+            "derivation": "0.5 * sigma_x(10) * epsilon_x(0.00005) * area(5) * thickness(10)"
+          },
+          {
+            "ladderId": "L3-T6",
+            "geometryCaseId": "M2-L-SHAPE-01",
+            "area": 5,
+            "expectedValue": 0.0125,
+            "derivation": "0.5 * sigma_x(10) * epsilon_x(0.00005) * area(5) * thickness(10)"
+          },
+          {
+            "ladderId": "L3-Q8",
+            "geometryCaseId": "M2-UNIT-SQUARE-01",
+            "area": 1,
+            "expectedValue": 0.0025,
+            "derivation": "0.5 * sigma_x(10) * epsilon_x(0.00005) * area(1) * thickness(10)"
+          }
+        ],
+        "analyticalReferenceUsedForConvergenceAcceptance": false
+      },
+      "selectedDisplacement": {
+        "quantity": "SELECTED_DISPLACEMENT",
+        "probeContractRef": "S-013",
+        "quantityId": "DISPLACEMENT_X",
+        "representation": "PHYSICAL_POINT_DIRECT",
+        "recoveryMethod": "ELEMENT_SHAPE_INTERPOLATION",
+        "units": "mm",
+        "singularityClassification": "NOT_APPLICABLE",
+        "probes": [
+          {"probeId":"L3-L-P1","applicableLadders":["L3-T3","L3-T6"],"expectedValue":0.0000185},
+          {"probeId":"L3-L-P2","applicableLadders":["L3-T3","L3-T6"],"expectedValue":0.0001205},
+          {"probeId":"L3-L-P3","applicableLadders":["L3-T3","L3-T6"],"expectedValue":0.0000215},
+          {"probeId":"L3-Q8-P1","applicableLadders":["L3-Q8"],"expectedValue":0.0000185},
+          {"probeId":"L3-Q8-P2","applicableLadders":["L3-Q8"],"expectedValue":0.0000365}
+        ],
+        "expectedValueDerivation": "u_x = 0.00005*x at the already-frozen physical coordinate",
+        "analyticalReferenceUsedForConvergenceAcceptance": false
+      }
+    }
+  },
+  "lafea4": {
+    "physicsId": "M4-L4-PRESCRIBED-MEMBRANE-V1",
+    "applicableLadders": ["L4-CST-DKT"],
+    "geometryCaseId": "M2-TWO-PATCH-SHELL-01",
+    "sourceAuthority": {
+      "fixtureSourceRef": "S-021",
+      "qualificationWitnessRef": "S-027",
+      "solverContractRef": "S-028",
+      "cstKinematicsRef": "S-029",
+      "projectionClass": "BOUNDARY_REPLAY_OF_EXISTING_PRESCRIBED_PATCH_MEMBRANE_FIELD_ON_FROZEN_TWO_PATCH_GEOMETRY"
+    },
+    "units": {
+      "length": "mm",
+      "force": "N",
+      "moment": "N*mm",
+      "pressure": "MPa",
+      "modulus": "MPa",
+      "rotation": "rad"
+    },
+    "formulation": "CST_DKT_TRI3_THIN_SHELL_V1",
+    "material": {
+      "elasticModulus": 200000,
+      "poissonRatio": 0.3,
+      "thickness": 2,
+      "source": "scripts/lafea.4-fixtures.mjs#baseSource/patchSource"
+    },
+    "closedFormField": {
+      "mode": "MEMBRANE",
+      "epsilonX": 0.001,
+      "epsilonY": 0,
+      "gammaXY": 0,
+      "curvature": [0, 0, 0],
+      "displacementField": {
+        "UX": "0.001*x",
+        "UY": "0",
+        "UZ": "0",
+        "R1": "0",
+        "R2": "0"
+      },
+      "sourceStatement": "Existing prescribedPatchSource defaults to MEMBRANE with epsilonX=0.001, epsilonY=0, gammaXY=0 and zero curvature."
+    },
+    "loadCase": {
+      "loadCaseId": "LC",
+      "boundaryConditionClass": "PRESCRIBE_EXISTING_MEMBRANE_FIELD_ON_EXTERNAL_FROZEN_MULTIPATCH_BOUNDARY_NODES",
+      "boundaryMembership": "TOPOLOGICAL_EXTERNAL_BOUNDARY_EDGE_OWNER_COUNT_ONE_NOT_NODE_ID; shared seam interior nodes are not boundary-constrained",
+      "nodalLoads": [],
+      "pressureLoads": [],
+      "temperatureLoads": [],
+      "imposedDisplacementField": {
+        "UX": "0.001*x",
+        "UY": "0",
+        "UZ": "0",
+        "R1": "0",
+        "R2": "0"
+      }
+    },
+    "responses": {
+      "strainEnergy": {
+        "quantity": "STRAIN_ENERGY",
+        "recovery": "loadCaseResult.totalStrainEnergy",
+        "units": "N*mm",
+        "analyticalReference": {
+          "area": 2,
+          "thickness": 2,
+          "sigmaX": 219.78021978021977,
+          "sigmaY": 65.93406593406593,
+          "expectedValue": 0.43956043956043955,
+          "derivation": "0.5 * epsilonX(0.001) * [E/(1-nu^2)*epsilonX] * area(2) * thickness(2)"
+        },
+        "analyticalReferenceUsedForConvergenceAcceptance": false
+      },
+      "selectedDisplacement": {
+        "quantity": "SELECTED_DISPLACEMENT",
+        "quantityId": "DISPLACEMENT_X",
+        "representation": "PHYSICAL_POINT_DIRECT",
+        "recoveryMethod": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX",
+        "units": "mm",
+        "singularityClassification": "NOT_APPLICABLE",
+        "recoveryRules": {
+          "locateByPhysicalCoordinate": true,
+          "requireUniqueContainingTriangle": true,
+          "rejectAmbiguousBoundaryOwnership": true,
+          "interpolateFromThreeCornerGlobalUxValues": true,
+          "crossElementAveragingUsed": false,
+          "stressRecoveryUsed": false,
+          "movingMaximumUsed": false
+        },
+        "probes": [
+          {"probeId":"L4-PA-P1","expectedValue":0.00037},
+          {"probeId":"L4-PB-P1","expectedValue":0.00163}
+        ],
+        "expectedValueDerivation": "UX = 0.001*x at the already-frozen physical coordinate",
+        "analyticalReferenceUsedForConvergenceAcceptance": false
+      }
+    }
+  },
+  "runnerObligations": [
+    "Use the existing BM-MESH production mesh for every level; do not create or mutate a benchmark mesh.",
+    "Construct canonical solver models from the frozen physics projection without changing element connectivity or node coordinates.",
+    "Require an accepted solver result before retaining any response value.",
+    "Build at least three coarse-to-fine histories with the frozen level order and call requireSufficientMeshLevels before qualifyConvergenceSet.",
+    "Apply no convergence limit overrides.",
+    "Retain physical-point mapping evidence for every selected-displacement observation.",
+    "Do not use raw peak stress, moving maxima, cross-element stress averaging, release qualification or temperature authority."
+  ],
+  "sourceRefs": ["S-012", "S-013", "S-014", "S-015", "S-021", "S-024", "S-025", "S-026", "S-027", "S-028", "S-029"]
+}

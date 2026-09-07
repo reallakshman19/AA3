@@ -1,7 +1,7 @@
 {
   "schema": "lafea-mesh-source-registry/v1",
   "benchmarkId": "BM-MESH",
-  "stage": "M3",
+  "stage": "M4",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "baselineTree": "5059890f372e7d885c7e3743bf806826444a6c8e",
   "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
@@ -26,9 +26,16 @@
     {"sourceId":"S-018","role":"lafea3DomainFirstMeshRequestContract","path":"src/workspace/lafea-domain-first-requests.js","blobSha":"51907e33fcf363e1d84fa491e7124a3c961529a0"},
     {"sourceId":"S-019","role":"explicitMappedQ8Primitive","path":"src/core/lafea-meshing/mapped-mitc-mesh.js","blobSha":"4ad4740e3853cfec31ea372710713a8e270619f6"},
     {"sourceId":"S-020","role":"lafea4ShellThicknessBasisContract","path":"src/workspace/lafea-shell-thickness-basis.js","blobSha":"643b73a6c6589cb2b2dbaa2879246d6e3ef057f1"},
-    {"sourceId":"S-021","role":"lafea4ExistingFixtureThicknessSource","path":"scripts/lafea.4-fixtures.mjs","blobSha":"b3e68b24064221a7d35dd1fbb156addfc41667ef"},
+    {"sourceId":"S-021","role":"lafea4ExistingFixtureThicknessAndPrescribedPatchSource","path":"scripts/lafea.4-fixtures.mjs","blobSha":"b3e68b24064221a7d35dd1fbb156addfc41667ef"},
     {"sourceId":"S-022","role":"lafea4ThicknessBasisQualificationWitness","path":"scripts/lafea-tech2-thickness-curvature-check.mjs","blobSha":"31348e942aeca59c17e7c00df3ab4732a60e1cb6"},
-    {"sourceId":"S-023","role":"benchmarkFrozenShellThicknessFixture","path":"validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json","blobSha":"b0e408cee23df76d247a9dc7a7ac2bc49c144094"}
+    {"sourceId":"S-023","role":"benchmarkFrozenShellThicknessFixture","path":"validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json","blobSha":"b0e408cee23df76d247a9dc7a7ac2bc49c144094"},
+    {"sourceId":"S-024","role":"lafea3ClosedFormAffinePhysicsOracle","path":"validation/bucket-01/04-t3-patch-oracle.json","blobSha":"38cdab72f181eb4407a16aaa0753f8770d5989d8"},
+    {"sourceId":"S-025","role":"lafea3AffinePhysicsQualificationWitness","path":"scripts/lafea-bucket-01-t3-patch-check.mjs","blobSha":"47cecae5a5a159ea1ee0e28a0d92990a88f1824e"},
+    {"sourceId":"S-026","role":"lafea3CanonicalContinuumSolverContract","path":"src/core/local-continuum/index.js","blobSha":"6c5184ec3044eef0ea48d1500985eb513e9f34d2"},
+    {"sourceId":"S-027","role":"lafea4ProductionRoutePhysicsQualificationWitness","path":"scripts/lafea.4-production-route-benchmarks-check.mjs","blobSha":"da375442897a302027e15bb3400390ea3c715111"},
+    {"sourceId":"S-028","role":"lafea4CanonicalShellSolverContract","path":"src/core/local-shell/index.js","blobSha":"4af7ff09daae2b0e35edbabce627aa9b546485e2"},
+    {"sourceId":"S-029","role":"lafea4CstMembraneKinematicsContract","path":"src/core/local-shell/cst.js","blobSha":"ae140f4c8cfd74c009b3bd9743d1deed00dd89ea"},
+    {"sourceId":"S-030","role":"benchmarkFrozenM4PhysicsResponseFixture","path":"validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json","blobSha":"7fcf6bea3c31a16973b953568bc9732401422a1b"}
   ],
   "trace": {
     "LAFEA.3": {
@@ -54,6 +61,23 @@
       "qualificationWitness": "S-022",
       "frozenBenchmarkFixture": "S-023"
     },
+    "M4": {
+      "convergenceFramework": "S-012",
+      "fixedProbeDefinitions": "S-015",
+      "frozenPhysicsResponseFixture": "S-030",
+      "lafea3": {
+        "physicsOracle": "S-024",
+        "qualificationWitness": "S-025",
+        "solverContract": "S-026",
+        "physicalProbeContract": "S-013"
+      },
+      "lafea4": {
+        "prescribedPatchFixture": "S-021",
+        "qualificationWitness": "S-027",
+        "solverContract": "S-028",
+        "cstKinematics": "S-029"
+      }
+    },
     "TASK-005": {
       "overCeilingPublication": "S-002",
       "unauthorizedFamilyIntent": "S-018",
@@ -68,7 +92,10 @@
     "benchmarkOnlyMeshGeneratorUsed": false,
     "benchmarkThicknessFixtureOwnerAuthorized": true,
     "benchmarkThicknessInventedFromUncitedValue": false,
+    "benchmarkM4PhysicsResponseFixtureOwnerAuthorized": true,
+    "benchmarkM4PhysicsChosenFromSolverOutput": false,
+    "solverExecutionAuthorizedByRegistry": false,
     "productionSourceMutationAuthorized": false
   },
-  "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_OR_M3_THICKNESS_REQUIREMENT_CHANGES"
+  "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_M3_OR_M4_FIXTURE_REQUIREMENT_CHANGES"
 }

@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "baselineId": "QB-ISSUE-1706-A",
+  "source": "github:reallaksh19/Advanced_Analysis#1706/Q1-Q5",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "QS-BM-UQ-REF-DISC-COV-0002",
+  "questions": [
+    {
+      "baselineQuestion": "Q1",
+      "coveredBy": ["Q1"],
+      "requiredLiterals": ["rho_BD=0.3", "Cov(B,D)=0.018", "2mCov(B,D)"],
+      "requiredConcepts": ["factor marginal", "discrepancy marginal", "synthetic covariance", "deterministic model IDs/values", "post-construction diagnostics", "holdout observations cannot generate marginals/covariance/oracle"],
+      "requiredObligations": ["trace", "derive", "separate diagnostics from prediction construction"]
+    },
+    {
+      "baselineQuestion": "Q2",
+      "coveredBy": ["Q2"],
+      "requiredLiterals": ["2mCov", "|rho|<1"],
+      "requiredConcepts": ["marginal source transcription", "covariance/rho transcription", "symmetry", "positive-definiteness", "semantic ID/unit binding", "cross-term sign", "interval arithmetic", "authority leakage"],
+      "requiredObligations": ["isolate", "compute", "identify first wrong boundary", "do not tune frozen inputs to PASS"]
+    },
+    {
+      "baselineQuestion": "Q3",
+      "coveredBy": ["Q3"],
+      "requiredLiterals": ["rho_BD=0.3", "NONE", "0"],
+      "requiredConcepts": ["reference-only correlation", "production model-discrepancy authority false", "production calibration authority false", "production statistical authority false", "production sensitivity/validation authority false", "code/design-basis authority false", "B03/release/temperature false"],
+      "requiredObligations": ["trace authority", "protect invariants", "reject production extrapolation"]
+    },
+    {
+      "baselineQuestion": "Q4",
+      "coveredBy": ["Q4"],
+      "requiredLiterals": ["[[0.0004,0.018],[0.018,9]]", "0.003276", "[3.96,5.04,6.3,7.92]", "[17.8,21.88,27.55,36.28]", "rho=0", "NOT_APPLICABLE_ZERO_COMBINED_UNCERTAINTY"],
+      "requiredConcepts": ["independent covariance reconstruction", "positive-definiteness", "rho=0 reduction to #1704", "covariance-sign causality", "semantic permutation", "zero-discrepancy-SD compatibility", "fail-closed covariance/provenance/authority matrix"],
+      "requiredObligations": ["independently reconstruct", "verify", "falsify implementation-coupled oracle"]
+    },
+    {
+      "baselineQuestion": "Q5",
+      "coveredBy": ["Q5"],
+      "requiredLiterals": ["#1705", "8da6ae56f6f8632892ec532fbfe2534552355374", "LEG-001"],
+      "requiredConcepts": ["bounded correlated reference fixture", "narrow covariance-aware analytical utility", "reduction/invariance/causality controls", "structured fail-closed cases", "no production registry", "no solver/mesh/recovery", "no roadmap mutation", "no code/design-basis or release authority"],
+      "requiredObligations": ["define smallest safe next contribution", "protect no-patch boundary", "preserve frozen oracle"]
+    }
+  ]
+}

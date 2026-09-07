@@ -6,13 +6,13 @@ ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-07
 PREVIOUS_ISSUE_BASIS: NONE
 CHANGE_AUTHORITY: INITIAL_CAPTURE
 ISSUE_BASIS_STATUS: CURRENT
-CURRENT_ENDPOINT: EP-0001
+CURRENT_ENDPOINT: EP-0002
 
 ## Original task / acceptance ledger
 TASK-001 | Pull current GitHub main and preserve checkout. | PASS | Owner current session
 TASK-002 | Parent roadmap plus native LAFEA.3-.6 children with benchmark, hand-calc, UI and validation requirements. | PASS | Owner current session
 TASK-003 | Questionnaires only in children for future-agent validation. | PASS | Owner steering
-TASK-004 | Proceed with bounded practical code repair and benchmark execution. | OPEN | Owner current session
+TASK-004 | Proceed with bounded practical code repair and benchmark execution. | PASS | LEG-001 completes bounded integration; larger meshing programme remains OPEN
 
 ## Input ledger
 INPUT-001 | Main 695538dd713f2ef11fb00e54b86073f19d38684a. | AVAILABLE | Git fetch/pull
@@ -22,8 +22,8 @@ INPUT-004 | Real practical project mesh-validation input. | UNRESOLVED | No new 
 
 ## Benchmark / oracle ledger
 BM-001 | Inherited public M4 runner on clean PR head. | FAIL | Source-pinned fixture
-BM-002 | Current-main imported/repaired M0-M4 runner. | NOT_RUN | Same independent expected geometry/physics
-BM-003 | Existing meshing governance + applicable imports/build checks. | NOT_RUN | Repository entrypoints
+BM-002 | Current-main imported/repaired M0-M4 runner. | FAIL | M0-M2 PASS; M3 FAIL; M4 BLOCKED; final/ exact code b76e33984
+BM-003 | Existing meshing governance + applicable imports/build checks. | FAIL | Meshing/imports/shell-contract/self-test PASS; bundle-size build FAIL; see regression-receipt.json
 
 ## Roadmap ledger
 RM-001 | docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a | PROJECT_ROADMAP | PRIMARY | ALIGNED | Owner controlled, unchanged
@@ -33,3 +33,6 @@ RM-003 | github:reallaksh19/Advanced_Analysis#1710 | ISSUE_EXECUTION_PLAN | DELI
 ## Owner qualification baseline
 Current-session exam waived by Owner. Future-child questions preserve #1535-.1538 challenges and identify invalid/ambiguous premises. This chain has no independent takeover admission claim.
 
+
+## Continuation
+RP-0001 is proposed, not applied. Original M3 acceptance and all physical-response expectations remain in force. Next material leg needs Owner decision on the precise protected boundary. UI, practical project cases, engineering negative suite and LAFEA.5/.6 implementation remain open in children.

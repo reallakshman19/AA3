@@ -55,6 +55,7 @@ import {
   produceLafeaMultiPatchShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-multipatch-mesh-core.js';
 import { finalizeAuditRecord, sha256File } from './lib/lafea-benchmark-audit.mjs';
+import { runMeshBenchmarkM4 } from './lib/lafea-mesh-benchmark-m4.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
@@ -66,6 +67,7 @@ const ORACLE_PATH = path.join(BUCKET_ROOT, 'oracle/expected-values.json');
 const LADDERS_PATH = path.join(BUCKET_ROOT, 'convergence/mesh-ladders.json');
 const PROBES_PATH = path.join(BUCKET_ROOT, 'convergence/fixed-probes.json');
 const THICKNESS_PATH = path.join(BUCKET_ROOT, 'convergence/shell-thickness.json');
+const M4_FIXTURE_PATH = path.join(BUCKET_ROOT, 'convergence/m4-physics-response.json');
 const REPORT_ROOT = path.join(ROOT, 'reports/qualification/lafea-benchmark-program');
 const STAGE_ORDER = ['M0', 'M1', 'M2', 'M3', 'M4'];
 
@@ -76,6 +78,7 @@ const oracle = readJson(ORACLE_PATH);
 const ladders = readJson(LADDERS_PATH);
 const fixedProbes = readJson(PROBES_PATH);
 const shellThickness = readJson(THICKNESS_PATH);
+const m4Fixture = readJson(M4_FIXTURE_PATH);
 const args = parseArgs(process.argv.slice(2));
 
 if (args.worker) {
@@ -119,7 +122,7 @@ for (const stageId of selectedStages) {
   const record = finalizeAuditRecord({
     schema: 'lafea-benchmark-audit-record/v1',
     programId: 'BM-MESH',
-    materialLeg: 'LEG-015',
+    materialLeg: 'LEG-017',
     runId,
     generatedAt: new Date().toISOString(),
     repository: 'reallaksh19/Advanced_Analysis',
@@ -153,7 +156,7 @@ for (const stageId of selectedStages) {
       benchmarkAuthoredMeshUsed: false,
       benchmarkSideMeshMutationUsed: false,
       fabricatedPhysicsUsed: false,
-      solverOrCompilerExecuted: false,
+      solverOrCompilerExecuted: evidence.solverExecuted === true,
       benchmarkRegistrationGranted: true,
       releaseAuthorityGranted: false,
       temperatureAuthorityGranted: false,
@@ -172,7 +175,7 @@ const overallStatus = stageRecords.some((row) => row.caseStatus === 'FAIL')
 const summary = {
   schema: 'lafea-mesh-benchmark-program-run/v1',
   benchmarkId: 'BM-MESH',
-  materialLeg: 'LEG-015',
+  materialLeg: 'LEG-017',
   runId,
   generatedAt: new Date().toISOString(),
   exactHeadSha,
@@ -206,14 +209,14 @@ function runStage(stageId, predecessorGateSatisfied) {
   if (stageId === 'M1') return runM1();
   if (stageId === 'M2') return runM2();
   if (stageId === 'M3') return runM3();
-  return {
-    schema: 'lafea-mesh-benchmark-stage-evidence/v1',
-    status: 'BLOCKED',
-    blocker: 'M4_PHYSICS_RESPONSE_SOLVER_AND_CONVERGENCE_AUTHORITY_NOT_FROZEN',
-    fixedProbeDefinitionHash: sha256File(PROBES_PATH),
-    note: 'No material, loads, restraints, loadCaseId, response quantity, recovery method, response acceptance, solver execution or convergence outcome is synthesized.',
-    observations: [],
-  };
+  return runMeshBenchmarkM4({
+    m4Fixture,
+    fixedProbes,
+    refinementLevel,
+    continuumObservation,
+    shellMultiPatchObservation,
+    fixtureHash: sha256File(M4_FIXTURE_PATH),
+  });
 }
 
 function runM0() {
@@ -1136,9 +1139,13 @@ function validateFrozenInputs() {
   assert.equal(shellThickness.sizeToThicknessQualification.minimumMultiple, 0.5);
   assert.equal(shellThickness.sizeToThicknessQualification.maximumMultiple, 2);
   assert.equal(shellThickness.sizeToThicknessQualification.outsideBandDisposition, 'WARNING');
+  assert.equal(m4Fixture.schema, 'lafea-mesh-m4-physics-response/v1');
+  assert.equal(m4Fixture.benchmarkId, 'BM-MESH');
+  assert.equal(m4Fixture.convergencePolicy.requiredLevelCount, 3);
+  assert.equal(m4Fixture.convergencePolicy.limitOverrides, null);
   for (const ladder of ladders.ladders) assert.equal(ladder.levelIds.at(-1), 'L2');
   const ids = new Set(registry.sources.map((row) => row.sourceId));
-  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023']) {
+  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023', 'S-030', 'S-031']) {
     assert.ok(ids.has(sourceId));
   }
 }
@@ -1149,7 +1156,7 @@ function stageComparisonPolicy(stageId) {
     M1: 'BYTE_STABLE_CANONICAL_MESH_HASH_ACROSS_REPLAY_PROCESS_AND_INPUT_ORDER',
     M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_WITH_PRODUCTION_MULTIPATCH_SEAM_IDENTITY',
     M3: 'RETAIN_PRODUCTION_QUALITY_DISTRIBUTIONS_AND_FROZEN_1_5_MM_SHELL_SIZE_TO_THICKNESS_GATE',
-    M4: 'BLOCK_IF_PHYSICS_RESPONSE_SOLVER_OR_CONVERGENCE_AUTHORITY_IS_ABSENT',
+    M4: 'FROZEN_PHYSICS_RESPONSE_THREE_LEVEL_PRODUCTION_SOLVER_CONVERGENCE_WITH_NO_LIMIT_OVERRIDES',
   }[stageId];
 }
 

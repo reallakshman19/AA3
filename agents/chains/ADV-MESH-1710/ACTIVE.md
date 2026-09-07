@@ -49,11 +49,13 @@ ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-MESH-1710/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-MESH-1710/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5574255662
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5574255261
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5574255504
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 CHAIN_HANDOVER_READY: FALSE
 HANDOVER_READY: FALSE
 CURRENT_BLOCKER: Inherited runner aborts before M0 because required S-031 is absent; manifest still denies solver execution.
 EXACT_NEXT_ACTION: Import pinned benchmark files, pin unchanged helper and current runner custody, reconcile authorized M4 manifest, execute clean committed candidate and retain first failing boundary.
-

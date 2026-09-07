@@ -1,0 +1,261 @@
+{
+  "schema": "lafea-mesh-benchmark-manifest/v1",
+  "bucketId": "MESH",
+  "issue": "github:reallaksh19/Advanced_Analysis#1652",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "LEG-017",
+  "state": "M4_EXECUTION_WIRED_PENDING_EXACT_HEAD_VALIDATION",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "authority": {
+    "benchmarkExecutionAuthorized": true,
+    "productionSourceMutationAuthorized": false,
+    "thresholdMutationAuthorized": false,
+    "shellThicknessFixtureAuthorityGranted": true,
+    "m4PhysicsResponseFixtureAuthorityGranted": true,
+    "solverOrCompilerExecutionAuthorized": true,
+    "benchmarkRegistrationAuthorized": true,
+    "workflowMutationAuthorized": false,
+    "roadmapMutationAuthorized": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false,
+    "executionAuthorizationSource": "issue #1652 EP-0030 and Owner 2026-09-07 #1710 implementation request"
+  },
+  "scopeBoundary": {
+    "allowed": [
+      "Execute registered production continuum, single-patch shell and qualified multipatch shell mesh producers for frozen M0-M3 observations.",
+      "Retain canonical lafea-analysis-mesh/v1 hashes, counts, DOF, conforming seam identity and mesh-quality observations.",
+      "Use only the source-cited 1.5 mm uniform shell thickness frozen in convergence/shell-thickness.json for M3 h/t observation.",
+      "Freeze and retain the source-cited M4 physics/response/recovery contract in convergence/m4-physics-response.json.",
+      "Retain per-stage audit records and gate later stages on a contiguous PASS prefix.",
+      "Emit explicit BLOCKED records where execution authority is absent.",
+      "Execute the frozen M4 production-solver/convergence helper only after a contiguous M0-M3 PASS prefix."
+    ],
+    "forbidden": [
+      "Benchmark-authored meshes or benchmark-only mesh adapters defining ladder meshes.",
+      "Benchmark-side node merging to manufacture a conforming multi-patch shell seam.",
+      "Production source, threshold, solver/compiler, workflow or roadmap changes.",
+      "M4 solver/compiler or convergence execution without recorded Owner authority or a contiguous M0-M3 PASS prefix.",
+      "Physics values, response quantities or recovery methods outside the frozen M4 fixture.",
+      "Convergence limit overrides, raw singular peak stress, moving maxima, cross-element stress averaging, release or temperature authority."
+    ]
+  },
+  "stageOrder": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "advancementPolicy": "AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",
+  "stages": [
+    {
+      "benchmarkStage": "M0",
+      "title": "Production producer conformance",
+      "definitionState": "READY",
+      "gateMode": "REQUIRE_PASS",
+      "methods": [
+        {
+          "methodId": "M0-PRODUCTION-PRODUCER-CONFORMANCE",
+          "authorityClass": "PRODUCTION_PRODUCER_OBSERVATION",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-001",
+            "S-002",
+            "S-003",
+            "S-004",
+            "S-005",
+            "S-006",
+            "S-011",
+            "S-014",
+            "S-016",
+            "S-017"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "PRODUCTION_CONTRACT_AND_FROZEN_LADDER_REQUESTS"
+        }
+      ]
+    },
+    {
+      "benchmarkStage": "M1",
+      "title": "Determinism",
+      "definitionState": "READY",
+      "gateMode": "REQUIRE_PASS",
+      "methods": [
+        {
+          "methodId": "M1-IN_PROCESS-CROSS_PROCESS-SHUFFLED_INPUT",
+          "authorityClass": "PRODUCTION_PRODUCER_DETERMINISM",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-001",
+            "S-002",
+            "S-003",
+            "S-004",
+            "S-005",
+            "S-006",
+            "S-011",
+            "S-014",
+            "S-016",
+            "S-017"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "BYTE_STABLE_CANONICAL_MESH_HASH"
+        }
+      ]
+    },
+    {
+      "benchmarkStage": "M2",
+      "title": "Independent geometry fidelity",
+      "definitionState": "READY",
+      "gateMode": "REQUIRE_PASS",
+      "methods": [
+        {
+          "methodId": "M2-INDEPENDENT-GEOMETRY-FIDELITY",
+          "authorityClass": "INDEPENDENT_CLOSED_FORM_AND_FROZEN_POLICY",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-002",
+            "S-003",
+            "S-004",
+            "S-005",
+            "S-006",
+            "S-008",
+            "S-011",
+            "S-014",
+            "S-016",
+            "S-017"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "validation/lafea-benchmark-data/MESH/oracle/expected-values.json"
+        }
+      ],
+      "multipatchSeamPolicy": {
+        "caseId": "M2-TWO-PATCH-SHELL-01",
+        "producerScope": "PLANAR_TWO_RECTANGULAR_PATCHES_CONFORMING_FULL_EDGE_SEAM_CST_DKT_TRI3_V1",
+        "requiredIdentity": "TOPOLOGICAL_IDENTITY_NOT_COORDINATE_PROXIMITY",
+        "benchmarkSideNodeMergeAllowed": false,
+        "requireSharedSeamEdgeOwnerCount": 2
+      }
+    },
+    {
+      "benchmarkStage": "M3",
+      "title": "Quality-gate distributions over systematic refinement",
+      "definitionState": "READY_STATIC_NOT_RUN",
+      "executionState": "STATIC_NOT_RUN",
+      "gateMode": "REQUIRE_PASS",
+      "methods": [
+        {
+          "methodId": "M3-ALL-FROZEN-LADDERS-NON-THICKNESS-QUALITY-DISTRIBUTIONS",
+          "authorityClass": "PRODUCTION_QUALITY_OBSERVATION_FROZEN_LADDER",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "sourceRefs": [
+            "S-002",
+            "S-003",
+            "S-006",
+            "S-007",
+            "S-011",
+            "S-014",
+            "S-016",
+            "S-017"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "FROZEN_LADDER_PLUS_EXISTING_PRODUCTION_QUALITY_POLICY_NO_THRESHOLD_MUTATION"
+        },
+        {
+          "methodId": "M3-LAFEA4-SHELL-SIZE-TO-THICKNESS",
+          "authorityClass": "OWNER_FROZEN_THICKNESS_PLUS_PRODUCTION_QUALITY_GATE",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "implementationState": "WIRED_STATIC_NOT_RUN",
+          "sourceRefs": [
+            "S-007",
+            "S-020",
+            "S-021",
+            "S-022",
+            "S-023"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "EP_0025_FROZEN_1_5_MM_THICKNESS_PLUS_ISSUE_1652_0_5T_TO_2T_BAND"
+        }
+      ],
+      "retainedDistributionMetrics": [
+        "ASPECT_RATIO",
+        "MINIMUM_ANGLE_DEGREES",
+        "SCALED_JACOBIAN",
+        "SHELL_SIZE_TO_THICKNESS_RATIO"
+      ],
+      "shellAdditionalEvidence": [
+        "ADJACENT_SIZE_RATIO",
+        "SHELL_ORIENTATION_TOPOLOGY",
+        "CONFORMING_SHARED_SEAM"
+      ],
+      "warpageDisposition": "NOT_APPLICABLE_FOR_CST_DKT_TRI3_QUAD_WARPAGE_METRIC",
+      "thicknessFixture": {
+        "path": "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json",
+        "sourceRef": "S-023",
+        "classification": "BENCHMARK_ONLY_FROZEN_UNIFORM_THICKNESS_FROM_EXISTING_LAFEA4_SOURCE",
+        "uniformThickness": 1.5,
+        "lengthUnit": "mm",
+        "minimumMultiple": 0.5,
+        "maximumMultiple": 2,
+        "outsideBandDisposition": "WARNING"
+      },
+      "refinementAcceptance": {
+        "requireDistinctMeshHash": true,
+        "requireIncreasingNodeCount": true,
+        "requireIncreasingElementCount": true,
+        "adjacentTargetHRatio": 2,
+        "worstCaseTrend": "IMPROVES_OR_HOLDS"
+      },
+      "declaredBlockers": []
+    },
+    {
+      "benchmarkStage": "M4",
+      "title": "Solver handoff and governed convergence",
+      "definitionState": "FROZEN_PHYSICS_RESPONSE_EXECUTION_WIRED",
+      "executionState": "NOT_RUN",
+      "gateMode": "REQUIRE_PASS",
+      "physicsResponseFixture": {
+        "path": "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json",
+        "sourceRef": "S-030",
+        "authorityEndpoint": "EP-0028",
+        "convergenceQuantities": [
+          "STRAIN_ENERGY",
+          "SELECTED_DISPLACEMENT"
+        ],
+        "limitOverrides": null,
+        "rawSingularPeakStressAllowed": false
+      },
+      "methods": [
+        {
+          "methodId": "M4-PRODUCTION-MESH-SOLVER-CONVERGENCE",
+          "authorityClass": "FROZEN_PHYSICS_PRODUCTION_MESH_PRODUCTION_SOLVER_CONVERGENCE",
+          "executor": "scripts/lafea-mesh-benchmark-run.mjs",
+          "implementationState": "WIRED_PENDING_EXACT_HEAD_EXECUTION",
+          "sourceRefs": [
+            "S-012",
+            "S-013",
+            "S-014",
+            "S-015",
+            "S-021",
+            "S-024",
+            "S-025",
+            "S-026",
+            "S-027",
+            "S-028",
+            "S-029",
+            "S-030",
+            "S-031",
+            "S-032"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-stage-evidence/v1",
+          "oracleAuthority": "EP_0028_SOURCE_CITED_M4_PHYSICS_RESPONSE_FIXTURE_PLUS_EXISTING_CONVERGENCE_DEFAULTS"
+        }
+      ],
+      "declaredBlockers": [
+        {
+          "blockerId": "M4-PREDECESSOR-GATE",
+          "reason": "M4 cannot execute unless M0-M3 form a contiguous PASS prefix on the exact execution head."
+        }
+      ]
+    }
+  ]
+}

@@ -1,13 +1,13 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0035
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0036
 UPDATED_AT: 2026-09-07
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5572407700
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5572410902
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5572621806
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5572627156
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
@@ -30,19 +30,21 @@ LIVE_MAIN_DRIFT_EMP1_OVERLAP: FALSE
 LIVE_MAIN_DRIFT_PLAYWRIGHT_OVERLAP: FALSE
 LIVE_MAIN_DRIFT_PACKAGE_CUSTODY_OVERLAP: FALSE
 LIVE_MAIN_DRIFT_WRC_PRESSURE_AUTHORITY_OVERLAP: FALSE
+REQUALIFICATION_REQUIRED_BY_DRIFT: FALSE
 
 POST_MERGE_RECONCILIATION_BRANCH: agent/emp1-1651-post-merge-ep0029
 POST_MERGE_RECONCILIATION_PR: 1708
 POST_MERGE_RECONCILIATION_PR_STATUS: OPEN_DRAFT_OWNER_ONLY_NOT_AUTHORIZED
-PR_MERGEABILITY_AT_EP0035: MERGEABLE
-PR_REVIEWS_AT_EP0035: 0
-PR_UNRESOLVED_THREADS_AT_EP0035: 0
-PR_STATUS_CONTEXTS_AT_EP0035: 0
-PR_WORKFLOW_RUNS_AT_EP0035: 0
+PR_MERGEABILITY_AT_EP0036: MERGEABLE
+PR_REVIEWS_AT_EP0036: 0
+PR_UNRESOLVED_THREADS_AT_EP0036: 0
+PR_STATUS_CONTEXTS_AT_EP0036: 0
+PR_WORKFLOW_RUNS_AT_EP0036: 0
 
-ACTIVE_ENDPOINT: EP-0035
+ACTIVE_ENDPOINT: EP-0036
 LAST_COMPLETED_MATERIAL_LEG: LEG-014
 CURRENT_MATERIAL_LEG: NONE
+LEG015_OPENED: FALSE
 MATERIAL_RECEIPT: agents/chains/ADV-EMP1-HUMAN-UI-1651/material-legs/LEG-014.md
 MATERIAL_BASE: 8b698396cd8850e82702147243afe3a98a050419
 MATERIAL_HEAD: ca139008d7e62c87299bca7292828e4e4cf1b1b7
@@ -56,7 +58,7 @@ VALIDATION_EVIDENCE_RECORD: agents/chains/ADV-EMP1-HUMAN-UI-1651/validation/EP-0
 - TASK-002 | Pressure 5 identities × Internal/External = 10 governed cells. | SOURCE RETAINED/MERGED. Live confirmation pending.
 - TASK-003 | Anti-waterfall split-console / one active task / selected evidence only. | LEG-010 MERGED. Human-factor desktop/narrow re-observation pending executable PASS.
 - TASK-004 | CAUx staged benchmark UI with physical keyboard behavior. | SOURCE RETAINED/MERGED. Physical Enter/Space and visual evidence pending executable PASS.
-- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED through LEG-014 and EP-0035.
+- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED through LEG-014 and EP-0036.
 
 ## Repair / validation history
 
@@ -107,39 +109,21 @@ Immutable parent endpoint comment `5570759358`; recovery comment `5570762614`.
 
 ### EP-0035 self-execution feasibility + live-main drift reconciliation
 
-Owner issued exact `proceed next`. Live Common is `a32af52584b6a87ce0c617b7dc7f8182044e93d4`; the complete `engineering-pr-delivery-v2` subtree remains unchanged:
+Owner `proceed next` was consumed by EP-0035. Common advanced to `a32af52584b6a87ce0c617b7dc7f8182044e93d4` while the complete `engineering-pr-delivery-v2` subtree remained unchanged (`SKILL` blob `aa832f5f9f204c3834ffcee40102b482f121ce76`; agents/references/scripts tree SHAs unchanged).
 
-```text
-SKILL blob   aa832f5f9f204c3834ffcee40102b482f121ce76
-agents tree  59871bb7bc8b20d67a661da5a3fd93b5d2084c1a
-references   a3e0f8ef48cd5e5b3e8e27474349613e56fb9087
-scripts tree 9d70db021318458f5bf01db070fea456f47cecec
-```
+`main` advanced to `cb84d4d249d3be130a8f0b739b312cac32f49983` via PR #1707. Its paths are confined to the independent LAFEA-UQ reference chain, two LAFEA-UQ scripts, and one UQ reference JSON; no EMP.1, Playwright, package custody, WRC/Pressure, benchmark, workflow or release-authority overlap exists.
 
-`Advanced_Analysis/main` advanced to `cb84d4d249d3be130a8f0b739b312cac32f49983` through merged PR #1707. Its 19 changed paths are confined to `LAFEA-UQ-REF-DISC-COV-1706` custody/qualification, two LAFEA-UQ reference scripts, and one UQ reference JSON. There is no EMP.1, Playwright, package-lock/package, WRC/Pressure, benchmark, workflow or release-authority overlap. No requalification is required for this independent drift.
+Assistant execution feasibility was directly probed: system Chromium 144 and Python Playwright are available, but the private worktree is not mounted, Node Playwright/@playwright/test are absent with no cache observed, and outbound GitHub/npm access is unavailable. Therefore the exact repository carrier remains `NOT_RUN / BLOCKED_ENVIRONMENT_PRIVATE_REPO_NOT_MOUNTED_AND_NODE_PLAYWRIGHT_UNAVAILABLE` in the assistant sandbox.
 
-The assistant actively probed its execution sandbox rather than assuming capability:
-
-```text
-Advanced_Analysis private worktree mount = NOT_FOUND
-node = v22.16.0
-npm = 10.9.2
-system Chromium = 144.0.7559.96
-Node playwright = NOT_FOUND
-Node @playwright/test = NOT_FOUND
-Playwright npm cache = no entries observed
-git ls-remote private repo = FAILED_NETWORK (Could not resolve host: github.com)
-npm registry = unavailable / timed out
-Python Playwright = AVAILABLE
-```
-
-Therefore the governed exact LEG-014 Node/Playwright carrier is `NOT_RUN / BLOCKED_ENVIRONMENT_PRIVATE_REPO_NOT_MOUNTED_AND_NODE_PLAYWRIGHT_UNAVAILABLE` in this assistant sandbox.
-
-A non-admissible Python-Playwright + system-Chromium mechanism falsifier was executed: a plain DOM click listener invoked an async handler that set execution after 500 ms; browser click returned after ~59.3 ms with immediate execution `null`, and an explicit completion poll later observed `CALCULATED`. Result: `PASS_ASYNC_DOM_LISTENER_CLICK_RETURNS_BEFORE_PROMISE_SETTLES`. This independently supports the LEG-014 race mechanism but is not repository engineering PASS.
-
-No source mutation occurred, no LEG-015 opened, and this `proceed next` is consumed by EP-0035.
+A non-admissible Python-Playwright/system-Chromium mechanism falsifier showed a plain DOM click returns before an async listener settles (click ~59.3 ms, immediate execution null, later `CALCULATED`), supporting the LEG-014 synchronization diagnosis without creating engineering PASS.
 
 Immutable parent endpoint comment `5572407700`; recovery comment `5572410902`.
+
+### EP-0036 LEG-014 evidence wait
+
+Owner `proceed next` was consumed as a no-patch evidence-wait checkpoint. Common and live `main` were unchanged from EP-0035. PR #1708 remained Draft/open/mergeable at start head `a716a98001076329a16009fdb289d392aa314aff`; reviews/unresolved threads/status contexts/PR workflow runs remained `0/0/0/0`, which is not PASS. No new admissible LEG-014 executable evidence existed; no LEG-015 or source mutation was opened.
+
+Immutable parent endpoint comment `5572621806`; recovery comment `5572627156`.
 
 ## Benchmark / authority ledger
 
@@ -147,7 +131,7 @@ Immutable parent endpoint comment `5572407700`; recovery comment `5572410902`.
 - PV Elite: `REFERENCE_NOT_AVAILABLE` / `SOURCE_NOT_RETAINED`; zero rows; no invented expected values, version or tolerance.
 - Bounded route `EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP` retains its existing bounded engineering-use authorization; global/full-domain WRC production authority remains unclaimed/unregistered.
 - Pressure remains 5 identities × Internal/External = 10 governed cells.
-- No LEG-014/EP-0035 change to WRC equations/tables/curves/applicability/sign/axes/SCFs, benchmark authority/tolerance, code compliance, workflows, production authorization or release authority.
+- No LEG-014/EP-0036 change to WRC equations/tables/curves/applicability/sign/axes/SCFs, benchmark authority/tolerance, code compliance, workflows, production authorization or release authority.
 
 ## Roadmap / protocol / control
 
@@ -157,7 +141,7 @@ ROADMAP_MUTATION_AUTHORITY: NONE
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: a32af52584b6a87ce0c617b7dc7f8182044e93d4
 COMMON_PROTOCOL_STATUS: CURRENT
-OWNER_PROGRESSION_COMMAND: `proceed next` CONSUMED_BY_EP_0035_SELF_EXECUTION_FEASIBILITY_AND_DRIFT_RECONCILIATION
+OWNER_PROGRESSION_COMMAND: `proceed next` CONSUMED_BY_EP_0036_LEG014_EVIDENCE_WAIT
 OWNER_CUSTODY_INSTRUCTION: CURRENT_CUSTODIAN_CONTINUES_NO_TAKEOVER
 OWNER_MERGE_COMMAND: MERGE CONSUMED_BY_PR_1701
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
@@ -178,5 +162,5 @@ CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
-CURRENT_BLOCKER: exact LEG-014 Node/Playwright/full-carrier validation remains NOT_RUN. The current assistant execution sandbox cannot supply that evidence because the private repository is not mounted, repository Node Playwright is absent, and outbound GitHub/npm network is unavailable. The prior exact merged-head runner remains FAIL; Stage-17 and human-factor remain blocked.
-EXACT_NEXT_ACTION: no further source mutation. Accept only executable evidence against exact LEG-014 material head `ca139008d7e62c87299bca7292828e4e4cf1b1b7` from an environment containing the private worktree, repository Node dependencies and project-local Chromium with `PLAYWRIGHT_BROWSERS_PATH=0`, running `node scripts/emp1-issue1651-executable-validation.mjs`. Evidence intake needs no new progression; any further material mutation after a failed LEG-014 run requires another exact Owner progression.
+CURRENT_BLOCKER: exact LEG-014 Node/Playwright/full-carrier validation remains NOT_RUN. The assistant sandbox cannot provide that governed evidence because the private worktree and repository Node Playwright are unavailable. The prior exact merged-head runner remains FAIL; Stage-17 and human-factor remain blocked.
+EXACT_NEXT_ACTION: no further source mutation. Accept executable evidence only against exact LEG-014 material head `ca139008d7e62c87299bca7292828e4e4cf1b1b7` from an environment containing the private worktree, repository Node dependencies and project-local Chromium with `PLAYWRIGHT_BROWSERS_PATH=0`, running `node scripts/emp1-issue1651-executable-validation.mjs`. Evidence intake needs no new progression; any further material mutation after a failed LEG-014 run requires another exact Owner progression.

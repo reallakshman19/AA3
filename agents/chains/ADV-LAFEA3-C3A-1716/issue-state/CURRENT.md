@@ -15,8 +15,8 @@ SUCCESSOR_PR: 1718 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0007_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0007_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586916059
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -71,13 +71,14 @@ LEG-002 receipt/evidence: `material-legs/LEG-002.md` and `validation/LEG-002-EVI
 Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0006.md`  
 Receipt: `agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-003.md`  
 Evidence: `agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-003-EVIDENCE.md`  
-Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0007.md`
+Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0007.md`  
+Issue endpoint comment: `5586916059`
 
-The unchanged `.github/workflows/lafea3-bm005-qualification.yml` watches the merged BM005 harness path on `push: main`. The exact main SHA `4fb35481...` was queried for Actions runs immediately after merge and again after EP-0006 Issue synchronization. Both returned `total_count=0` and `workflow_runs=[]`.
+The unchanged `.github/workflows/lafea3-bm005-qualification.yml` watches the merged BM005 harness path on `push: main`. Exact main `4fb35481...` was queried for Actions runs immediately after merge and again after synchronized EP-0006. Both returned `total_count=0` and `workflow_runs=[]`.
 
 Classification: `BM005_EXACT_MAIN = NOT_RUN_TRIGGER_NOT_SCHEDULED`.
 
-There is no current run ID, job ID, checkout step, Node process, stdout/stderr, exit code or artifact. This is not a benchmark FAIL and not engineering PASS. It is an external scheduling/control-plane blocker.
+There is no current run ID, job ID, checkout step, Node process, stdout/stderr, exit code or artifact. This is not benchmark FAIL and not engineering PASS. It is an external scheduling/control-plane blocker.
 
 ## Validation truth
 
@@ -88,6 +89,8 @@ PASS_CONTROL_PLANE:
 - EP-0006 synchronized before final exact-main observation;
 - watched merge path proven;
 - exact-main Actions scheduling observed twice as zero runs;
+- EP-0007 repository↔Issue projection synchronized;
+- successor PR #1718 is open Draft, mergeable, with no reviews, no unresolved threads and zero reported statuses at last observation;
 - no solver/formulation/quadrature/mesher/oracle/tolerance/B02/workflow/roadmap/release mutation.
 
 NOT_RUN:

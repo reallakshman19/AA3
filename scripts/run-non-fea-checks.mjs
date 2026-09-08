@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 const checks = [
   ['Canvas2D render-model v3 bootstrap regression', 'scripts/non-fea-canvas-v3-bootstrap-check.mjs'],
   ['Project Data authority contract', 'scripts/non-fea-project-data-authority-check.mjs'],
+  ['Load Calc qualification-profile auto-ensure authority', 'scripts/load-calc-qualification-profile-auto-ensure-check.mjs'],
   ['Product-default authority and hash binding', 'scripts/non-fea-product-default-profile-check.mjs'],
   ['Governed gravity-method request authority', 'scripts/non-fea-gravity-method-authority-check.mjs'],
   ['Component CoG fallback policy', 'scripts/non-fea-component-cog-fallback-policy-check.mjs'],

@@ -1,0 +1,455 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "BM-MESH",
+  "runId": "mesh-1710-roundoff-final",
+  "generatedAt": "2026-09-08T02:22:13.913Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "9fb5d5bd4b606143fe334e4e6f018629b768f908",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "MESH",
+  "stageId": "M0",
+  "methodResults": [
+    {
+      "methodId": "BM-MESH-M0",
+      "materialLeg": "ADV-MESH-1710/LEG-004",
+      "benchmarkClass": "STAGED_MESH_BENCHMARK",
+      "comparisonPolicy": "PRODUCTION_CONTRACT_CONFORMANCE",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/lafea-mesh-benchmark-run.mjs",
+        "--stage",
+        "M4",
+        "--expected-head",
+        "9fb5d5bd4b606143fe334e4e6f018629b768f908",
+        "--run-id",
+        "mesh-1710-roundoff-final"
+      ],
+      "sourceCustody": [
+        {
+          "sourceId": "S-001",
+          "path": "src/workspace/lafea-mesh-producer-registry.js",
+          "expectedBlobSha": "b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6",
+          "observedBlobSha": "b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-002",
+          "path": "src/workspace/lafea-mesh-producer-binding.js",
+          "expectedBlobSha": "e8307066293314ad952608872db596cf1898d5c1",
+          "observedBlobSha": "e8307066293314ad952608872db596cf1898d5c1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-003",
+          "path": "src/workspace/lafea-mesh-producer-engine.js",
+          "expectedBlobSha": "36fe0e7cb8b95aab8ebc2532578a68a1eb75f558",
+          "observedBlobSha": "36fe0e7cb8b95aab8ebc2532578a68a1eb75f558",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-004",
+          "path": "src/workspace/lafea-shell-mesh-producer.js",
+          "expectedBlobSha": "6bb02be40673ce79bb3488905c4ee465ad6625df",
+          "observedBlobSha": "6bb02be40673ce79bb3488905c4ee465ad6625df",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-005",
+          "path": "src/workspace/lafea-mesh-geometry-topology-adapter.js",
+          "expectedBlobSha": "0dea937de150ca5a54cc7750c907fd3fafd7761c",
+          "observedBlobSha": "0dea937de150ca5a54cc7750c907fd3fafd7761c",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-006",
+          "path": "src/workspace/lafea-analysis-mesh-contract.js",
+          "expectedBlobSha": "c5b9b246321456d3514de4b9294de831b4a82c0e",
+          "observedBlobSha": "c5b9b246321456d3514de4b9294de831b4a82c0e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-007",
+          "path": "src/core/lafea-meshing/quality-gates.js",
+          "expectedBlobSha": "da21c333a5bc22e59c4b52c2c1ff135ee7460ebb",
+          "observedBlobSha": "da21c333a5bc22e59c4b52c2c1ff135ee7460ebb",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-008",
+          "path": "scripts/lafea.10-quality-gate-check.mjs",
+          "expectedBlobSha": "97fa853ba347a65e2ad451ff9bc16488f9d4b146",
+          "observedBlobSha": "97fa853ba347a65e2ad451ff9bc16488f9d4b146",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-009",
+          "path": "src/workspace/lafea-stage-analysis-adapter.js",
+          "expectedBlobSha": "899afb248fc9864bdbea44f34a4a675d3574e5fa",
+          "observedBlobSha": "899afb248fc9864bdbea44f34a4a675d3574e5fa",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-010",
+          "path": "validation/lafea-benchmark-data/B01/sources/source-registry.json",
+          "expectedBlobSha": "21d86d5884e42adb462c402ca94b1289c27884f3",
+          "observedBlobSha": "21d86d5884e42adb462c402ca94b1289c27884f3",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-011",
+          "path": "src/core/lafea-profile-contract/field-schemas.js",
+          "expectedBlobSha": "1f860b106834d16d0400ac2d758d9e38d8051711",
+          "observedBlobSha": "1f860b106834d16d0400ac2d758d9e38d8051711",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-012",
+          "path": "src/core/lafea-meshing/mesh-convergence-framework.js",
+          "expectedBlobSha": "e7c5613d9a2ff1bb32fe20bc732d6bbf077b5b19",
+          "observedBlobSha": "e7c5613d9a2ff1bb32fe20bc732d6bbf077b5b19",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-013",
+          "path": "src/workspace/lafea-continuum-physical-probe.js",
+          "expectedBlobSha": "f1991fc17f0e799933917601b78c7a89af196df1",
+          "observedBlobSha": "f1991fc17f0e799933917601b78c7a89af196df1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-014",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json",
+          "expectedBlobSha": "7be1e34b9e35c35f27be4aae49dfc441090fad4b",
+          "observedBlobSha": "7be1e34b9e35c35f27be4aae49dfc441090fad4b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-015",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json",
+          "expectedBlobSha": "32436222284374cd94bad09ba4980ce64a0d28e8",
+          "observedBlobSha": "32436222284374cd94bad09ba4980ce64a0d28e8",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-016",
+          "path": "src/workspace/lafea-shell-multipatch-midsurface-contract.js",
+          "expectedBlobSha": "45158697eb552688f71b68ce09c9e33869f263f2",
+          "observedBlobSha": "45158697eb552688f71b68ce09c9e33869f263f2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-017",
+          "path": "src/workspace/lafea-shell-multipatch-mesh-core.js",
+          "expectedBlobSha": "b54063378d8265e5d5905975368b8094c251b8e7",
+          "observedBlobSha": "b54063378d8265e5d5905975368b8094c251b8e7",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-018",
+          "path": "src/workspace/lafea-domain-first-requests.js",
+          "expectedBlobSha": "51907e33fcf363e1d84fa491e7124a3c961529a0",
+          "observedBlobSha": "51907e33fcf363e1d84fa491e7124a3c961529a0",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-019",
+          "path": "src/core/lafea-meshing/mapped-mitc-mesh.js",
+          "expectedBlobSha": "4ad4740e3853cfec31ea372710713a8e270619f6",
+          "observedBlobSha": "4ad4740e3853cfec31ea372710713a8e270619f6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-020",
+          "path": "src/workspace/lafea-shell-thickness-basis.js",
+          "expectedBlobSha": "643b73a6c6589cb2b2dbaa2879246d6e3ef057f1",
+          "observedBlobSha": "643b73a6c6589cb2b2dbaa2879246d6e3ef057f1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-021",
+          "path": "scripts/lafea.4-fixtures.mjs",
+          "expectedBlobSha": "b3e68b24064221a7d35dd1fbb156addfc41667ef",
+          "observedBlobSha": "b3e68b24064221a7d35dd1fbb156addfc41667ef",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-022",
+          "path": "scripts/lafea-tech2-thickness-curvature-check.mjs",
+          "expectedBlobSha": "31348e942aeca59c17e7c00df3ab4732a60e1cb6",
+          "observedBlobSha": "31348e942aeca59c17e7c00df3ab4732a60e1cb6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-023",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json",
+          "expectedBlobSha": "b0e408cee23df76d247a9dc7a7ac2bc49c144094",
+          "observedBlobSha": "b0e408cee23df76d247a9dc7a7ac2bc49c144094",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-024",
+          "path": "validation/bucket-01/04-t3-patch-oracle.json",
+          "expectedBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8",
+          "observedBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-025",
+          "path": "scripts/lafea-bucket-01-t3-patch-check.mjs",
+          "expectedBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e",
+          "observedBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-026",
+          "path": "src/core/local-continuum/index.js",
+          "expectedBlobSha": "6c5184ec3044eef0ea48d1500985eb513e9f34d2",
+          "observedBlobSha": "6c5184ec3044eef0ea48d1500985eb513e9f34d2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-027",
+          "path": "scripts/lafea.4-production-route-benchmarks-check.mjs",
+          "expectedBlobSha": "da375442897a302027e15bb3400390ea3c715111",
+          "observedBlobSha": "da375442897a302027e15bb3400390ea3c715111",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-028",
+          "path": "src/core/local-shell/index.js",
+          "expectedBlobSha": "4af7ff09daae2b0e35edbabce627aa9b546485e2",
+          "observedBlobSha": "4af7ff09daae2b0e35edbabce627aa9b546485e2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-029",
+          "path": "src/core/local-shell/cst.js",
+          "expectedBlobSha": "ae140f4c8cfd74c009b3bd9743d1deed00dd89ea",
+          "observedBlobSha": "ae140f4c8cfd74c009b3bd9743d1deed00dd89ea",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-030",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json",
+          "expectedBlobSha": "7fcf6bea3c31a16973b953568bc9732401422a1b",
+          "observedBlobSha": "7fcf6bea3c31a16973b953568bc9732401422a1b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-031",
+          "path": "scripts/lib/lafea-mesh-benchmark-m4.mjs",
+          "expectedBlobSha": "69e286739a620ff8b5522d8225752c2780735f46",
+          "observedBlobSha": "69e286739a620ff8b5522d8225752c2780735f46",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-032",
+          "path": "scripts/lafea-mesh-benchmark-run.mjs",
+          "expectedBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+          "observedBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-033",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json",
+          "expectedBlobSha": "9f1889bc995e8774a363561a53f2427d384bf96a",
+          "observedBlobSha": "9f1889bc995e8774a363561a53f2427d384bf96a",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-034",
+          "path": "scripts/lib/lafea-mesh-benchmark-m3.mjs",
+          "expectedBlobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d",
+          "observedBlobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-035",
+          "path": "src/core/lafea-meshing/element-geometry.js",
+          "expectedBlobSha": "a99f90f19ed9b414689f875457558e29f667f69b",
+          "observedBlobSha": "a99f90f19ed9b414689f875457558e29f667f69b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-036",
+          "path": "src/workspace/lafea-analysis-mesh-quality.js",
+          "expectedBlobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341",
+          "observedBlobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341",
+          "status": "PASS"
+        }
+      ],
+      "sourceRefHashes": {
+        "validation/lafea-benchmark-data/MESH/bucket-manifest.json": "sha256:a8f40c2c27cd626daaeafea7c47755d0d033b4b41f1850da02055ac5df7db366",
+        "validation/lafea-benchmark-data/MESH/sources/source-registry.json": "sha256:aaf2afc18e8973b4ed70b9d898ac1d7e8351d5406078debf1f80e9b125d94523",
+        "validation/lafea-benchmark-data/MESH/geometry/cases.json": "sha256:a3ec24bebcc6ee19f35706d5063947533c184f25732790b08199a58526836a14",
+        "validation/lafea-benchmark-data/MESH/oracle/expected-values.json": "sha256:6e9adf0a08461b16ff1ed6cb393cbe2e2c36e16c05a910e075513bea4aff9d39",
+        "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json": "sha256:d8106bc24aa90cd71b380d3dbadb30a0fd2bf0b198af08086b662d9a5ec0dcb8",
+        "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json": "sha256:49856393c4c93cc20ce8165e83cce41cc8dd10d106293d894f49568d97ed116b",
+        "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json": "sha256:6646db49efeee9c559f1b6dbd1455e092227d30739ede9469343a51f8a0b4e60",
+        "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json": "sha256:73563cd2fead924cc2ff42ad318f43a899179deb9383598741f591cca352b635",
+        "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json": "sha256:c3efcc84142da3521e5e88d14ff92e1ac7567cf957cb625bd02948b228fa58db"
+      },
+      "evidence": {
+        "schema": "lafea-mesh-benchmark-stage-evidence/v1",
+        "status": "PASS",
+        "observations": [
+          {
+            "checkId": "M0-L3-T3",
+            "status": "PASS",
+            "schema": "lafea-mesh-producer-observation/v1",
+            "stageId": "LAFEA.3",
+            "caseId": "M2-L-SHAPE-01",
+            "meshSchema": "lafea-analysis-mesh/v1",
+            "elementFamily": "T3",
+            "globalTargetSize": 1,
+            "profileHash": "fnv1a64:46390ba5ebffce4b",
+            "meshHash": "sha256:48d5798f0dd7dcf392ba519b3fe3d96415f4f10c15c7a259341114e688db34b3",
+            "nodeCount": 14,
+            "elementCount": 14,
+            "estimatedDofs": 28,
+            "resourceDisposition": "WITHIN_LIMITS",
+            "qualityWorstStatus": "WARNING",
+            "domainProjectionClass": "FROZEN_GEOMETRY_SOURCE_CUSTODY_ONLY_NO_PHYSICS",
+            "quality": {
+              "schema": "lafea-analysis-mesh-quality/v1",
+              "worstStatus": "WARNING",
+              "blockingElementIds": [],
+              "elementCount": 14
+            }
+          },
+          {
+            "checkId": "M0-L3-T6",
+            "status": "PASS",
+            "schema": "lafea-mesh-producer-observation/v1",
+            "stageId": "LAFEA.3",
+            "caseId": "M2-L-SHAPE-01",
+            "meshSchema": "lafea-analysis-mesh/v1",
+            "elementFamily": "T6",
+            "globalTargetSize": 1,
+            "profileHash": "fnv1a64:b6d10c65415d0347",
+            "meshHash": "sha256:aa062be8abdf0a7a716c3f49d4e7351eecb9511859bb564f27ac105815b5c83e",
+            "nodeCount": 41,
+            "elementCount": 14,
+            "estimatedDofs": 82,
+            "resourceDisposition": "WITHIN_LIMITS",
+            "qualityWorstStatus": "WARNING",
+            "domainProjectionClass": "FROZEN_GEOMETRY_SOURCE_CUSTODY_ONLY_NO_PHYSICS",
+            "quality": {
+              "schema": "lafea-analysis-mesh-quality/v1",
+              "worstStatus": "WARNING",
+              "blockingElementIds": [],
+              "elementCount": 14
+            }
+          },
+          {
+            "checkId": "M0-L3-Q8",
+            "status": "PASS",
+            "schema": "lafea-mesh-producer-observation/v1",
+            "stageId": "LAFEA.3",
+            "caseId": "M2-UNIT-SQUARE-01",
+            "meshSchema": "lafea-analysis-mesh/v1",
+            "elementFamily": "Q8",
+            "globalTargetSize": 1,
+            "profileHash": "fnv1a64:97183550ab2aec59",
+            "meshHash": "sha256:1756b2b38476708f7c3e26dc64f8068ee4e407a27d92f4467fc69df0435d6de2",
+            "nodeCount": 8,
+            "elementCount": 1,
+            "estimatedDofs": 16,
+            "resourceDisposition": "WITHIN_LIMITS",
+            "qualityWorstStatus": "OK",
+            "domainProjectionClass": "FROZEN_GEOMETRY_SOURCE_CUSTODY_ONLY_NO_PHYSICS",
+            "quality": {
+              "schema": "lafea-analysis-mesh-quality/v1",
+              "worstStatus": "OK",
+              "blockingElementIds": [],
+              "elementCount": 1
+            }
+          },
+          {
+            "checkId": "M0-LAFEA4-SINGLE-PATCH-PRODUCER",
+            "status": "PASS",
+            "schema": "lafea-mesh-producer-observation/v1",
+            "stageId": "LAFEA.4",
+            "caseId": "M2-UNIT-SQUARE-01",
+            "meshSchema": "lafea-analysis-mesh/v1",
+            "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+            "globalTargetSize": 1,
+            "profileHash": "fnv1a64:161c86c3df654f01",
+            "meshHash": "sha256:fdba4cae7e8137776a5d722caba708607f53808132465e0ddf67f70ab1e5fb9d",
+            "nodeCount": 4,
+            "elementCount": 2,
+            "estimatedDofs": 20,
+            "resourceDisposition": "WITHIN_LIMITS",
+            "qualityWorstStatus": "OK",
+            "domainProjectionClass": "PRODUCTION_SHELL_MIDSURFACE_GEOMETRY_ONLY",
+            "quality": {
+              "schema": "lafea-analysis-mesh-quality/v1",
+              "worstStatus": "OK",
+              "blockingElementIds": [],
+              "elementCount": 2
+            }
+          },
+          {
+            "checkId": "M0-LAFEA4-MULTIPATCH-PRODUCER",
+            "status": "PASS",
+            "schema": "lafea-mesh-producer-observation/v1",
+            "stageId": "LAFEA.4",
+            "caseId": "M2-TWO-PATCH-SHELL-01",
+            "meshSchema": "lafea-analysis-mesh/v1",
+            "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+            "globalTargetSize": 1,
+            "profileHash": "fnv1a64:c0b033d0c7a2bd1c",
+            "meshHash": "sha256:9f293149ed00fabffd9cd8e7fbbf403cfc4be2e14e93b5883b2a72274cb79bd5",
+            "nodeCount": 6,
+            "elementCount": 4,
+            "estimatedDofs": 30,
+            "resourceDisposition": "WITHIN_LIMITS",
+            "qualityWorstStatus": "OK",
+            "productionScope": "PLANAR_TWO_RECTANGULAR_PATCHES_CONFORMING_FULL_EDGE_SEAM_CST_DKT_TRI3_V1",
+            "seamConforming": true,
+            "seamLength": 1,
+            "seamNodeCount": 2,
+            "seamEdgeCount": 1,
+            "seamDuplicateNodeEliminations": 2,
+            "maximumSeamPairDistance": 0,
+            "maximumEdgeOwnerCount": 2,
+            "authorityArea": 2,
+            "meshedArea": 2,
+            "areaError": 0,
+            "domainProjectionClass": "PRODUCTION_MULTIPATCH_SHELL_MIDSURFACE_GEOMETRY_ONLY",
+            "quality": {
+              "schema": "lafea-analysis-mesh-quality/v1",
+              "worstStatus": "OK",
+              "blockingElementIds": [],
+              "elementCount": 4
+            }
+          }
+        ]
+      },
+      "status": "PASS",
+      "predecessorGateSatisfied": true,
+      "advancementPolicy": "AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",
+      "elapsedMs": 267.955
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "benchmarkAuthoredMeshUsed": false,
+    "benchmarkSideMeshMutationUsed": false,
+    "fabricatedPhysicsUsed": false,
+    "solverOrCompilerExecuted": false,
+    "benchmarkRegistrationGranted": true,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "recordHash": "sha256:acd03fe731d56552003659a7885a589de75e2c6522ca57e1dbab12e2ee6368fd"
+}

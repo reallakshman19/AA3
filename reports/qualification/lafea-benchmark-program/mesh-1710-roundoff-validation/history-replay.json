@@ -1,0 +1,362 @@
+{
+  "schema": "lafea-mesh-convergence-replay/v1",
+  "inputBasis": "[SIMULATED] frozen M4 analytical fixture histories; actual production convergence API",
+  "historicalCodeHead": "5eadd65ddd5716aaa4a371e454b08d69d2d61a78",
+  "historicalAuditHash": "sha256:8e0d99d6d7fb1e1a0365aa3fe5f34071b1c7ae123bd25ffc8d2e44be687daad2",
+  "replayCodeHead": "9fb5d5bd4b606143fe334e4e6f018629b768f908",
+  "status": "PASS",
+  "replay": [
+    {
+      "ladderId": "L3-T3",
+      "previousStatus": "PASS",
+      "status": "PASS",
+      "comparisons": [
+        {
+          "historyId": "L3-T3/STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.012500000000000002,
+            0.012499999999999999,
+            0.012499999999999975
+          ],
+          "previous": {
+            "historyId": "L3-T3/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 1.942890293094028e-15,
+            "limit": 0.02,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 1.942890293094028e-15,
+            "limit": 0.02,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P1",
+          "valuesByLevel": [
+            0.0000185,
+            0.000018500000000000013,
+            0.000018500000000000023
+          ],
+          "previous": {
+            "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 5.494267765973833e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 5.494267765973833e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P2",
+          "valuesByLevel": [
+            0.00012050000000000003,
+            0.00012050000000000003,
+            0.00012050000000000002
+          ],
+          "previous": {
+            "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P2",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 1.1246910502961662e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 1.1246910502961662e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P3",
+          "valuesByLevel": [
+            0.0000215,
+            0.0000215,
+            0.000021500000000000008
+          ],
+          "previous": {
+            "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P3",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.151750501411349e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.151750501411349e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        }
+      ]
+    },
+    {
+      "ladderId": "L3-T6",
+      "previousStatus": "FAIL",
+      "status": "PASS",
+      "comparisons": [
+        {
+          "historyId": "L3-T6/STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.012500000000000025,
+            0.0125,
+            0.01250000000000003
+          ],
+          "previous": {
+            "historyId": "L3-T6/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 2.359223927328452e-15,
+            "limit": 0.02,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          "current": {
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 2.359223927328452e-15,
+            "limit": 0.02,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P1",
+          "valuesByLevel": [
+            0.000018500000000000002,
+            0.000018500000000000036,
+            0.000018499999999999965
+          ],
+          "previous": {
+            "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.845987436181695e-15,
+            "limit": 0.01,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.845987436181695e-15,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P2",
+          "valuesByLevel": [
+            0.0001205,
+            0.00012050000000000003,
+            0.0001205
+          ],
+          "previous": {
+            "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P2",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 2.249382100592333e-16,
+            "limit": 0.01,
+            "behavior": "OSCILLATORY",
+            "accepted": false
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 2.249382100592333e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P3",
+          "valuesByLevel": [
+            0.000021500000000000014,
+            0.00002150000000000001,
+            0.000021499999999999994
+          ],
+          "previous": {
+            "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P3",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 7.879376253528377e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 7.879376253528377e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        }
+      ]
+    },
+    {
+      "ladderId": "L3-Q8",
+      "previousStatus": "FAIL",
+      "status": "PASS",
+      "comparisons": [
+        {
+          "historyId": "L3-Q8/STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.0024999999999999996,
+            0.0025,
+            0.002499999999999999
+          ],
+          "previous": {
+            "historyId": "L3-Q8/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 3.469446951953615e-16,
+            "limit": 0.02,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          "current": {
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 3.469446951953615e-16,
+            "limit": 0.02,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P1",
+          "valuesByLevel": [
+            0.000018499999999999996,
+            0.000018500000000000002,
+            0.00001850000000000001
+          ],
+          "previous": {
+            "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.6628451773158913e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.6628451773158913e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P2",
+          "valuesByLevel": [
+            0.000036500000000000006,
+            0.0000365,
+            0.0000365
+          ],
+          "previous": {
+            "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P2",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 0,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 0,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        }
+      ]
+    },
+    {
+      "ladderId": "L4-CST-DKT",
+      "previousStatus": "FAIL",
+      "status": "PASS",
+      "comparisons": [
+        {
+          "historyId": "L4-CST-DKT/STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.43956043956043955,
+            0.4395604395604396,
+            0.4395604395604391
+          ],
+          "previous": {
+            "historyId": "L4-CST-DKT/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 1.1365908214600053e-15,
+            "limit": 0.02,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          "current": {
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 1.1365908214600053e-15,
+            "limit": 0.02,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PA-P1",
+          "valuesByLevel": [
+            0.00037000000000000005,
+            0.0003699999999999999,
+            0.0003699999999999999
+          ],
+          "previous": {
+            "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PA-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 0,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 0,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        },
+        {
+          "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PB-P1",
+          "valuesByLevel": [
+            0.00163,
+            0.0016299999999999997,
+            0.0016300000000000002
+          ],
+          "previous": {
+            "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PB-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 2.6606188281852866e-16,
+            "limit": 0.01,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          "current": {
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 2.6606188281852866e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        }
+      ]
+    }
+  ],
+  "percentageLimitsAndRelativeChangesUnchanged": true,
+  "solverExecutedByReplay": false
+}

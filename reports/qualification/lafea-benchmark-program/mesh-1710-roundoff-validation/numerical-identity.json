@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "oldAuditHash": "sha256:8e0d99d6d7fb1e1a0365aa3fe5f34071b1c7ae123bd25ffc8d2e44be687daad2",
+  "newAuditHash": "sha256:f303f34668788d3a23551c34d152df89c1fbc10470d60c991dfec56a51b9bac1",
+  "rows": [
+    {
+      "ladderId": "L3-T3",
+      "previousStatus": "PASS",
+      "currentStatus": "PASS",
+      "solverLevelsExactlyEqual": true,
+      "rawHistoriesExactlyEqual": true,
+      "relativeChangesAndLimitsExactlyEqual": true
+    },
+    {
+      "ladderId": "L3-T6",
+      "previousStatus": "FAIL",
+      "currentStatus": "PASS",
+      "solverLevelsExactlyEqual": true,
+      "rawHistoriesExactlyEqual": true,
+      "relativeChangesAndLimitsExactlyEqual": true
+    },
+    {
+      "ladderId": "L3-Q8",
+      "previousStatus": "FAIL",
+      "currentStatus": "PASS",
+      "solverLevelsExactlyEqual": true,
+      "rawHistoriesExactlyEqual": true,
+      "relativeChangesAndLimitsExactlyEqual": true
+    },
+    {
+      "ladderId": "L4-CST-DKT",
+      "previousStatus": "FAIL",
+      "currentStatus": "PASS",
+      "solverLevelsExactlyEqual": true,
+      "rawHistoriesExactlyEqual": true,
+      "relativeChangesAndLimitsExactlyEqual": true
+    }
+  ],
+  "verifiedAuditHashes": 5
+}

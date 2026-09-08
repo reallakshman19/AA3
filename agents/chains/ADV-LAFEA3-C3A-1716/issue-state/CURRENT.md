@@ -14,8 +14,8 @@ SUCCESSOR_PR: 1718 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0010_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0010_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588104535
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -28,7 +28,7 @@ MERGE_AUTHORIZED: FALSE
 | TASK-003 | NOT_RUN_EXECUTION_CONTROL_PLANE_BLOCKED | Exact merged-main trigger is eligible, but no Actions run was scheduled; current-head manual dispatch is unavailable through the connected GitHub surface. |
 | TASK-004 | PASS_RECONCILED | #1663 material reconciliation complete: 7 already identical, 5 stale/superseded, 0 still-needed/disjoint. |
 | TASK-005 | PASS_MINIMAL_REPAIR_SOURCE / EXECUTION_NOT_RUN | LEG-001 custody repair merged in #1717 without numerical mechanics/authority change; execution remains unproven. |
-| TASK-006 | PASS_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; LEG-004 isolated scheduler/dispatch; LEG-005 prework is external-evidence-only. |
+| TASK-006 | PASS_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; LEG-004 isolated scheduler/dispatch; LEG-005 prework is synchronized and external-evidence-only. |
 
 ## Input ledger
 
@@ -69,7 +69,7 @@ LEG-004 receipt/evidence: `material-legs/LEG-004.md` and `validation/LEG-004-EVI
 
 ## LEG-005 prework
 
-Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0010.md`.
+Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0010.md`; Issue endpoint comment `5588104535`.
 
 Owner command: `proceed next` -> `PROCEED_NEXT`.
 
@@ -83,14 +83,14 @@ Prework observations:
 - connected GitHub action discovery returns no workflow-dispatch creation action;
 - the generic workflow-metadata GET is unsupported by the connector allowlist and is not treated as evidence that the workflow is disabled.
 
-LEG-005 scope is external execution evidence reconciliation only. No engineering source/test/benchmark/oracle/workflow/roadmap/release mutation is authorized. After EP-0010 Issue synchronization, repeat the decisive evidence queries once. If no current execution evidence exists, record `NO_NEW_EXECUTION_EVIDENCE__CONTROL_PLANE_BLOCKER_PERSISTS` and stop.
+LEG-005 scope is external execution evidence reconciliation only. No engineering source/test/benchmark/oracle/workflow/roadmap/release mutation is authorized. EP-0010 repository and Issue projections are synchronized. Repeat the decisive evidence queries once; if no current execution evidence exists, record `NO_NEW_EXECUTION_EVIDENCE__CONTROL_PLANE_BLOCKER_PERSISTS` and stop.
 
 ## Validation truth
 
 PASS_CONTROL_PLANE:
 - exact main and PR state re-grounded;
 - pinned Common skill re-read;
-- EP-0009 Issue sync confirmed;
+- EP-0010 repository/Issue sync complete;
 - prework Actions and external-receipt absence observed;
 - Q set remains current/reused;
 - protected numerical/workflow/oracle/roadmap/release domains unchanged.
@@ -141,4 +141,4 @@ Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver to
 
 ## Exact next action
 
-Synchronize EP-0010 to Issue #1716, then perform one post-prework external execution evidence reconciliation. If no current run or faithful exact-main receipt exists, record LEG-005 evidence/receipt and a successor endpoint, return to READ_ONLY, and stop. PR #1718 remains not merge-authorized.
+Perform one post-prework external-evidence reconciliation. If no current run or faithful exact-main receipt exists, record LEG-005 evidence/receipt and a successor endpoint, return to READ_ONLY, and stop. PR #1718 remains not merge-authorized.

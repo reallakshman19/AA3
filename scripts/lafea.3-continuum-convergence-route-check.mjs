@@ -42,6 +42,7 @@ assert.equal(asymptotic.registration.record.qualification, 'PASS');
 assert.equal(asymptotic.registration.record.parentHashes.recoveryHash, asymptotic.study.finalRecoveryHash);
 assert.equal(asymptotic.registration.record.parentHashes.recoverySetHash, asymptotic.study.recoverySetHash);
 assert.equal(asymptotic.registration.record.parentHashes.convergenceProfileHash, asymptotic.study.convergenceProfileHash);
+assert.equal(asymptotic.canonicalExecutionInputCustodyPreserved, true);
 
 const firstProfile = deriveLafeaContinuumConvergenceMeshProfile(
   baseProfile,
@@ -129,6 +130,7 @@ console.log(JSON.stringify({
   divergentPublicationBlocked: true,
   singularPointwisePublicationBlocked: true,
   staleParentInvalidationProved: true,
+  canonicalExecutionInputCustodyPreserved: true,
   nonLafea3PublicationSemanticsUnchanged: true,
   releaseQualified: false,
 }));
@@ -158,6 +160,7 @@ function study(label, values, hs, singular = false) {
     meshHash: row.custody.meshHash,
     solverModelHash: hash((index + 4).toString(16)),
     executionHash: row.custody.executionHash,
+    canonicalExecutionInputHash: row.custody.canonicalExecutionInputHash,
     recoveryHash: row.custody.recoveryHash,
     probeEvidenceHash: row.semanticHash,
     probeIdentityHash: row.probeIdentityHash,
@@ -174,11 +177,21 @@ function study(label, values, hs, singular = false) {
     analysisGeometryHash: GEOMETRY,
     baseMeshProfileHash: baseProfile.semanticHash,
   });
+  const canonicalExecutionInputCustodyPreserved = studyEvidence.levels.every(
+    (row, index) => row.canonicalExecutionInputHash
+      === evidence[index].custody.canonicalExecutionInputHash,
+  );
+  assert.equal(
+    canonicalExecutionInputCustodyPreserved,
+    true,
+    'convergence study must retain each probe canonical execution-input identity',
+  );
   return {
     definition,
     convergence,
     study: studyEvidence,
     registration: createLafeaContinuumConvergenceLifecycleRegistration(studyEvidence),
+    canonicalExecutionInputCustodyPreserved,
   };
 }
 
@@ -216,6 +229,7 @@ function probeEvidence(definition, value, index, singular) {
     custody: {
       meshHash: hash(((index + 1) % 10).toString(16)),
       executionHash: hash(((index + 5) % 10).toString(16)),
+      canonicalExecutionInputHash: hash(((index + 6) % 10).toString(16)),
       recoveryHash: hash(((index + 7) % 10).toString(16)),
     },
   };

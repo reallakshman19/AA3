@@ -14,8 +14,8 @@ SUCCESSOR_PR: 1718 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0008_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0008_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5587636782
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -28,7 +28,7 @@ MERGE_AUTHORIZED: FALSE
 | TASK-003 | NOT_RUN_TRIGGER_NOT_SCHEDULED | PR-head reopen and exact merged-main push observations produced no Actions run. LEG-004 is isolating scheduler/dispatch state without changing engineering source. |
 | TASK-004 | PASS_RECONCILED | #1663 material reconciliation complete: 7 already identical, 5 stale/superseded, 0 still-needed/disjoint. |
 | TASK-005 | PASS_MINIMAL_REPAIR_SOURCE / EXECUTION_NOT_RUN | LEG-001 custody repair merged in #1717 without numerical mechanics/authority change; execution remains unproven. |
-| TASK-006 | PASS_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; EP-0008 establishes bounded scheduler/dispatch diagnosis. |
+| TASK-006 | PASS_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; EP-0008 scheduler/dispatch diagnosis synchronized. |
 
 ## Input ledger
 
@@ -67,11 +67,11 @@ LEG-003 receipt/evidence: `material-legs/LEG-003.md` and `validation/LEG-003-EVI
 
 ## LEG-004 prework
 
-Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0008.md`.
+Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0008.md`; Issue endpoint comment `5587636782`.
 
 Owner command: `proceed next` -> `PROCEED_NEXT`; qualification scope is unchanged, so `QS-ADV-LAFEA3-C3A-1716-0002` is reused and hidden.
 
-Bounded scope is execution scheduler/dispatch isolation only. Read-only observations already show:
+Bounded scope is execution scheduler/dispatch isolation only. Read-only observations show:
 - exact main remains `4fb35481...`;
 - the merge from `27dde65f...` to `4fb35481...` modified `scripts/lafea.3-bm005-ordinary-route-check.mjs`;
 - `.github/workflows/lafea3-bm005-qualification.yml` watches that path on `push` to `main`;
@@ -93,6 +93,7 @@ PASS_CONTROL_PLANE:
 - #1718 path-filter ineligibility proven;
 - repository-date run absence and exact-main run absence observed;
 - prior runner history distinguished from current scheduler absence;
+- EP-0008 repository↔Issue projection synchronized;
 - protected numerical/workflow/oracle/roadmap/release domains unchanged.
 
 NOT_RUN:
@@ -141,4 +142,4 @@ Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver to
 
 ## Exact next action
 
-Synchronize EP-0008, repeat key observations after sync, then record LEG-004 as an execution-control-plane diagnosis. If no exact-main dispatch/execution surface exists, stop read-only with a precise external/tooling blocker. PR #1718 remains not merge-authorized.
+Repeat key observations after synchronized EP-0008, then record LEG-004 as an execution-control-plane diagnosis. If no exact-main dispatch/execution surface exists, stop read-only with a precise external/tooling blocker. PR #1718 remains not merge-authorized.

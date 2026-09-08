@@ -26,7 +26,7 @@
     {
       "caseId": "B01",
       "definitionState": "READY",
-      "title": "2D continuum affine patch â€” cross-method formulation gate",
+      "title": "2D continuum affine patch — cross-method formulation gate",
       "stageId": "LAFEA.3",
       "benchmarkClass": "AFFINE_CONSTANT_STRAIN_PATCH",
       "comparisonPolicy": "CROSS_METHOD_INVARIANTS_NOT_DIRECT_NUMERICAL_PARITY",
@@ -75,7 +75,7 @@
     {
       "caseId": "B02",
       "definitionState": "READY",
-      "title": "2D continuum engineering response â€” bending, shear, hole and lug progression",
+      "title": "2D continuum engineering response — bending, shear, hole and lug progression",
       "stageId": "LAFEA.3",
       "benchmarkClass": "STAGED_SOLVER_BENCHMARK",
       "comparisonPolicy": "STAGE_SPECIFIC_INDEPENDENT_ORACLE_AND_INVARIANTS",
@@ -104,7 +104,7 @@
     {
       "caseId": "BM-MESH",
       "definitionState": "READY",
-      "title": "Common analysis-mesh benchmark â€” LAFEA.3 and LAFEA.4 staged producer contract",
+      "title": "Common analysis-mesh benchmark — LAFEA.3 and LAFEA.4 staged producer contract",
       "stageId": "LAFEA.3+LAFEA.4",
       "benchmarkClass": "STAGED_ANALYSIS_MESH_BENCHMARK",
       "comparisonPolicy": "STAGE_SPECIFIC_PRODUCTION_MESH_CONTRACT_AND_INDEPENDENT_ORACLE",
@@ -149,9 +149,9 @@
     }
   ],
   "futureQueue": [
-    {"caseId": "B03", "title": "Thin-shell patch and bending â€” authoritative route plus explicitly non-production method checks", "activation": "AFTER_B02_PASS"},
-    {"caseId": "B04", "title": "Trunnion footprint â€” load distribution and shell-result custody", "activation": "AFTER_B03_PASS"},
+    {"caseId": "B03", "title": "Thin-shell patch and bending — authoritative route plus explicitly non-production method checks", "activation": "AFTER_B02_PASS"},
+    {"caseId": "B04", "title": "Trunnion footprint — load distribution and shell-result custody", "activation": "AFTER_B03_PASS"},
     {"caseId": "B05", "title": "Foundation and pipe-section analytical screening", "activation": "AFTER_B04_PASS"},
-    {"caseId": "B06", "title": "Governance negative suite â€” unsupported, singular, stale, temperature and release fail-closed cases", "activation": "AFTER_B05_PASS"}
+    {"caseId": "B06", "title": "Governance negative suite — unsupported, singular, stale, temperature and release fail-closed cases", "activation": "AFTER_B05_PASS"}
   ]
 }

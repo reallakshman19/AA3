@@ -14,8 +14,8 @@ SUCCESSOR_PR: 1718 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0011_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0011_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -28,7 +28,7 @@ MERGE_AUTHORIZED: FALSE
 | TASK-003 | NOT_RUN_EXECUTION_CONTROL_PLANE_BLOCKED | Exact merged-main trigger is eligible, but no Actions run was scheduled; no faithful exact-main execution receipt or safe current-head dispatch surface exists. |
 | TASK-004 | PASS_RECONCILED | #1663 material reconciliation complete: 7 already identical, 5 stale/superseded, 0 still-needed/disjoint. |
 | TASK-005 | PASS_MINIMAL_REPAIR_SOURCE / EXECUTION_NOT_RUN | LEG-001 custody repair merged in #1717 without numerical mechanics/authority change; execution remains unproven. |
-| TASK-006 | PASS_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; LEG-004 isolated scheduler/dispatch; LEG-005 confirmed no new execution evidence and froze the blocker. |
+| TASK-006 | PASS_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; LEG-004 isolated scheduler/dispatch; LEG-005 confirmed no new execution evidence and froze synchronized EP-0011. |
 
 ## Input ledger
 
@@ -75,7 +75,7 @@ Receipt: `agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-005.md`.
 
 Evidence: `agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-005-EVIDENCE.md`.
 
-Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0011.md`.
+Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0011.md`; Issue endpoint comment `5588164073`.
 
 Accepted result:
 
@@ -84,7 +84,7 @@ Accepted result:
 Post-prework observations:
 - exact-main Actions query remains `total_count=0`, `workflow_runs=[]`;
 - repository Actions query for `created=2026-09-08` remains `total_count=0`, `workflow_runs=[]`;
-- Issue #1716 contains no new faithful exact-main execution receipt beyond the synchronized control-plane endpoints;
+- Issue #1716 contains no new faithful exact-main execution receipt beyond synchronized control-plane endpoints;
 - PR #1718 conversation comments are empty;
 - no current-head workflow-dispatch creation action became available through the connected GitHub surface;
 - main remained `4fb3548133f53e33d21cd0f3b3d471da592ae871`.
@@ -103,7 +103,7 @@ PASS_CONTROL_PLANE:
 - EP-0010 synchronized before final LEG-005 observations;
 - exact-main/repository-date Actions absence repeated;
 - Issue and PR receipt surfaces checked;
-- LEG-005 evidence/receipt and EP-0011 recorded;
+- LEG-005 evidence/receipt and EP-0011 recorded and synchronized;
 - Q set remains current/reused;
 - protected numerical/workflow/oracle/roadmap/release domains unchanged.
 
@@ -153,4 +153,4 @@ Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver to
 
 ## Exact next action
 
-Synchronize EP-0011 to Issue #1716, then remain READ_ONLY. Do not author another identical scheduler-observation material leg absent genuinely new execution/control-plane evidence or material main/authority drift. Only an actually executed current-main harness FAIL may reopen engineering code. PR #1718 remains not merge-authorized.
+Remain READ_ONLY. Do not author another identical scheduler-observation material leg absent genuinely new execution/control-plane evidence or material main/authority drift. Only an actually executed current-main harness FAIL may reopen engineering code. PR #1718 remains not merge-authorized.

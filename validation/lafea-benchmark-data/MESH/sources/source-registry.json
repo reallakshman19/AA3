@@ -198,7 +198,7 @@
       "sourceId": "S-032",
       "role": "benchmarkPublicStagedRunner",
       "path": "scripts/lafea-mesh-benchmark-run.mjs",
-      "blobSha": "46021cb41eba8b8a14336ec8cd65461daba4cb51",
+      "blobSha": "7a8c8e9bfd432070d55e5c2ac42bbc1d5ea7c97a",
       "previousBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
       "changeAuthority": "Owner proceed next: frozen TASK-005 execution through existing audited runner; production unchanged"
     },

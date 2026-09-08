@@ -357,7 +357,13 @@ function executeNegativeCase(definition) {
   }
   if (definition.negativeCaseId === 'MESH-NEG-NONCONFORMING-MULTIPATCH-SEAM') {
     const positive = multiPatchShellGeometry(requireCase(input.baseGeometryCaseId), 'NORMAL');
-    const { semanticHash, ...request } = positive;
+    const { semanticHash, ...core } = positive;
+    const request = {
+      ...core,
+      patches: positive.patches.map(({ patchId, geometry }) => ({
+        patchId, vertices: geometry.vertices, segments: geometry.segments, loops: geometry.loops,
+      })),
+    };
     const invalid = structuredClone(request);
     const seam = invalid.seams[0];
     const patch = invalid.patches.find((row) => row.patchId === seam.patchAId);

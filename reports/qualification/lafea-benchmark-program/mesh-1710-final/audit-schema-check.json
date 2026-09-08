@@ -1,0 +1,32 @@
+{
+  "schema": "mesh-1710-audit-schema-check/v1",
+  "status": "PASS",
+  "records": [
+    {
+      "stage": "M0",
+      "auditSchema": "PASS",
+      "engineeringStatus": "PASS"
+    },
+    {
+      "stage": "M1",
+      "auditSchema": "PASS",
+      "engineeringStatus": "PASS"
+    },
+    {
+      "stage": "M2",
+      "auditSchema": "PASS",
+      "engineeringStatus": "PASS"
+    },
+    {
+      "stage": "M3",
+      "auditSchema": "PASS",
+      "engineeringStatus": "FAIL"
+    },
+    {
+      "stage": "M4",
+      "auditSchema": "PASS",
+      "engineeringStatus": "BLOCKED"
+    }
+  ],
+  "meshProgrammePass": false
+}

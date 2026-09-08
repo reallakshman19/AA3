@@ -1,0 +1,163 @@
+{
+  "schema": "lafea-mesh-geometry-cases/v1",
+  "benchmarkId": "BM-MESH",
+  "stage": "M2",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "authority": {
+    "class": "BENCHMARK_ONLY_FROZEN_GEOMETRY",
+    "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+    "productionGeometryModified": false,
+    "solverPhysicsIncluded": false,
+    "productionOutputUsedToDefineFixture": false
+  },
+  "coordinateSystem": {
+    "type": "CARTESIAN",
+    "lengthUnit": "mm",
+    "plane": "XY",
+    "z": "0"
+  },
+  "cases": [
+    {
+      "caseId": "M2-UNIT-SQUARE-01",
+      "caseClass": "UNIT_SQUARE",
+      "stageApplicability": ["LAFEA.3", "LAFEA.4"],
+      "dimensions": {"side": "1"},
+      "topology": {
+        "type": "PLANAR_SINGLE_REGION",
+        "outerLoop": {
+          "orientation": "CCW",
+          "vertices": [["0", "0"], ["1", "0"], ["1", "1"], ["0", "1"]],
+          "curves": [
+            {"type": "LINE", "from": 0, "to": 1},
+            {"type": "LINE", "from": 1, "to": 2},
+            {"type": "LINE", "from": 2, "to": 3},
+            {"type": "LINE", "from": 3, "to": 0}
+          ]
+        },
+        "holes": []
+      }
+    },
+    {
+      "caseId": "M2-L-SHAPE-01",
+      "caseClass": "L_SHAPE_REENTRANT",
+      "stageApplicability": ["LAFEA.3", "LAFEA.4"],
+      "dimensions": {
+        "outerWidth": "3",
+        "outerHeight": "3",
+        "cutoutWidth": "2",
+        "cutoutHeight": "2",
+        "cutoutCorner": "TOP_RIGHT"
+      },
+      "topology": {
+        "type": "PLANAR_SINGLE_REGION",
+        "outerLoop": {
+          "orientation": "CCW",
+          "vertices": [["0", "0"], ["3", "0"], ["3", "1"], ["1", "1"], ["1", "3"], ["0", "3"]],
+          "curves": [
+            {"type": "LINE", "from": 0, "to": 1},
+            {"type": "LINE", "from": 1, "to": 2},
+            {"type": "LINE", "from": 2, "to": 3},
+            {"type": "LINE", "from": 3, "to": 4},
+            {"type": "LINE", "from": 4, "to": 5},
+            {"type": "LINE", "from": 5, "to": 0}
+          ]
+        },
+        "holes": [],
+        "reentrantCorner": ["1", "1"],
+        "removedVoid": {
+          "xGreaterThan": "1",
+          "yGreaterThan": "1",
+          "xLessThanOrEqual": "3",
+          "yLessThanOrEqual": "3"
+        }
+      }
+    },
+    {
+      "caseId": "M2-ANNULUS-SECTOR-01",
+      "caseClass": "ANNULUS_SECTOR",
+      "stageApplicability": ["LAFEA.3", "LAFEA.4"],
+      "dimensions": {
+        "innerRadius": "1",
+        "outerRadius": "2",
+        "startAngleDegrees": "0",
+        "sweepAngleDegrees": "90"
+      },
+      "topology": {
+        "type": "PLANAR_SINGLE_REGION",
+        "outerLoop": {
+          "orientation": "CCW",
+          "vertices": [["1", "0"], ["2", "0"], ["0", "2"], ["0", "1"]],
+          "curves": [
+            {"type": "LINE", "from": 0, "to": 1},
+            {"type": "ARC", "from": 1, "to": 2, "center": ["0", "0"], "radius": "2", "sweepAngleDegrees": "90"},
+            {"type": "LINE", "from": 2, "to": 3},
+            {"type": "ARC", "from": 3, "to": 0, "center": ["0", "0"], "radius": "1", "sweepAngleDegrees": "-90"}
+          ]
+        },
+        "holes": []
+      }
+    },
+    {
+      "caseId": "M2-SQUARE-HOLE-01",
+      "caseClass": "SQUARE_WITH_CIRCULAR_HOLE",
+      "stageApplicability": ["LAFEA.3", "LAFEA.4"],
+      "dimensions": {"side": "4", "holeCenter": ["2", "2"], "holeRadius": "1"},
+      "boundaryQualificationClass": "PRODUCTION_GENERAL",
+      "topology": {
+        "type": "PLANAR_REGION_WITH_HOLE",
+        "outerLoop": {
+          "orientation": "CCW",
+          "vertices": [["0", "0"], ["4", "0"], ["4", "4"], ["0", "4"]],
+          "curves": [
+            {"type": "LINE", "from": 0, "to": 1},
+            {"type": "LINE", "from": 1, "to": 2},
+            {"type": "LINE", "from": 2, "to": 3},
+            {"type": "LINE", "from": 3, "to": 0}
+          ]
+        },
+        "holes": [
+          {
+            "holeId": "H1",
+            "orientation": "CW",
+            "vertices": [["3", "2"], ["2", "1"], ["1", "2"], ["2", "3"]],
+            "curves": [
+              {"type": "ARC", "from": 0, "to": 1, "center": ["2", "2"], "radius": "1", "sweepAngleDegrees": "-90"},
+              {"type": "ARC", "from": 1, "to": 2, "center": ["2", "2"], "radius": "1", "sweepAngleDegrees": "-90"},
+              {"type": "ARC", "from": 2, "to": 3, "center": ["2", "2"], "radius": "1", "sweepAngleDegrees": "-90"},
+              {"type": "ARC", "from": 3, "to": 0, "center": ["2", "2"], "radius": "1", "sweepAngleDegrees": "-90"}
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "caseId": "M2-TWO-PATCH-SHELL-01",
+      "caseClass": "TWO_PATCH_PLANAR_SHELL",
+      "stageApplicability": ["LAFEA.4"],
+      "dimensions": {"patchWidth": "1", "patchHeight": "1", "totalWidth": "2"},
+      "topology": {
+        "type": "PLANAR_MULTI_PATCH_SHELL",
+        "patches": [
+          {
+            "patchId": "P-A",
+            "outerLoop": {"orientation": "CCW", "vertices": [["0", "0"], ["1", "0"], ["1", "1"], ["0", "1"]]},
+            "sharedBoundaryIds": ["SEAM-A-B"]
+          },
+          {
+            "patchId": "P-B",
+            "outerLoop": {"orientation": "CCW", "vertices": [["1", "0"], ["2", "0"], ["2", "1"], ["1", "1"]]},
+            "sharedBoundaryIds": ["SEAM-A-B"]
+          }
+        ],
+        "sharedBoundaries": [
+          {
+            "boundaryId": "SEAM-A-B",
+            "geometry": {"type": "LINE", "from": ["1", "0"], "to": ["1", "1"]},
+            "owners": ["P-A", "P-B"],
+            "identityPolicy": "ONE_TOPOLOGICAL_BOUNDARY_SHARED_BY_BOTH_PATCHES"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "scripts/lafea-mesh-benchmark-run.mjs",
+    "--stage",
+    "M4",
+    "--expected-head",
+    "87851d7a2132842d60efc8e46a543c9ae16303da",
+    "--run-id",
+    "mesh-1710-inherited-reproduction"
+  ],
+  "cwd": "F:/CODE-8/Advanced_Analysis_BM_MESH_1652",
+  "exactHeadSha": "87851d7a2132842d60efc8e46a543c9ae16303da",
+  "exitCode": 1,
+  "engineeringStatus": "FAIL",
+  "firstFailure": "MISSING_S031_BEFORE_M0",
+  "solverExecuted": false
+}

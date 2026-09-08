@@ -1,0 +1,24 @@
+{
+  "schema": "lafea-mesh-benchmark-program-run/v1",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "ADV-MESH-1710/LEG-005",
+  "runId": "mesh-1710-negative-01",
+  "generatedAt": "2026-09-08T08:54:39.487Z",
+  "exactHeadSha": "0235c8de3060adf65a9476090389b8461718f84b",
+  "requestedLastStage": "NEGATIVE",
+  "stageOrder": [
+    "NEGATIVE"
+  ],
+  "stages": [
+    {
+      "stageId": "NEGATIVE",
+      "caseStatus": "FAIL",
+      "nextBenchmarkAuthorized": false,
+      "recordHash": "sha256:e4b9467a6e3d6561762c0bb5ecd63ed3e5fe5669d3c384fcae0866b8afd857f6",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-negative-01\\NEGATIVE\\audit-record.json"
+    }
+  ],
+  "overallStatus": "FAIL",
+  "releaseAuthorityGranted": false,
+  "temperatureAuthorityGranted": false
+}

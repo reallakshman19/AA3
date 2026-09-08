@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "existingEvidenceUnchanged": true,
+  "rows": [
+    {
+      "name": "existingReport",
+      "status": "PASS",
+      "expectedRejection": "EEXIST",
+      "exitCode": 1,
+      "stderr": "node:fs:1334\r\n  const result = binding.mkdir(\r\n                         ^\r\n\r\nError: EEXIST: file already exists, mkdir 'F:\\CODE-8\\Advanced_Analysis\\reports\\qualification\\lafea-benchmark-program\\mesh-1710-candidate-02'\r\n    at Object.mkdirSync (node:fs:1334:26)\r\n    at file:///F:/CODE-8/Advanced_Analysis/scripts/lafea-mesh-benchmark-run.mjs:120:4\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\r\n    at async node:internal/modules/esm/loader:646:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  errno: -4075,\r\n  code: 'EEXIST',\r\n  syscall: 'mkdir',\r\n  path: 'F:\\\\CODE-8\\\\Advanced_Analysis\\\\reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-candidate-02'\r\n}\r\n\r\nNode.js v26.3.0\r\n"
+    },
+    {
+      "name": "unsafeReportName",
+      "status": "PASS",
+      "expectedRejection": "runId must be a single portable",
+      "exitCode": 1,
+      "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: runId must be a single portable report-directory name.\r\n    at file:///F:/CODE-8/Advanced_Analysis/scripts/lafea-mesh-benchmark-run.mjs:117:8\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\r\n    at async node:internal/modules/esm/loader:646:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '../mesh-1710-invalid',\r\n  expected: /^[A-Za-z0-9][A-Za-z0-9._-]*$/u,\r\n  operator: 'match',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v26.3.0\r\n"
+    },
+    {
+      "name": "wrongExactHead",
+      "status": "PASS",
+      "expectedRejection": "Expected HEAD",
+      "exitCode": 1,
+      "stderr": "file:///F:/CODE-8/Advanced_Analysis/scripts/lafea-mesh-benchmark-run.mjs:98\r\n  throw new Error(`Expected HEAD ${args.expectedHead}, observed ${exactHeadSha}.`);\r\n        ^\r\n\r\nError: Expected HEAD 0000000000000000000000000000000000000000, observed b76e33984d3bd33c46e4b81d716c38e34fdb693c.\r\n    at file:///F:/CODE-8/Advanced_Analysis/scripts/lafea-mesh-benchmark-run.mjs:98:9\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\r\n    at async node:internal/modules/esm/loader:646:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v26.3.0\r\n"
+    }
+  ]
+}

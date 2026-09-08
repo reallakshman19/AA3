@@ -1,0 +1,13 @@
+{
+  "schema": "mesh-1710-scoped-material-history-check/v1",
+  "status": "FAIL",
+  "errors": [
+    "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md@a09a93b028fdd354e4b0229b921bfea39524e917: PREWORK_QUALIFICATION_READY expected TRUE, found FALSE",
+    "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md@a09a93b028fdd354e4b0229b921bfea39524e917: QUALIFICATION_PROTOCOL_VERSION expected 3, found None",
+    "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md@a09a93b028fdd354e4b0229b921bfea39524e917: QUESTION_SET_STATUS expected CURRENT, found None",
+    "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md@a09a93b028fdd354e4b0229b921bfea39524e917: QUESTION_SET_ADMISSION_REQUIREMENT expected REQUIRED_ON_TAKEOVER, found None",
+    "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md@a09a93b028fdd354e4b0229b921bfea39524e917: missing QUALIFICATION_PROFILE",
+    "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md@a09a93b028fdd354e4b0229b921bfea39524e917: historical prework endpoint must already contain ordered Q1-Q5, found []"
+  ],
+  "interpretation": "Owner waived this session questionnaire. Validator requires historical Q1-Q5 and readiness TRUE; do not fabricate those or rewrite immutable EP-0001. Receipt ordering and coverage remain recorded. This is not qualification readiness."
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "mesh-1710-leg003-validation/v1",
+  "executedCodeHead": "5eadd65ddd5716aaa4a371e454b08d69d2d61a78",
+  "inputBasis": "[SIMULATED] frozen analytical fixtures through production mesh/solver APIs",
+  "stageResults": {
+    "M0": "PASS",
+    "M1": "PASS",
+    "M2": "PASS",
+    "M3": "PASS_UNDER_OWNER_APPROVED_V2",
+    "M4": "FAIL"
+  },
+  "m3LegacyShapeTrendFailuresRetained": true,
+  "negativeControls": {
+    "focusedEvidenceCorruptions": 17,
+    "isolatedSourcePinCorruption": 1,
+    "status": "PASS"
+  },
+  "schemaAndHashChecks": {
+    "audits": 14,
+    "status": "PASS"
+  },
+  "regressions": "PASS: meshing 12-part suite, imports, advanced shell contract, benchmark program self-test",
+  "build": "FAIL_PREVIOUS_RUN_BUNDLE_SIZE; NOT_RERUN_THIS_LEG; application/build sources unchanged",
+  "productionSourcesAndOriginalOraclesUnchanged": true,
+  "firstM4Failure": "Raw sign-based shared convergence classification rejects roundoff-scale reversals in T6, Q8 and shell histories",
+  "m4AnalyticalReferencesAreInformational": true,
+  "unexecuted": [
+    "reaction-equilibrium qualification",
+    "full engineering negative suite",
+    "curved/non-affine response qualification",
+    "practical-project import/UI acceptance"
+  ],
+  "reviewCorrections": [
+    "Fixed verification-script use of finalizeAuditRecord before running negative controls",
+    "Restored non-MESH UTF-8 text; final semantic preservation check PASS",
+    "Corrected duplicate successor Issue Basis metadata; no Owner scope or authority change"
+  ],
+  "proposedProductionCorrection": "RP-0002 not applied",
+  "mergeAuthorized": false
+}

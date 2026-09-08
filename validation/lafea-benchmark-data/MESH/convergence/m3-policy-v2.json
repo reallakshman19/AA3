@@ -1,0 +1,17 @@
+{
+  "schema": "lafea-mesh-m3-acceptance-policy/v2",
+  "policyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1710",
+  "approval": "Owner 2026-09-08 ok proceed following RP-0001 code-fix plan",
+  "proposal": "agents/chains/ADV-MESH-1710/roadmap-proposals/RP-0001.md",
+  "requiredLevelCount": 3,
+  "measurement": "PRODUCTION_QUALITY_ELEMENT_CHARACTERISTIC_LENGTH",
+  "refinementRule": "STRICTLY_DECREASING_MEASURED_MAXIMUM",
+  "shapeTrendDisposition": "RETAIN_DIAGNOSTIC_STATUS_SEPARATE_FROM_ADVANCEMENT",
+  "productionQualityThresholdsModified": false,
+  "physicalOracleOrToleranceModified": false,
+  "requiredGates": ["COMPLETE_FINITE_POSITIVE_EVIDENCE", "UNCHANGED_PRODUCTION_QUALITY", "INCREASING_UNIQUE_MESHES", "FROZEN_REQUESTED_LADDER", "RESOURCE_LIMITS", "SHELL_SEAMS_AND_ADJACENCY", "EXISTING_THICKNESS_WARNING_SEMANTICS"],
+  "originalEvidence": "reports/qualification/lafea-benchmark-program/mesh-1710-final/M3/audit-record.json",
+  "negativeControls": ["UNCHANGED_ACTUAL_SIZE", "NONFINITE_OR_NONPOSITIVE_LENGTH", "MISSING_EVIDENCE", "PRODUCTION_QUALITY_BLOCK", "BROKEN_SEAM", "ADJACENCY_BLOCK", "SOURCE_PIN_MISMATCH"],
+  "releaseAuthorityGranted": false
+}

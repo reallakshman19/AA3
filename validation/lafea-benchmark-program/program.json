@@ -100,6 +100,52 @@
         "performance observations remain informational only",
         "production mesh, temperature, and release authority remain false"
       ]
+    },
+    {
+      "caseId": "BM-MESH",
+      "definitionState": "READY",
+      "title": "Common analysis-mesh benchmark — LAFEA.3 and LAFEA.4 staged producer contract",
+      "stageId": "LAFEA.3+LAFEA.4",
+      "benchmarkClass": "STAGED_ANALYSIS_MESH_BENCHMARK",
+      "comparisonPolicy": "STAGE_SPECIFIC_PRODUCTION_MESH_CONTRACT_AND_INDEPENDENT_ORACLE",
+      "purpose": "Execute frozen M0-M4 production analysis-mesh benchmarks under recorded execution authority and contiguous stage gating; registration grants no production, release or temperature authority.",
+      "methods": [
+        {
+          "methodId": "BM-MESH-M0-M4",
+          "authorityClass": "STAGED_ANALYSIS_MESH_BENCHMARK_PROGRAM",
+          "command": [
+            "node",
+            "scripts/lafea-mesh-benchmark-run.mjs",
+            "--stage",
+            "M4"
+          ],
+          "sourceRefs": [
+            "scripts/lafea-mesh-benchmark-run.mjs",
+            "validation/lafea-benchmark-data/MESH/bucket-manifest.json",
+            "validation/lafea-benchmark-data/MESH/sources/source-registry.json",
+            "validation/lafea-benchmark-data/MESH/geometry/cases.json",
+            "validation/lafea-benchmark-data/MESH/oracle/expected-values.json",
+            "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json",
+            "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json",
+            "validation/lafea-benchmark-data/MESH/governance/negative-cases.json",
+            "scripts/lib/lafea-mesh-benchmark-m4.mjs",
+            "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json",
+            "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json",
+            "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json",
+            "scripts/lib/lafea-mesh-benchmark-m3.mjs"
+          ],
+          "expectedEvidenceSchema": "lafea-mesh-benchmark-program-run/v1",
+          "oracleAuthority": "BM_MESH_M0_M4_FROZEN_INDEPENDENT_GEOMETRY_ORACLE_AND_PRODUCTION_MESH_CONTRACT"
+        }
+      ],
+      "passCriteria": [
+        "the governed staged runner exits zero",
+        "M0 through M4 form one contiguous authorized PASS prefix",
+        "each selected mesh stage retains its own audit record and evidence",
+        "all frozen benchmark definitions and producer-policy custody inputs are hash-bound",
+        "no expected value is generated from observed production output",
+        "release and temperature authority remain false"
+      ]
     }
   ],
   "futureQueue": [

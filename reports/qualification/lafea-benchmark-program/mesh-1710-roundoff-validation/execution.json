@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "scripts/lafea-mesh-benchmark-run.mjs",
+    "--stage",
+    "M4",
+    "--expected-head",
+    "9fb5d5bd4b606143fe334e4e6f018629b768f908",
+    "--run-id",
+    "mesh-1710-roundoff-final"
+  ],
+  "exactHeadSha": "9fb5d5bd4b606143fe334e4e6f018629b768f908",
+  "exitCode": 0,
+  "stdout": "{\n  \"schema\": \"lafea-mesh-benchmark-program-run/v1\",\n  \"benchmarkId\": \"BM-MESH\",\n  \"materialLeg\": \"ADV-MESH-1710/LEG-004\",\n  \"runId\": \"mesh-1710-roundoff-final\",\n  \"generatedAt\": \"2026-09-08T02:22:24.900Z\",\n  \"exactHeadSha\": \"9fb5d5bd4b606143fe334e4e6f018629b768f908\",\n  \"requestedLastStage\": \"M4\",\n  \"stageOrder\": [\n    \"M0\",\n    \"M1\",\n    \"M2\",\n    \"M3\",\n    \"M4\"\n  ],\n  \"stages\": [\n    {\n      \"stageId\": \"M0\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:acd03fe731d56552003659a7885a589de75e2c6522ca57e1dbab12e2ee6368fd\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-roundoff-final\\\\M0\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M1\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:6b3c2aeb8d44ae383b2342b00467e4ee6839a1993a78f61cdd6b864962eef902\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-roundoff-final\\\\M1\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M2\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:391b927f8b2cf0f86a96198483e068a0cfc5254e6197b5696a00ffb0c7fa0d79\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-roundoff-final\\\\M2\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M3\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:b8a5a4a9ed3d2dae56588f97d3e451cad38f5be40d344b112749aaba4b5365b2\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-roundoff-final\\\\M3\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M4\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:f303f34668788d3a23551c34d152df89c1fbc10470d60c991dfec56a51b9bac1\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-roundoff-final\\\\M4\\\\audit-record.json\"\n    }\n  ],\n  \"overallStatus\": \"PASS\",\n  \"releaseAuthorityGranted\": false,\n  \"temperatureAuthorityGranted\": false\n}\n",
+  "stderr": ""
+}

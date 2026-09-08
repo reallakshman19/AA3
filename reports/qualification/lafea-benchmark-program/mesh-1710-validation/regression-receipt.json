@@ -1,0 +1,57 @@
+{
+  "schema": "mesh-1710-regression-receipt/v1",
+  "sourceBaseSha": "695538dd713f2ef11fb00e54b86073f19d38684a",
+  "materialHeadSha": "b76e33984d3bd33c46e4b81d716c38e34fdb693c",
+  "observation": "Executed commands in this session; application source and build inputs unchanged by mesh integration.",
+  "checks": [
+    {
+      "command": "npm run check:lafea-meshing",
+      "status": "PASS",
+      "scope": "All 12 chained entrypoints completed, including panel, smoothing, cross-process determinism and producer binding; source basis main before integration."
+    },
+    {
+      "command": "npm run check:imports",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/advanced-shell-contract-check.mjs",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/lafea-benchmark-program-self-test.mjs",
+      "status": "PASS"
+    },
+    {
+      "command": "npm run build",
+      "status": "FAIL",
+      "viteCompilation": "PASS",
+      "reason": "Bundle size gate: main-DbzrufI6.js is 1955370 bytes; limit 1179648 bytes. Application/bundler sources unchanged; baseline build was not separately executed."
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "command": "python Common/skills/engineering-pr-delivery-v2/scripts/validate_work_item_exclusivity.py .",
+      "status": "FAIL",
+      "reason": "Pre-existing non-UUID instance IDs in ADV-EMP1-ENGINEERING-REVIEW, ADV-EMP1-HUMAN-UI-1651, ADV-EMP1-REVIEW-READINESS. No #1710 collision reported."
+    },
+    {
+      "command": "BM-MESH TASK-005 engineering negative suite",
+      "status": "NOT_RUN",
+      "reason": "Frozen definitions retained; not implemented/executed in this bounded integration."
+    },
+    {
+      "command": "M4 solver convergence",
+      "status": "NOT_RUN",
+      "reason": "M3 failed; public runner emitted BLOCKED without solving."
+    },
+    {
+      "command": "Real-project / browser UI qualification",
+      "status": "NOT_RUN",
+      "reason": "This leg repairs benchmark execution; input fixtures are SIMULATED analytical definitions. UI requirements are in issues, no UI source changed."
+    }
+  ],
+  "mergeAuthorized": false,
+  "releaseAuthorityGranted": false
+}

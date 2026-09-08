@@ -1,0 +1,49 @@
+{
+  "schema": "lafea-mesh-shell-thickness-fixture/v1",
+  "benchmarkId": "BM-MESH",
+  "definitionTask": "TASK-004-M3-THICKNESS",
+  "materialLeg": "LEG-014",
+  "ownerIssue": "github:reallaksh19/Advanced_Analysis#1652",
+  "stageId": "LAFEA.4",
+  "geometryCaseId": "M2-TWO-PATCH-SHELL-01",
+  "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+  "purpose": "Freeze one source-cited uniform shell thickness for the BM-MESH M3 size-to-thickness observation without importing solver physics.",
+  "thicknessBasis": {
+    "classification": "BENCHMARK_ONLY_FROZEN_UNIFORM_THICKNESS_FROM_EXISTING_LAFEA4_SOURCE",
+    "lengthUnit": "mm",
+    "uniformThickness": 1.5,
+    "sourceValuePath": "scripts/lafea.4-fixtures.mjs#cylindricalSource.elements[*].thickness",
+    "sourceValueStatement": "The existing LAFEA.4 cylindricalSource fixture assigns thickness 1.5 to every generated shell element.",
+    "basisContractPath": "src/workspace/lafea-shell-thickness-basis.js",
+    "basisContractStatement": "The LAFEA.4 thickness-basis contract recomputes source authority, requires positive element thickness, and rejects source-hash mismatch rather than accepting a naked injected thickness.",
+    "qualificationWitnessPath": "scripts/lafea-tech2-thickness-curvature-check.mjs",
+    "qualificationWitnessStatement": "The existing TECH2 witness validates the basis as UNIFORM_THICKNESS and asserts uniformThickness, minimumThickness and maximumThickness are all 1.5."
+  },
+  "sizeToThicknessQualification": {
+    "gateFunction": "qualifyShellSizeToThicknessRatio",
+    "gateSourceRef": "S-007",
+    "minimumMultiple": 0.5,
+    "maximumMultiple": 2,
+    "elementSizeBasis": "PRODUCED_ELEMENT_CHARACTERISTIC_LENGTH",
+    "outsideBandDisposition": "WARNING",
+    "note": "The production gate reports WARNING outside the band; this artifact does not convert that warning into a BLOCK or alter production thresholds."
+  },
+  "authority": {
+    "ownerAuthorizedByEndpoint": "EP-0025",
+    "productionOutputUsedToChooseThickness": false,
+    "solverOutputUsedToChooseThickness": false,
+    "benchmarkMeshUsedToChooseThickness": false,
+    "thicknessInventedFromUncitedValue": false,
+    "sourceCitedExistingLafea4Fixture": true,
+    "materialPropertiesImported": false,
+    "loadsImported": false,
+    "restraintsImported": false,
+    "loadCaseImported": false,
+    "responseQuantityImported": false,
+    "recoveryOrAcceptanceImported": false,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "scopeBoundary": "This fixture supplies only a uniform thickness scalar for M3 h/t mesh-quality observation on the frozen two-patch shell geometry. It is not a physical-analysis or solver fixture.",
+  "sourceRefs": ["S-007", "S-020", "S-021", "S-022"]
+}

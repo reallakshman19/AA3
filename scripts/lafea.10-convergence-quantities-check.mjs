@@ -8,6 +8,8 @@
  * peak), the default §10.3 acceptance table thresholds classify a synthetic
  * two-finest-level relative change correctly, and MONOTONIC/OSCILLATORY/
  * NON_CONVERGENT behavior is classified from the full quantity history.
+ * [SIMULATED] fixed histories also exercise the approved roundoff sign band;
+ * assertions verify boundary rejection, unit scaling and unchanged input values.
  */
 
 import assert from 'node:assert/strict';
@@ -27,6 +29,7 @@ checkDefaultAcceptanceLimitsPerQuantity();
 checkMonotonicOscillatoryNonConvergentClassification();
 checkConvergenceSetAggregation();
 checkMinimumThreeLevelsRequired();
+checkRoundoffSignClassification();
 console.log('\n✅ LAFEA §10.4 convergence quantities check passed.\n');
 
 function checkSixAcceptedQuantities() {
@@ -126,4 +129,41 @@ function checkMinimumThreeLevelsRequired() {
     return true;
   });
   console.log('✅ A quantity history with fewer than 3 mesh levels is rejected.');
+}
+
+/** Fixed numerical boundary controls; no benchmark response is rounded or replaced. */
+function checkRoundoffSignClassification() {
+  const band = 256 * Number.EPSILON;
+  /** @type {Array<{name:string, values:number[], accepted:boolean}>} */
+  const cases = [
+    { name: 'exact constant', values: [1, 1, 1], accepted: true },
+    { name: 'zero constant', values: [0, 0, 0], accepted: true },
+    { name: 'negative constant', values: [-1, -1, -1], accepted: true },
+    { name: 'roundoff reversal', values: [1, 1 - Number.EPSILON, 1], accepted: true },
+    { name: 'exact band reversal', values: [1, 1 - band, 1], accepted: true },
+    { name: 'next representable above band', values: [1, 1 - band - Number.EPSILON / 2, 1], accepted: false },
+    { name: 'shrinking physical reversal', values: [1, 1.008, 1.004], accepted: false },
+    { name: 'growing physical reversal', values: [1, 0.996, 1.004], accepted: false },
+    { name: 'coarse outlier cannot mask fine reversal', values: [1e20, 1, 1.008, 1.004], accepted: false },
+    { name: 'near-zero physical sign changes', values: [1e-100, -1e-100, 1e-100], accepted: false },
+    { name: 'monotonic above percentage limit', values: [1, 1.5, 2], accepted: false },
+  ];
+  for (const quantity of CONVERGENCE_QUANTITIES) {
+    for (const control of cases) {
+      // Powers of two preserve exact band boundaries during unit scaling.
+      for (const scale of [2 ** -20, 1, 2 ** 20]) {
+        const values = control.values.map((value) => value * scale);
+        const before = [...values];
+        const history = canonicalQuantityHistory(quantity, values);
+        const result = qualifyConvergence(history, undefined);
+        assert.equal(result.accepted, control.accepted, `${quantity}/${control.name}/${scale}`);
+        assert.deepEqual(values, before);
+        assert.deepEqual(history.valuesByLevel, before);
+      }
+    }
+  }
+  for (const invalid of [[1, Infinity, 1], [1, NaN, 1], [1, -Infinity, 1]]) {
+    assert.throws(() => canonicalQuantityHistory('STRAIN_ENERGY', invalid));
+  }
+  console.log('PASS: roundoff boundaries, physical reversals, unit scaling, limits and immutable histories.');
 }

@@ -1,0 +1,22 @@
+{
+  "schema": "mesh-1710-m3v2-source-schema-check/v1",
+  "status": "PASS",
+  "validatedAudits": [
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-gate-01/M0/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-gate-01/M1/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-gate-01/M2/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-gate-01/M3/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-m4-01/M0/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-m4-01/M1/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-m4-01/M2/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-m4-01/M3/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-m4-01/M4/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-final/M0/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-final/M1/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-final/M2/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-final/M3/audit-record.json",
+    "reports/qualification/lafea-benchmark-program/mesh-1710-m3v2-final/M4/audit-record.json"
+  ],
+  "originalProductionPhysicsAndV1EvidenceUnchanged": true,
+  "nonMeshProgramUnchanged": true
+}

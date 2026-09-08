@@ -1,0 +1,25 @@
+{
+  "schema": "mesh-1710-transport-evidence/v1",
+  "logs": [
+    {
+      "name": "inherited-startup.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "utf8": ""
+    },
+    {
+      "name": "inherited-startup.stderr.log",
+      "sha256": "b770d0cffb837f5c4f080ae129d7f487b33a35f453329eff0741e1b36d7536cc",
+      "utf8": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\r\n\r\n  assert.ok(ids.has(sourceId))\r\n\r\n    at validateFrozenInputs (file:///F:/CODE-8/Advanced_Analysis_BM_MESH_1652/scripts/lafea-mesh-benchmark-run.mjs:1149:12)\r\n    at file:///F:/CODE-8/Advanced_Analysis_BM_MESH_1652/scripts/lafea-mesh-benchmark-run.mjs:99:1\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\r\n    at async node:internal/modules/esm/loader:646:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\r\n  generatedMessage: true,\r\n  code: 'ERR_ASSERTION',\r\n  actual: false,\r\n  expected: true,\r\n  operator: '==',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v26.3.0\r\n"
+    },
+    {
+      "name": "runner.stdout.log",
+      "sha256": "5ca68abd50f45bea451775e805b263e3f5b5dd6cceaf6b4e5bbdd66d350ba9f2",
+      "utf8": "{\n  \"schema\": \"lafea-mesh-benchmark-program-run/v1\",\n  \"benchmarkId\": \"BM-MESH\",\n  \"materialLeg\": \"LEG-017\",\n  \"runId\": \"mesh-1710-final\",\n  \"generatedAt\": \"2026-09-07T18:15:20.292Z\",\n  \"exactHeadSha\": \"b76e33984d3bd33c46e4b81d716c38e34fdb693c\",\n  \"requestedLastStage\": \"M4\",\n  \"stageOrder\": [\n    \"M0\",\n    \"M1\",\n    \"M2\",\n    \"M3\",\n    \"M4\"\n  ],\n  \"stages\": [\n    {\n      \"stageId\": \"M0\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:e45a6d3897d8850b485602bb048435fe41887c0537498c4805ff11433d675175\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-final\\\\M0\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M1\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:71635b1036b722133b362bb2f1da670436c475a238843bfac1c465272a0c6bd2\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-final\\\\M1\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M2\",\n      \"caseStatus\": \"PASS\",\n      \"nextBenchmarkAuthorized\": true,\n      \"recordHash\": \"sha256:181674dd49c1b8ecdd30fb6899da21aeb45d518ec09321d10ab3b66d825be40c\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-final\\\\M2\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M3\",\n      \"caseStatus\": \"FAIL\",\n      \"nextBenchmarkAuthorized\": false,\n      \"recordHash\": \"sha256:5bf2b189828406a4d5f8d358f6b897604beadab41396a159bcdbab377ad83e7c\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-final\\\\M3\\\\audit-record.json\"\n    },\n    {\n      \"stageId\": \"M4\",\n      \"caseStatus\": \"BLOCKED\",\n      \"nextBenchmarkAuthorized\": false,\n      \"recordHash\": \"sha256:290db0f627a29a272c21e5d30c22119dc5aa6cdc0174540e8a9b87a2c6cb9ce5\",\n      \"recordPath\": \"reports\\\\qualification\\\\lafea-benchmark-program\\\\mesh-1710-final\\\\M4\\\\audit-record.json\"\n    }\n  ],\n  \"overallStatus\": \"FAIL\",\n  \"releaseAuthorityGranted\": false,\n  \"temperatureAuthorityGranted\": false\n}\n"
+    },
+    {
+      "name": "runner.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "utf8": ""
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "mesh-1710-formatting-review/v1",
+  "status": "PASS",
+  "checks": [
+    {
+      "path": "reports/qualification/lafea-benchmark-program/mesh-1710-validation/m3-diagnosis.json",
+      "parsedJsonUnchanged": true,
+      "beforeSha256": "fe861828fd782926014beda4f66ee446a55a5f25e9225586b41a86eee6a25c66",
+      "afterSha256": "395edc45bbe4d648f3bc75c80012b35593d0a7ff5b061619db929d2e87d5735b"
+    },
+    {
+      "path": "reports/qualification/lafea-benchmark-program/mesh-1710-validation/transport-evidence.json",
+      "parsedJsonUnchanged": true,
+      "beforeSha256": "dbbca774e207401a7369ee003af1b6f5d817a592a4d0f0889ec17e8fe1f5e8fa",
+      "afterSha256": "032ccc4d307e1d8bf6b92a3dbfa47e5159253251f72d407f43e8dab7c6013e92"
+    }
+  ],
+  "protectedSourcesFixturesAndFinalAuditsUnchanged": true,
+  "engineeringOutcome": "M0-M2 PASS; M3 FAIL; M4 BLOCKED unchanged",
+  "relayEofCleanup": [
+    {
+      "path": "agents/chains/ADV-MESH-1710/endpoints/EP-0001.md",
+      "change": "Remove only extra terminal blank line; historical content remains at original commit a09a93b028fdd354e4b0229b921bfea39524e917"
+    },
+    {
+      "path": "agents/chains/ADV-MESH-1710/issue-basis/IB-0001.md",
+      "change": "Remove only extra terminal blank line; historical content remains at original commit a09a93b028fdd354e4b0229b921bfea39524e917"
+    }
+  ]
+}

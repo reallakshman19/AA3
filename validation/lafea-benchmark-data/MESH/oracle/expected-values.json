@@ -1,0 +1,183 @@
+{
+  "schema": "lafea-mesh-m2-expected-values/v1",
+  "benchmarkId": "BM-MESH",
+  "stage": "M2",
+  "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
+  "authority": {
+    "class": "INDEPENDENT_CLOSED_FORM",
+    "productionImports": [],
+    "productionOutputUsed": false,
+    "expectedValuesDerivedOnlyFromFrozenFixtureDimensions": true
+  },
+  "fixtureSource": "validation/lafea-benchmark-data/MESH/geometry/cases.json",
+  "policySourceRegistry": "validation/lafea-benchmark-data/MESH/sources/source-registry.json",
+  "cases": [
+    {
+      "caseId": "M2-UNIT-SQUARE-01",
+      "expectations": [
+        {
+          "quantity": "AREA",
+          "symbolicValue": "1",
+          "decimalValue": "1",
+          "equation": "A = s^2",
+          "operands": {"s": "1"},
+          "derivation": "1^2 = 1",
+          "citation": {
+            "authority": "INDEPENDENT_CLOSED_FORM",
+            "fixture": "M2-UNIT-SQUARE-01.dimensions.side",
+            "ownerRequirement": "issue #1652 / M2 unit square analytic area"
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "M2-L-SHAPE-01",
+      "expectations": [
+        {
+          "quantity": "AREA",
+          "symbolicValue": "5",
+          "decimalValue": "5",
+          "equation": "A = W*H - wc*hc",
+          "operands": {"W": "3", "H": "3", "wc": "2", "hc": "2"},
+          "derivation": "3*3 - 2*2 = 9 - 4 = 5",
+          "citation": {
+            "authority": "INDEPENDENT_CLOSED_FORM",
+            "fixture": "M2-L-SHAPE-01.dimensions",
+            "ownerRequirement": "issue #1652 / M2 L-shape analytic area"
+          }
+        }
+      ],
+      "topologyInvariants": [
+        {
+          "invariantId": "NO_ELEMENT_SPANS_REENTRANT_VOID",
+          "definition": "No produced element interior may intersect the removed void x>1 and y>1 inside the frozen 3x3 outer square.",
+          "witness": "reentrant corner [1,1]",
+          "ownerRequirement": "issue #1652 / no element spans the re-entrant corner"
+        }
+      ]
+    },
+    {
+      "caseId": "M2-ANNULUS-SECTOR-01",
+      "expectations": [
+        {
+          "quantity": "AREA",
+          "symbolicValue": "3*pi/4",
+          "decimalValue": "2.3561944901923448",
+          "equation": "A = 0.5*(Ro^2 - Ri^2)*theta",
+          "operands": {"Ro": "2", "Ri": "1", "thetaRadians": "pi/2"},
+          "derivation": "0.5*(4-1)*(pi/2) = 3*pi/4",
+          "citation": {
+            "authority": "INDEPENDENT_CLOSED_FORM",
+            "fixture": "M2-ANNULUS-SECTOR-01.dimensions",
+            "ownerRequirement": "issue #1652 / annulus-sector analytic area"
+          }
+        },
+        {
+          "quantity": "OUTER_ARC_MAXIMUM_CHORD_SAGITTA_BOUND",
+          "symbolicValue": "2*(1-cos(pi/24))",
+          "decimalValue": "0.017110277252379236",
+          "equation": "s = R*(1 - cos(deltaTheta/2))",
+          "operands": {"R": "2", "deltaThetaDegreesMaximum": "15"},
+          "comparison": "MEASURED_MAXIMUM_CHORD_DEVIATION_LESS_THAN_OR_EQUAL",
+          "policyRef": "S-003",
+          "derivation": "R=2 and deltaTheta<=15 degrees gives s<=2*(1-cos(7.5 degrees))."
+        },
+        {
+          "quantity": "INNER_ARC_MAXIMUM_CHORD_SAGITTA_BOUND",
+          "symbolicValue": "1-cos(pi/24)",
+          "decimalValue": "0.008555138626189618",
+          "equation": "s = R*(1 - cos(deltaTheta/2))",
+          "operands": {"R": "1", "deltaThetaDegreesMaximum": "15"},
+          "comparison": "MEASURED_MAXIMUM_CHORD_DEVIATION_LESS_THAN_OR_EQUAL",
+          "policyRef": "S-003",
+          "derivation": "R=1 and deltaTheta<=15 degrees gives s<=1-cos(7.5 degrees)."
+        }
+      ]
+    },
+    {
+      "caseId": "M2-SQUARE-HOLE-01",
+      "expectations": [
+        {
+          "quantity": "NET_AREA",
+          "symbolicValue": "16-pi",
+          "decimalValue": "12.858407346410207",
+          "equation": "A = s^2 - pi*r^2",
+          "operands": {"s": "4", "r": "1"},
+          "derivation": "4^2 - pi*1^2 = 16 - pi",
+          "independentCrossCheck": {
+            "method": "GREENS_THEOREM",
+            "equation": "A = 0.5 * closed_line_integral(x dy - y dx)",
+            "expectedSymbolicValue": "16-pi"
+          },
+          "citation": {
+            "authority": "INDEPENDENT_CLOSED_FORM",
+            "fixture": "M2-SQUARE-HOLE-01.dimensions",
+            "ownerRequirement": "issue #1652 / Green's-theorem net area"
+          }
+        },
+        {
+          "quantity": "HOLE_BOUNDARY_SEGMENT_COUNT_MINIMUM",
+          "integerValue": 16,
+          "comparison": "GREATER_THAN_OR_EQUAL",
+          "policyRef": "S-008",
+          "derivation": "Production general boundary qualification witness calls qualifyBoundarySegmentCount(16, 16) and blocks 15."
+        },
+        {
+          "quantity": "CODE_SCL_HOLE_BOUNDARY_SEGMENT_COUNT_MINIMUM",
+          "integerValue": 24,
+          "comparison": "GREATER_THAN_OR_EQUAL",
+          "policyRef": "S-008",
+          "applicability": "POLICY_REFERENCE_ONLY_UNLESS_CASE_IS_CODE_SCL_REGION",
+          "derivation": "Code-SCL qualification witness calls qualifyBoundarySegmentCount(24, 24) and blocks 23."
+        }
+      ]
+    },
+    {
+      "caseId": "M2-TWO-PATCH-SHELL-01",
+      "expectations": [
+        {
+          "quantity": "PATCH_AREA",
+          "patchId": "P-A",
+          "symbolicValue": "1",
+          "decimalValue": "1",
+          "equation": "A = w*h",
+          "operands": {"w": "1", "h": "1"},
+          "derivation": "1*1 = 1"
+        },
+        {
+          "quantity": "PATCH_AREA",
+          "patchId": "P-B",
+          "symbolicValue": "1",
+          "decimalValue": "1",
+          "equation": "A = w*h",
+          "operands": {"w": "1", "h": "1"},
+          "derivation": "1*1 = 1"
+        },
+        {
+          "quantity": "TOTAL_AREA",
+          "symbolicValue": "2",
+          "decimalValue": "2",
+          "equation": "A_total = A_PA + A_PB",
+          "operands": {"A_PA": "1", "A_PB": "1"},
+          "derivation": "1 + 1 = 2"
+        },
+        {
+          "quantity": "SHARED_SEAM_LENGTH",
+          "symbolicValue": "1",
+          "decimalValue": "1",
+          "equation": "L = sqrt((x2-x1)^2 + (y2-y1)^2)",
+          "operands": {"from": ["1", "0"], "to": ["1", "1"]},
+          "derivation": "sqrt(0^2 + 1^2) = 1"
+        }
+      ],
+      "topologyInvariants": [
+        {
+          "invariantId": "CONFORMING_SHARED_SEAM",
+          "definition": "Every mesh node lying on SEAM-A-B must have one canonical node identity shared by incident elements from both patches; duplicate coincident seam nodes are forbidden.",
+          "comparison": "TOPOLOGICAL_IDENTITY_NOT_COORDINATE_PROXIMITY",
+          "ownerRequirement": "issue #1652 / conforming seam, no duplicated seam nodes"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "executedCodeHead": "798b2580fa0a42ac72342addcc8d6b5e99aec0a6",
+  "auditSchemasValidated": 7,
+  "completeM4EvidenceExactlyUnchanged": true,
+  "solverLevelsUnchanged": 12,
+  "productionAndWorkflowsUnchanged": true,
+  "frozenNegativeExpectedCodesUnchanged": true,
+  "inputBasis": "[SIMULATED] frozen analytical fixtures",
+  "practicalUIQualification": "NOT_RUN",
+  "build": "FAIL_FROM_LEG004_BUNDLE_SIZE_UNCHANGED_NOT_RERUN",
+  "regressions": {
+    "npm run check:imports": "PASS",
+    "node scripts/advanced-shell-contract-check.mjs": "PASS",
+    "git diff --check": "PASS"
+  }
+}

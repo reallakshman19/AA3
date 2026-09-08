@@ -1,0 +1,12 @@
+{
+  "schema": "mesh-1710-roundoff-source-audit/v1",
+  "status": "PASS",
+  "validatedAuditSchemas": 5,
+  "changedProductionPaths": [
+    "src/core/lafea-meshing/mesh-convergence-framework.js"
+  ],
+  "changedSourcePins": [
+    "S-012"
+  ],
+  "originalPhysicsOraclesM3PolicyProgramWorkflowsAndFailedEvidenceUnchanged": true
+}

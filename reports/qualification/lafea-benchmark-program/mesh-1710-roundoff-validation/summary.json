@@ -1,0 +1,20 @@
+{
+  "schema": "mesh-1710-leg004-validation/v1",
+  "executedCodeHead": "9fb5d5bd4b606143fe334e4e6f018629b768f908",
+  "inputBasis": "[SIMULATED] frozen analytical solver fixtures and numerical boundary controls",
+  "stageResults": "M0-M4 PASS",
+  "freshSolverLevelRecordsExactlyUnchanged": 12,
+  "rawResponseHistoriesExactlyUnchanged": 14,
+  "auditsSchemaAndHashValidated": 5,
+  "regressions": "PASS: meshing, imports, shell contract, program self-test, UQ context",
+  "build": "FAIL: initial Windows VirtualAlloc errno1455; retry with GOMAXPROCS=2 GOGC=50 compiles, then existing main bundle 1955370 >1179648 gate fails",
+  "productionScope": "Only shared convergence sign classifier changed; S-012 repinned with explicit Owner authority",
+  "notQualified": [
+    "non-affine/curved response",
+    "reaction-equilibrium qualification",
+    "practical-project/UI acceptance",
+    "release"
+  ],
+  "nextOwnerInstruction": "proceed next; execute original frozen TASK-005 negative cases after checkpoint",
+  "preworkClarification": "UQ context uses rejectRawSingularPeakAsConvergenceQuantity, not mesh-level requirements; the exported rejection behavior remains unchanged."
+}

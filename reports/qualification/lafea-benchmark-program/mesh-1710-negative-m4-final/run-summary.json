@@ -1,0 +1,56 @@
+{
+  "schema": "lafea-mesh-benchmark-program-run/v1",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "ADV-MESH-1710/LEG-005",
+  "runId": "mesh-1710-negative-m4-final",
+  "generatedAt": "2026-09-08T08:55:37.715Z",
+  "exactHeadSha": "798b2580fa0a42ac72342addcc8d6b5e99aec0a6",
+  "requestedLastStage": "M4",
+  "stageOrder": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "stages": [
+    {
+      "stageId": "M0",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:2ec8ab5f1fc81b96af92f3920f11b3f284944569aee11405300a766086527c19",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-negative-m4-final\\M0\\audit-record.json"
+    },
+    {
+      "stageId": "M1",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:b354a44db8aeb8f4ca9c4a621ac3c9467503f0be53961127bed86d985868e60c",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-negative-m4-final\\M1\\audit-record.json"
+    },
+    {
+      "stageId": "M2",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:84428863c11a86df5fc609d8eafe2c8f77e1726993117654d6a7ee9146f066f5",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-negative-m4-final\\M2\\audit-record.json"
+    },
+    {
+      "stageId": "M3",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:691b48e347ad6ac247d578ed6f32a64fb0944da519fc190e5bf55423741594e1",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-negative-m4-final\\M3\\audit-record.json"
+    },
+    {
+      "stageId": "M4",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:e23e49e79f1dc4374615bcfbfa0365daec66210a9f6eb32e5e77c9baa591a237",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-negative-m4-final\\M4\\audit-record.json"
+    }
+  ],
+  "overallStatus": "PASS",
+  "releaseAuthorityGranted": false,
+  "temperatureAuthorityGranted": false
+}

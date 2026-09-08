@@ -1,13 +1,13 @@
 # Current Issue State — ADV-EMP1-HUMAN-UI-1651
 
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0041
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0042
 UPDATED_AT: 2026-09-08
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0042_COMMENT_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5589307905
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5589310092
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0042_COMMENT
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0042_COMMENT
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
@@ -19,28 +19,33 @@ RECOVERY_CHILD_ISSUE: 1664
 - LEG-014 focused synchronization repair PR #1708: MERGED as `695538dd713f2ef11fb00e54b86073f19d38684a`.
 - Owner-waiver/self-check custody PR #1719: MERGED as `754bf8f4ac869b087063ac1181513f6012684e2f` from exact head `53074179e35cfb51ab6d0bd026d340f777602926`.
 - Active post-merge custody: Draft PR #1720 on `agent/emp1-1651-post-merge-ep0041`.
+- EP-0042 disposition: NO_PATCH / post-merge executable-evidence wait.
 - No merge authorization carries to PR #1720.
-- No LEG-015 is open and no production material mutation occurred in EP-0041.
+- No LEG-015 is open; no production material mutation occurred in EP-0042.
 
 ## Owner disposition retained
 
-Owner instruction: `no independent review required, self check, fix merge, proceed. add to pending activities in your issue`
-
-- independent review requirement: **WAIVED_BY_OWNER** for the executable-evidence/custody path;
-- assistant self-check: **AUTHORIZED_BY_OWNER** for review/scope inspection;
-- PR #1719 merge authorization: consumed by merge commit `754bf8f4…`;
-- executable validation waiver: **FALSE**;
-- plain `proceed` is not consumed as an exact material progression.
-
-The PR #1719 self-check passed only the custody-scope inspection: all merged paths were under `agents/chains/ADV-EMP1-HUMAN-UI-1651/**`; no production `src/**`, test, workflow YAML, WRC/Pressure, benchmark/tolerance/source authority, route/code/release-authority path was changed. This is not runtime PASS.
+Independent review remains **WAIVED_BY_OWNER** for the executable-evidence/custody path. Assistant self-check remains **AUTHORIZED_BY_OWNER** for review/scope inspection. Executable validation itself is not waived. PR #1719 merge authorization is consumed. Current `proceed next` is consumed by EP-0042; it did not authorize merge of PR #1720.
 
 ## Live main / drift
 
 LIVE_MAIN_HEAD: `754bf8f4ac869b087063ac1181513f6012684e2f`
-
-The move from `86e39646…` to `754bf8f4…` is the metadata-only PR #1719 merge. No new EMP.1 production overlap or engineering-authority drift is introduced by that merge. P1-B therefore retargets to the reconciled current main `754bf8f4…` unless main moves again before execution.
-
+MAIN_DRIFT_SINCE_EP0041: FALSE
 REQUALIFICATION_REQUIRED_BY_DRIFT: FALSE
+
+No live-main movement occurred during EP-0042. The move from the prior shared-workspace head to `754bf8f4…` remains the metadata-only PR #1719 merge and introduces no EMP.1 production or engineering-authority overlap.
+
+## PR #1720 state at EP-0042 start
+
+- head: `1207f89004d1ecdea9f22c161772ade2413aa561`
+- state: OPEN / DRAFT
+- mergeable: TRUE
+- reviews: 0
+- unresolved review threads: 0
+- status contexts: 0
+- PR-triggered workflow runs: 0
+
+Independent review is waived, so review count is not a blocker. Zero status/workflow evidence remains non-PASS.
 
 ## Original acceptance ledger
 
@@ -48,11 +53,11 @@ REQUALIFICATION_REQUIRED_BY_DRIFT: FALSE
 - TASK-002 | Pressure 5 identities × Internal/External = 10 governed cells. | SOURCE RETAINED/MERGED; live confirmation pending.
 - TASK-003 | Anti-waterfall task shell / one active task / selected evidence only. | SOURCE MERGED; human-factor desktop/narrow re-observation pending.
 - TASK-004 | CAUx staged benchmark UI with physical keyboard behavior. | SOURCE RETAINED/MERGED; physical Enter/Space and visual evidence pending.
-- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED through EP-0041.
+- TASK-005 | Preserve numerical/source/tolerance/sign/axis/route/code/release authority. | PRESERVED through EP-0042.
 
 ## Validation truth / pending activity
 
-Historical exact pre-LEG-014 runner `f98d56d…`: browser preflight PASS, five Node gates PASS, focused Playwright FAIL (`emp1ExecutionStatus` sampled `null`), runner `FAIL_EXECUTABLE_GATE_SEQUENCE`, Stage-17/human-factor NOT_RUN.
+Historical exact pre-LEG-014 runner `f98d56d…`: browser preflight PASS, five Node gates PASS, focused Playwright FAIL because `emp1ExecutionStatus` was sampled as `null`, runner `FAIL_EXECUTABLE_GATE_SEQUENCE`, Stage-17/human-factor NOT_RUN.
 
 ### P0 — review / custody
 
@@ -62,6 +67,7 @@ Status: **COMPLETE_BY_OWNER_DISPOSITION**. No independent reviewer is required. 
 
 Exact target: `695538dd713f2ef11fb00e54b86073f19d38684a`
 Status: **NOT_RUN**.
+Observed status contexts: 0. Observed PR-triggered workflow runs: 0. Zero is not PASS.
 
 Governed command with repository Node dependencies and project-local Chromium (`PLAYWRIGHT_BROWSERS_PATH=0`):
 
@@ -69,12 +75,13 @@ Governed command with repository Node dependencies and project-local Chromium (`
 node scripts/emp1-issue1651-executable-validation.mjs
 ```
 
-Required success boundary remains five Node gates PASS, focused Playwright 2/0, Stage-17 exit 0, and final `PASS_EXECUTABLE_EXACT_HEAD_GATE_SEQUENCE`. Independent review is waived; actual execution is not.
+Required success boundary remains five Node gates PASS, focused Playwright 2/0, Stage-17 exit 0, and final `PASS_EXECUTABLE_EXACT_HEAD_GATE_SEQUENCE`. Actual execution is still required.
 
 ### P1-B — current-main regression proof
 
-Exact target at EP-0041: `754bf8f4ac869b087063ac1181513f6012684e2f`
+Exact target at EP-0042: `754bf8f4ac869b087063ac1181513f6012684e2f`
 Status: **NOT_RUN / GATED_BY_P1A**.
+Observed status contexts: 0. Observed PR-triggered workflow runs: 0. Zero is not PASS.
 
 After P1-A PASS, run the same governed carrier on the reconciled live-main target. Re-ground first if main changes.
 
@@ -84,7 +91,7 @@ Status: **NOT_RUN / GATED**. Only after executable PASS: desktop >1050 default a
 
 ### P3 — acceptance reconciliation / closure
 
-Resolve TASK-001..005 from live evidence. Close #1664 then #1651 only if every acceptance condition passes. Any production/material repair requires an exact Owner progression command.
+Resolve TASK-001..005 from live evidence. Close #1664 then #1651 only if every acceptance condition passes. Any production/material repair requires a new exact Owner progression command.
 
 ## Roadmap
 
@@ -102,7 +109,7 @@ Resolve TASK-001..005 from live evidence. Close #1664 then #1651 only if every a
 - Pressure remains 5 identities × Internal/External = 10 governed cells.
 - Bounded route `EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP` retains its existing bounded engineering-use authorization.
 - Global/full-domain WRC production authority remains unclaimed/unregistered.
-- No EP-0041 change to WRC equations/tables/curves/applicability/sign/axes/SCFs, benchmark source/tolerance/authority, workflow YAML, code compliance, production authorization or release authority.
+- No EP-0042 change to WRC equations/tables/curves/applicability/sign/axes/SCFs, benchmark source/tolerance/authority, workflow YAML, code compliance, production authorization or release authority.
 
 ## Protocol / control
 
@@ -110,8 +117,7 @@ COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: af4c5c73b87b26187aa6c930b60172cbb1f0f3e2
 COMMON_PROTOCOL_STATUS: CURRENT
 COMMON_SKILL_BLOB: aa832f5f9f204c3834ffcee40102b482f121ce76
-OWNER_PROGRESSION_COMMAND: NONE_EXACT
-OWNER_PROGRESSION_STATUS: NOT_CONSUMED_PLAIN_PROCEED_NOT_NORMAL_PROGRESSION
+OWNER_PROGRESSION_COMMAND: `proceed next` CONSUMED_BY_EP_0042_POST_MERGE_EXECUTABLE_EVIDENCE_WAIT
 OWNER_MERGE_STATUS: CONSUMED_BY_PR_1719
 INDEPENDENT_REVIEW_REQUIREMENT: WAIVED_BY_OWNER
 SELF_CHECK_AUTHORITY: AUTHORIZED_BY_OWNER
@@ -136,4 +142,4 @@ HUMAN_FACTOR_MAY_PROCEED: FALSE
 
 CURRENT_BLOCKER: P1-A executable validation on exact `695538dd713f2ef11fb00e54b86073f19d38684a` remains NOT_RUN. Independent review is no longer a blocker. P1-B and human-factor remain gated.
 
-EXACT_NEXT_ACTION: remain READ_ONLY awaiting P1-A executable evidence. Evidence intake requires no new progression. No merge authorization carries to PR #1720. A further production/material mutation requires an exact Owner progression command.
+EXACT_NEXT_ACTION: remain READ_ONLY awaiting actual P1-A executable evidence. Evidence intake requires no new progression. No merge authorization carries to PR #1720. Any production/material repair after a failed executable observation requires another exact Owner progression command.

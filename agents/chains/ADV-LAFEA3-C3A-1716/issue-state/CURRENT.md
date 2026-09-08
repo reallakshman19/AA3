@@ -8,9 +8,13 @@ PARENT_ISSUE: github:reallaksh19/Advanced_Analysis#1711
 PROGRAM_ROADMAP_ISSUE: github:reallaksh19/Advanced_Analysis#1710
 CURRENT_MAIN: 27dde65f51e1b9d7e6d20a324510a50ea3631729
 ACTIVE_BRANCH: chatgpt/lafea3-c3a-1716-current-main-route
-PR: NONE_AT_PREWORK
+PREWORK_HEAD: 7b8f6c1c59a4179cc2fa3fd4dd26370c30aba934
+PR: 1717 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN_AT_PREWORK_COMMIT
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5585247978
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -18,12 +22,12 @@ MERGE_AUTHORIZED: FALSE
 
 | ID | Status | Current disposition |
 |---|---|---|
-| TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded; prework pack is being committed before material code. |
-| TASK-002 | OPEN | Public ordinary-route source trace is the first technical work after progression authority. |
+| TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded; write-ahead prework is committed before any material code and Issue projection is synchronized. |
+| TASK-002 | OPEN | Public ordinary-route source/execution trace is the first technical work after progression authority. |
 | TASK-003 | NOT_RUN | Faithful execution of `node scripts/lafea.3-bm005-ordinary-route-check.mjs` is not available through repository API inspection alone. |
 | TASK-004 | OPEN | #1663 file-by-file reconciliation pending. |
 | TASK-005 | BLOCKED_ON_REPRODUCTION | No production patch is justified until an actual first wrong boundary is demonstrated. |
-| TASK-006 | IN_PROGRESS | Initial Issue Basis/current-state/endpoint/qualification custody is being established and will be synchronized to Issue comments. |
+| TASK-006 | PASS_PREWORK_SYNC | Initial Issue Basis/current-state/endpoint/qualification custody and CHAIN_ROOT/ACTIVE/ENDPOINT comments are synchronized. |
 
 ## Input ledger
 
@@ -78,8 +82,8 @@ OWNER_PROGRESSION_COMMAND: NOT_INVOKED — no exact `proceed next`, `proceed nex
 
 ## Protected boundary
 
-Current custodian may establish issue/branch/prework/PR/synchronized relay state. Material production/test/benchmark changes remain blocked until an exact Common progression command is supplied. When progression is authorized, diagnosis/reproduction precedes production change; no source/oracle/tolerance/formulation/mesh-math/workflow/release mutation is allowed to manufacture PASS.
+Current custodian has established issue/branch/prework/Draft-PR/synchronized relay state. Material production/test/benchmark changes remain blocked until an exact Common progression command is supplied. When progression is authorized, diagnosis/reproduction precedes production change; no source/oracle/tolerance/formulation/mesh-math/workflow/release mutation is allowed to manufacture PASS.
 
 ## Exact next action
 
-Commit relay-only prework; open a Draft PR; synchronize CHAIN_ROOT / ACTIVE / ENDPOINT issue comments and repository comment IDs. Then stop at the pre-material boundary. Ordinary material progression requires the exact Owner command `proceed next`.
+Owner invokes `proceed next`. Then LEG-001 starts with current-main public-route reproduction and #1663 file-by-file reconciliation. If reproduction exposes a real implementation failure, isolate the first wrong owner boundary and add the smallest focused failing regression before any repair. Do not merge.

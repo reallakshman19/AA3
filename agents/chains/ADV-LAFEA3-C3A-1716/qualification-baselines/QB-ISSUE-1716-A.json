@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "baselineId": "QB-ISSUE-1716-A",
+  "source": "github:reallaksh19/Advanced_Analysis#1711/Future-agent-questionnaire-Q1-Q5",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "QS-ADV-LAFEA3-C3A-1716-0001",
+  "questions": [
+    {
+      "baselineQuestion": "Q1",
+      "coveredBy": ["Q1"],
+      "requiredLiterals": ["L3-T6", "M2-L-SHAPE-01", "scripts/lafea-mesh-benchmark-run.mjs", "src/workspace/lafea-mesh-producer-binding.js", "lafea-mesh-producer-engine.js", "src/core/local-continuum/index.js", "lafea-continuum-physical-probe.js"],
+      "requiredConcepts": ["geometry hash", "profile hash", "mesh hash", "connectivity", "DOF ordering", "probe ownership", "public route"],
+      "requiredObligations": ["trace", "reconstruct", "identify"]
+    },
+    {
+      "baselineQuestion": "Q2",
+      "coveredBy": ["Q2"],
+      "requiredLiterals": ["N1=(0,0)", "N2=(40,0)", "N3=(0,30)", "N4=(22,2)", "N5=(20,15)", "N6=(0,15)", "3×3"],
+      "requiredConcepts": ["T6", "Jacobian", "det J", "centroid", "Hammer", "Q8", "partition of unity", "isoparametric", "BᵀDB det J"],
+      "requiredObligations": ["derive", "compute", "quantify", "distinguish", "falsifier"]
+    },
+    {
+      "baselineQuestion": "Q3",
+      "coveredBy": ["Q3"],
+      "requiredLiterals": ["a=10", "R=100", "50 MPa", "150 MPa"],
+      "requiredConcepts": ["Kirsch", "finite-boundary traction", "source registry", "integrated boundary resultant", "geometry error", "FE error"],
+      "requiredObligations": ["derive", "estimate", "trace", "show"]
+    },
+    {
+      "baselineQuestion": "Q4",
+      "coveredBy": ["Q4"],
+      "requiredLiterals": ["L=200", "h=20", "b=10", "E=200000", "ν=0.3", "P=1000", "2 mm"],
+      "requiredConcepts": ["Euler-Bernoulli", "T3", "T6", "Q8", "constant strain", "spurious energy", "convergence", "independent reference"],
+      "requiredObligations": ["evaluate", "explain", "quantify", "verify"]
+    },
+    {
+      "baselineQuestion": "Q5",
+      "coveredBy": ["Q5"],
+      "requiredLiterals": ["invalid probe owner", "stale mesh/solver hash", "NO-PATCH"],
+      "requiredConcepts": ["first wrong adapter boundary", "smallest edit", "negative control", "upstream", "downstream", "oracle", "tolerances"],
+      "requiredObligations": ["identify", "propose", "state", "reject"]
+    }
+  ]
+}

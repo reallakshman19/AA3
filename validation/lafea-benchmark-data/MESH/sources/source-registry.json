@@ -196,7 +196,31 @@
       "sourceId": "S-032",
       "role": "benchmarkPublicStagedRunner",
       "path": "scripts/lafea-mesh-benchmark-run.mjs",
-      "blobSha": "3a79b7dc911ac78afc0aaed93931a51a032f5189"
+      "blobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe"
+    },
+    {
+      "sourceId": "S-033",
+      "role": "m3OwnerApprovedPolicy",
+      "path": "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json",
+      "blobSha": "9f1889bc995e8774a363561a53f2427d384bf96a"
+    },
+    {
+      "sourceId": "S-034",
+      "role": "m3EvidenceAndAdvancement",
+      "path": "scripts/lib/lafea-mesh-benchmark-m3.mjs",
+      "blobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d"
+    },
+    {
+      "sourceId": "S-035",
+      "role": "isoparametricGeometryDiagnostics",
+      "path": "src/core/lafea-meshing/element-geometry.js",
+      "blobSha": "a99f90f19ed9b414689f875457558e29f667f69b"
+    },
+    {
+      "sourceId": "S-036",
+      "role": "productionAnalysisMeshQuality",
+      "path": "src/workspace/lafea-analysis-mesh-quality.js",
+      "blobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341"
     }
   ],
   "trace": {
@@ -260,7 +284,8 @@
     "benchmarkM4PhysicsChosenFromSolverOutput": false,
     "solverExecutionAuthorizedByRegistry": false,
     "productionSourceMutationAuthorized": false,
-    "executionAuthorizationSource": "issue #1652 EP-0030 and Owner 2026-09-07 #1710 implementation request"
+    "executionAuthorizationSource": "issue #1652 EP-0030 and Owner 2026-09-07 #1710 implementation request",
+    "m3AcceptancePolicyRevisionSource": "Owner 2026-09-08 #1710 RP-0001"
   },
   "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_M3_OR_M4_FIXTURE_REQUIREMENT_CHANGES"
 }

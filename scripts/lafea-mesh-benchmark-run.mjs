@@ -62,6 +62,7 @@ import {
 } from '../src/workspace/lafea-shell-multipatch-mesh-core.js';
 import { finalizeAuditRecord, sha256File } from './lib/lafea-benchmark-audit.mjs';
 import { runMeshBenchmarkM4 } from './lib/lafea-mesh-benchmark-m4.mjs';
+import { inspectM3Mesh, M3_POLICY_ID, qualifyM3MeasuredRefinement } from './lib/lafea-mesh-benchmark-m3.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
@@ -74,6 +75,7 @@ const LADDERS_PATH = path.join(BUCKET_ROOT, 'convergence/mesh-ladders.json');
 const PROBES_PATH = path.join(BUCKET_ROOT, 'convergence/fixed-probes.json');
 const THICKNESS_PATH = path.join(BUCKET_ROOT, 'convergence/shell-thickness.json');
 const M4_FIXTURE_PATH = path.join(BUCKET_ROOT, 'convergence/m4-physics-response.json');
+const M3_POLICY_PATH = path.join(BUCKET_ROOT, 'convergence/m3-policy-v2.json');
 const REPORT_ROOT = path.join(ROOT, 'reports/qualification/lafea-benchmark-program');
 const STAGE_ORDER = ['M0', 'M1', 'M2', 'M3', 'M4'];
 
@@ -85,6 +87,7 @@ const ladders = readJson(LADDERS_PATH);
 const fixedProbes = readJson(PROBES_PATH);
 const shellThickness = readJson(THICKNESS_PATH);
 const m4Fixture = readJson(M4_FIXTURE_PATH);
+const m3Policy = readJson(M3_POLICY_PATH);
 const args = parseArgs(process.argv.slice(2));
 
 if (args.worker) {
@@ -159,14 +162,14 @@ for (const stageId of selectedStages) {
     stageId,
     methodResults: [{
       methodId: `BM-MESH-${stageId}`,
-      materialLeg: 'LEG-017',
+      materialLeg: manifest.materialLeg,
       benchmarkClass: 'STAGED_MESH_BENCHMARK',
       comparisonPolicy: stageComparisonPolicy(stageId),
       command: [process.execPath, 'scripts/lafea-mesh-benchmark-run.mjs', ...process.argv.slice(2)],
       sourceCustody: custody,
       sourceRefHashes: Object.fromEntries([
         MANIFEST_PATH, REGISTRY_PATH, CASES_PATH, ORACLE_PATH, LADDERS_PATH,
-        PROBES_PATH, THICKNESS_PATH, M4_FIXTURE_PATH,
+        PROBES_PATH, THICKNESS_PATH, M4_FIXTURE_PATH, M3_POLICY_PATH,
       ].map((filePath) => [path.relative(ROOT, filePath).replaceAll('\\', '/'), sha256File(filePath)])),
       evidence,
       status: evidence.status,
@@ -203,7 +206,7 @@ const overallStatus = stageRecords.some((row) => row.caseStatus === 'FAIL')
 const summary = {
   schema: 'lafea-mesh-benchmark-program-run/v1',
   benchmarkId: 'BM-MESH',
-  materialLeg: 'LEG-017',
+  materialLeg: manifest.materialLeg,
   runId,
   generatedAt: new Date().toISOString(),
   exactHeadSha,
@@ -446,6 +449,9 @@ function runM3() {
     status: observations.some((row) => row.status === 'FAIL') ? 'FAIL' : 'PASS',
     blocker: null,
     shellThicknessFixtureHash: sha256File(THICKNESS_PATH),
+    acceptancePolicyId: M3_POLICY_ID,
+    acceptancePolicyFixtureHash: sha256File(M3_POLICY_PATH),
+    shapeTrendDisposition: m3Policy.shapeTrendDisposition,
     observations,
   };
 }
@@ -466,6 +472,7 @@ function runM3Ladder(ladderId) {
       estimatedDofs: produced.estimatedDofs,
       resourceDisposition: produced.resourceDisposition,
       qualityWorstStatus: produced.qualityWorstStatus,
+      meshEvidence: inspectM3Mesh(produced.mesh, produced.quality),
       qualityDistributions: m3QualityDistributions(produced.quality),
       adjacentSizeRatio: produced.quality?.adjacentSizeRatio ?? null,
       seamConforming: produced.seamConforming ?? null,
@@ -504,12 +511,19 @@ function runM3Ladder(ladderId) {
       && row.maximumSeamPairDistance <= roundoffTolerance(1));
   const thicknessPass = ladder.stageId !== 'LAFEA.4'
     || levels.every((row) => row.sizeToThickness?.blockCount === 0);
-  const passed = noBlock && seamPass && thicknessPass
+  const measuredRefinement = qualifyM3MeasuredRefinement(levels, ladder.stageId);
+  const legacyPassed = noBlock && seamPass && thicknessPass
     && refinementChecks.every((row) => row.status === 'PASS')
     && trendChecks.every((row) => row.status === 'PASS' || row.status === 'NOT_APPLICABLE');
+  const passed = measuredRefinement.status === 'PASS'
+    && refinementChecks.every((row) => row.status === 'PASS');
   return {
     checkId: `M3-${ladderId}`,
     status: passed ? 'PASS' : 'FAIL',
+    acceptancePolicyId: M3_POLICY_ID,
+    legacyV1Status: legacyPassed ? 'PASS' : 'FAIL',
+    diagnosticStatus: trendChecks.some((row) => row.status === 'FAIL') ? 'FAIL' : 'PASS',
+    measuredRefinement,
     ladderId,
     stageId: ladder.stageId,
     geometryCaseId: ladder.geometryCaseId,
@@ -1159,6 +1173,12 @@ function verifySourceCustody(headSha) {
 function validateFrozenInputs() {
   assert.equal(manifest.schema, 'lafea-mesh-benchmark-manifest/v1');
   assert.equal(manifest.benchmarkId, 'BM-MESH');
+  assert.equal(m3Policy.schema, 'lafea-mesh-m3-acceptance-policy/v2');
+  assert.equal(m3Policy.policyId, M3_POLICY_ID);
+  assert.equal(m3Policy.requiredLevelCount, 3);
+  assert.equal(m3Policy.productionQualityThresholdsModified, false);
+  assert.equal(m3Policy.physicalOracleOrToleranceModified, false);
+  assert.equal(manifest.m3AcceptancePolicy, M3_POLICY_ID);
   assert.equal(ladders.schema, 'lafea-mesh-ladders/v1');
   assert.equal(ladders.refinement.adjacentHRefinementRatio, 2);
   assert.deepEqual(ladders.refinement.levels.map((row) => row.levelId), ['L0', 'L1', 'L2']);
@@ -1182,7 +1202,7 @@ function validateFrozenInputs() {
   assert.equal(m4Fixture.convergencePolicy.limitOverrides, null);
   for (const ladder of ladders.ladders) assert.equal(ladder.levelIds.at(-1), 'L2');
   const ids = new Set(registry.sources.map((row) => row.sourceId));
-  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023', 'S-030', 'S-031', 'S-032']) {
+  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023', 'S-030', 'S-031', 'S-032', 'S-033', 'S-034', 'S-035', 'S-036']) {
     assert.ok(ids.has(sourceId), `Required BM-MESH source custody entry ${sourceId} is missing.`);
   }
 }
@@ -1192,7 +1212,7 @@ function stageComparisonPolicy(stageId) {
     M0: 'PRODUCTION_CONTRACT_CONFORMANCE',
     M1: 'BYTE_STABLE_CANONICAL_MESH_HASH_ACROSS_REPLAY_PROCESS_AND_INPUT_ORDER',
     M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_WITH_PRODUCTION_MULTIPATCH_SEAM_IDENTITY',
-    M3: 'RETAIN_PRODUCTION_QUALITY_DISTRIBUTIONS_AND_FROZEN_1_5_MM_SHELL_SIZE_TO_THICKNESS_GATE',
+    M3: M3_POLICY_ID,
     M4: 'FROZEN_PHYSICS_RESPONSE_THREE_LEVEL_PRODUCTION_SOLVER_CONVERGENCE_WITH_NO_LIMIT_OVERRIDES',
   }[stageId];
 }

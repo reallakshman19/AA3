@@ -6,7 +6,7 @@ ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-08
 PREVIOUS_ISSUE_BASIS: IB-0002
 CHANGE_AUTHORITY: Owner approval of RP-0002
 ISSUE_BASIS_STATUS: CURRENT
-CURRENT_ENDPOINT: EP-0007
+CURRENT_ENDPOINT: EP-0008
 
 ## Original task / acceptance ledger
 TASK-001 | Pull current GitHub main and preserve checkout. | PASS | Owner current session
@@ -22,7 +22,7 @@ INPUT-004 | Real practical project mesh-validation input. | UNRESOLVED | No new 
 
 ## Benchmark / oracle ledger
 BM-001 | Inherited public M4 runner on clean PR head. | FAIL | Source-pinned fixture
-BM-002 | Current-main imported/repaired M0-M4 runner. | FAIL | V1 failure retained; v2 M0-M3 PASS, M4 FAIL at shared sign classification; mesh-1710-m3v2-final/ exact code 5eadd65dd
+BM-002 | Current-main imported/repaired M0-M4 runner. | PASS | Historical failures retained; fresh M0-M4 PASS at 9fb5d5bd4, roundoff-final/
 BM-003 | Existing meshing governance + applicable imports/build checks. | FAIL | Meshing/imports/shell-contract/self-test PASS; bundle-size build FAIL; see regression-receipt.json
 
 ## Roadmap ledger
@@ -37,5 +37,5 @@ Current-session exam waived by Owner. Future-child questions preserve #1535-.153
 ## Continuation
 TASK-005 | Implement approved RP-0001 M3 policy and execute frozen M4. | PASS | LEG-003 complete; M4 failure retained and first wrong boundary isolated
 BM-004 | M3 v2 negative controls, source/schema/hash integrity. | PASS | 18 negative controls; 14 audit records; source-schema-check.json
-RP-0001 is implemented. RP-0002 is approved and in progress under EP-0007. Production source/physics/oracle limits are unchanged. Practical/UI/non-affine/reaction qualification and the full engineering negative suite remain open.
-TASK-006 | Approved shared-classifier correction and focused validation. | IN_PROGRESS | EP-0007
+RP-0001 is implemented. RP-0002 is implemented; all twelve solver records and fourteen histories are unchanged. Production source/physics/oracle limits are unchanged. Practical/UI/non-affine/reaction qualification and the full engineering negative suite remain open.
+TASK-006 | Approved shared-classifier correction and focused validation. | PASS | LEG-004, EP-0008

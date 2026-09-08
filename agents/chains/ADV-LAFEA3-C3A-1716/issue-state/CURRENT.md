@@ -11,14 +11,14 @@ CURRENT_MAIN: 754bf8f4ac869b087063ac1181513f6012684e2f
 ACTIVE_BRANCH: chatgpt/lafea3-c3a-1716-post-merge-execution
 PREVIOUS_PR: 1717 MERGED
 SUCCESSOR_PR: 1718 OPEN_DRAFT
-SUCCESSOR_PR_MERGEABILITY: NON_MERGEABLE_AT_POST_DRIFT_OBSERVATION
+SUCCESSOR_PR_MERGEABILITY: MERGEABLE_AT_POST_RECALC_OBSERVATION
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC_PENDING_RELAY
-ISSUE_DRIFT_PROJECTION_STATUS: IN_SYNC_PENDING_RELAY
-ISSUE_PENDING_ACTIVITY_PROJECTION_STATUS: IN_SYNC_PENDING_RETARGET
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_DRIFT_PROJECTION_STATUS: IN_SYNC
+ISSUE_PENDING_ACTIVITY_PROJECTION_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -94,8 +94,9 @@ PASS_CONTROL_PLANE:
 - exact drift compare from `86e39646...` is metadata-only for C3-A;
 - exact drift compare from EP-0011 basis to live main is 21 commits total;
 - latest exact-live-main Actions query returns zero runs;
-- PR #1718 re-grounded open Draft, no reviews, zero unresolved threads and zero reported statuses; mergeability observed false after base advance;
-- protected numerical/source/oracle/workflow/roadmap/release domains unchanged.
+- PR #1718 re-grounded open Draft, recalculated mergeable, no reviews, zero unresolved threads and zero reported statuses;
+- protected numerical/source/oracle/workflow/roadmap/release domains unchanged;
+- mutable Issue body, Active handover and PR description are synchronized to the live-main retarget.
 
 NOT_RUN:
 - live-main `node scripts/lafea.3-continuum-convergence-route-check.mjs`;
@@ -127,4 +128,4 @@ Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver to
 
 ## Exact next action
 
-Synchronize the metadata-only live-main retarget into the Issue Active handover, #1716 Pending activities and PR #1718 description, then remain READ_ONLY. The primary technical blocker is PEND-002: obtain faithful live-main BM005 execution receipts or a safe current-head dispatch/run. Material engineering writes remain blocked absent a separately valid authority path and an actually executed live-main failure. PR #1718 remains not merge-authorized.
+Remain READ_ONLY. The primary technical blocker is PEND-002: obtain faithful live-main BM005 execution receipts or a safe current-head dispatch/run. Material engineering writes remain blocked absent a separately valid authority path and an actually executed live-main failure. PR #1718 remains not merge-authorized.

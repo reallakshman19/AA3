@@ -4,8 +4,8 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-LAFEA3-C3A-1716
 MISSION: Reproduce current-main ordinary LAFEA.3 mesh-to-solver route, reconcile BM-MESH/#1663 dependency state, and isolate the first wrong/incomplete boundary before any engineering repair.
-ACTIVE_ENDPOINT: EP-0003
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0003.md
+ACTIVE_ENDPOINT: EP-0004
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0004.md
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
@@ -16,27 +16,27 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1716
 WORK_ITEM_MODE: EXCLUSIVE
 AGENT_INSTANCE_ID: chatgpt:94bae212-e461-4631-aa13-4ac68219ffb3
 ACTIVE_CUSTODIAN: ChatGPT GPT-5.6 Sol
-CUSTODY_EPOCH: 3
+CUSTODY_EPOCH: 4
 
 BRANCH: chatgpt/lafea3-c3a-1716-current-main-route
-HEAD: ec26f2169faecc315721de37a8b791f632249c1c
-HEAD_ROLE: MATERIAL_LEG_001_HEAD; endpoint/ACTIVE synchronization commits after this head are relay-only
+HEAD: cc9b43cf22b3856fd937359a3b2fb53c3ace9ad6
+HEAD_ROLE: LEG_002_PREWORK_HEAD; subsequent ACTIVE/CURRENT sync commits are relay-only until hosted execution observation
 BASE_MAIN: 27dde65f51e1b9d7e6d20a324510a50ea3631729
 PR: 1717
 PR_STATUS: OPEN_DRAFT
 MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
 REVIEWS: NONE
 UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_CHECKS_NOT_RUN
+REQUIRED_CHECKS: BM005_HOSTED_EXECUTION_PENDING
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: LEG_001_MATERIAL_COMPLETE_EXECUTION_NOT_RUN__LEG_002_OWNER_AUTHORIZED
+ENGINEERING_STATE: LEG_002_EXECUTION_PREWORK_READY
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_CURRENT_CUSTODIAN
-WRITE_AUTHORITY: LEG_002_BOUNDED_PROGRESSION_AUTHORIZED
+WRITE_AUTHORITY: LEG_002_EXECUTION_ONLY
 AUTO_STATE: NOT_APPLICABLE
-COORDINATION_STATE: SAFE_NO_MAIN_DRIFT_AT_LAST_OBSERVATION
+COORDINATION_STATE: SAFE_NO_MAIN_DRIFT
 DEPENDENCIES: #1711 parent; #1710 roadmap; #1535/#1569 ordinary route/BM005; #1652/#1663 reconciled; #1715 merged benchmark baseline
 
 ISSUE_BASIS_ID: IB-0001
@@ -44,10 +44,10 @@ ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0004
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586235523
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586309612
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
@@ -77,26 +77,29 @@ OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/ADV-LAFEA3-C3A-1716/qualifi
 OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
 MATERIAL_HISTORY_ROOT_BASE: 27dde65f51e1b9d7e6d20a324510a50ea3631729
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0002.md
+MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0004.md
 LAST_MATERIAL_LEG: LEG-001
 LAST_MATERIAL_LEG_HEAD: ec26f2169faecc315721de37a8b791f632249c1c
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-001.md
 NEXT_MATERIAL_LEG: LEG-002
-MATERIAL_LEG_STATUS: LEG_002_OWNER_AUTHORIZED_PREWORK_PENDING
+MATERIAL_LEG_STATUS: EXECUTION_TRIGGER_PENDING
+
+HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
+HOSTED_EXECUTION_TRIGGER: pull_request/reopened
+HOSTED_EXECUTION_PREVIOUS_CURRENT_BRANCH_RUNS: 0
+HOSTED_EXECUTION_HISTORICAL_DISPOSITION: NOT_RUN_EXECUTION_BLOCKED_BEFORE_CHECKOUT
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-001-EVIDENCE.md; executable checks unavailable at LEG-001
+HANDOVER_VALIDATION_STATUS: PREWORK_PASS_EXECUTION_PENDING
+HANDOVER_VALIDATION_EVIDENCE: EP-0004 plus existing workflow source; no current run yet
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-LEG-001 isolated and repaired an evidence-custody omission: physical-probe evidence already retained `canonicalExecutionInputHash`, but convergence study evidence dropped it. The custody-only patch now preserves and validates that identity. #1663 is fully reconciled: 7/12 material blobs already identical on current main; 5/12 are stale/superseded by the merged/executed #1715 line; no disjoint material remains.
-
-EP-0003 is synchronized to Issue comment `5586235523`. The Owner has supplied a new progression command, so LEG-002 may proceed within the same protected authority envelope. Executable BM005/current convergence checks remain the first unresolved technical requirement.
+LEG-001's custody repair and #1663 reconciliation are complete. EP-0003 is synchronized. LEG-002 has a write-ahead execution boundary at EP-0004. The repository already contains a dedicated exact-head BM005 Actions workflow, but no run exists yet for the current branch. Historical use of the same workflow failed before checkout, which is an infrastructure NOT_RUN condition rather than an engineering FAIL.
 
 ## Exact next action
 
-Begin LEG-002 by locating an existing faithful execution surface (project-local checkout or existing GitHub Actions workflow) for `node scripts/lafea.3-continuum-convergence-route-check.mjs` followed by `node scripts/lafea.3-bm005-ordinary-route-check.mjs`. Do not mutate workflow YAML. If no executable surface exists, retain NOT_RUN truth and improve only bounded evidence/diagnostic custody justified by source inspection. Do not merge.
+Close and immediately reopen Draft PR #1717 solely to fire the existing `pull_request` `reopened` trigger. Do not edit workflow YAML or engineering source. Inspect the resulting run, job, steps, logs and artifacts. If checkout never begins, retain `NOT_RUN_EXECUTION_BLOCKED`; if the harness executes, classify from its retained stdout and exit code. Do not merge.

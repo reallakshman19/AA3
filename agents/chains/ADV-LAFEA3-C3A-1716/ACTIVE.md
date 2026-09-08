@@ -49,8 +49,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0008_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0008_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5587636782
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -84,7 +84,7 @@ LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-0
 LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-003-EVIDENCE.md
 NEXT_MATERIAL_LEG: LEG-004
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0008.md
-MATERIAL_LEG_STATUS: LEG_004_PREWORK_RECORDED
+MATERIAL_LEG_STATUS: LEG_004_PREWORK_RECORDED_AND_SYNCED
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
 HOSTED_EXECUTION_TARGET: exact merged main 4fb3548133f53e33d21cd0f3b3d471da592ae871
@@ -102,8 +102,8 @@ HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-LEG-003 proved exact-main BM005 scheduling absence. LEG-004 is authorized only to isolate that execution-control-plane boundary. Read-only prework already proves the merged main changed the workflow-watched BM005 harness path while exact-main Actions runs remain zero. Repository runs dated 2026-09-08 are also zero, and #1718 itself is not BM005 path-eligible because it changes only chain/evidence files.
+LEG-003 proved exact-main BM005 scheduling absence. LEG-004 is authorized only to isolate that execution-control-plane boundary. The merged main changed the workflow-watched BM005 harness path while exact-main Actions runs remain zero. Repository runs dated 2026-09-08 are also zero, and #1718 itself is not BM005 path-eligible because it changes only chain/evidence files. EP-0008 is synchronized to Issue comment `5587636782`.
 
 ## Exact next action
 
-Synchronize EP-0008 to Issue #1716, then repeat exact-main/date/path observations after sync and classify whether the remaining blocker is repository Actions scheduling/dispatch availability rather than BM005 engineering behavior. Do not create trigger-only source changes, do not change workflow YAML, and do not merge PR #1718.
+Repeat exact-main/date/path observations after synchronized EP-0008 and classify whether the remaining blocker is repository Actions scheduling/dispatch availability rather than BM005 engineering behavior. Do not create trigger-only source changes, do not change workflow YAML, and do not merge PR #1718.

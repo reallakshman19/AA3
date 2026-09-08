@@ -40,8 +40,8 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-state/CURRENT.
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0011
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0011_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0011_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_ALIGNMENT: ALIGNED
@@ -64,7 +64,7 @@ LAST_MATERIAL_LEG: LEG-005
 LAST_MATERIAL_LEG_CLASS: EXTERNAL_EXECUTION_EVIDENCE_RECONCILIATION_ONLY
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-005.md
 LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-005-EVIDENCE.md
-MATERIAL_LEG_STATUS: LEG_005_RECORDED
+MATERIAL_LEG_STATUS: LEG_005_RECORDED_AND_SYNCED
 NEXT_MATERIAL_LEG: CONDITIONAL_ON_NEW_EXECUTION_OR_AUTHORITY_EVIDENCE
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
@@ -83,8 +83,8 @@ HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-LEG-005 found no new exact-main execution evidence after synchronized EP-0010. Exact-main Actions and repository Actions dated 2026-09-08 remain zero; Issue #1716 contains no faithful exact-main execution receipt; PR #1718 comments remain empty; no current-head workflow-dispatch creation action is available. BM005 remains NOT_RUN because the execution control plane is blocked, not because the harness failed.
+LEG-005 found no new exact-main execution evidence after synchronized EP-0010. Exact-main Actions and repository Actions dated 2026-09-08 remain zero; Issue #1716 contains no faithful exact-main execution receipt; PR #1718 comments remain empty; no current-head workflow-dispatch creation action is available. BM005 remains NOT_RUN because the execution control plane is blocked, not because the harness failed. EP-0011 is synchronized to Issue comment `5588164073`.
 
 ## Exact next action
 
-Synchronize EP-0011 to Issue #1716, then remain READ_ONLY. Do not author another identical scheduler-observation leg absent new execution/control-plane evidence or material main/authority drift. Only an actually executed current-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.
+Remain READ_ONLY. Do not author another identical scheduler-observation leg absent new execution/control-plane evidence or material main/authority drift. Only an actually executed current-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.

@@ -265,7 +265,7 @@ export async function autoEnsureDefaultQualificationProfile() {
   const activeProfiles = updatedProfile?.qualificationPolicy?.qualificationProfiles?.value?.profiles || [];
   const currentConfig = cis.getSnapshot().configuration;
   if (!currentConfig.qualificationProfileId && activeProfiles.length > 0) {
-    const target = activeProfiles.find((p) => p.locked && p.qualification === 'QUALIFIED') || activeProfiles[0];
+    const target = activeProfiles.find((p) => p.locked && p.qualification === 'QUALIFIED');
     if (target?.profileId) {
       cis.configure({
         qualificationProfileId: target.profileId,

@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "baselineId": "QB-ISSUE-1644-A",
+  "source": "github:reallaksh19/Advanced_Analysis#1644/Appendix-Expert-Qualification-Questionnaire",
+  "sourceAuthority": "OWNER",
+  "activeQuestionSetId": "QS-ISSUE-1644-0001",
+  "qualificationScopeId": "QSCOPE-1644-LAFEA4-ORACLE-LOADCALC-UX",
+  "ownerDisposition": "OWNER_CHAT:2026-09-05T02:40:30Z qualified",
+  "questions": [
+    {
+      "baselineQuestion": "Q1",
+      "coveredBy": ["Q1"],
+      "requiredLiterals": ["A(0,0)", "B(100,0)", "C(100,50)", "D(0,50)", "epsilonX=0.0004", "epsilonY=-0.0001", "gammaXY=0.00015", "E=200000 MPa", "nu=0.3"],
+      "requiredConcepts": ["localFrame", "nodalBasisTransformation", "combinedStress", "local-frame recovery"],
+      "requiredObligations": ["trace", "derive", "identify authority boundary"]
+    },
+    {
+      "baselineQuestion": "Q2",
+      "coveredBy": ["Q2"],
+      "requiredLiterals": ["c=2/√5", "s=1/√5", "1e-8"],
+      "requiredConcepts": ["engineering shear", "rotateStrain", "rotateStress", "planeStress", "first wrong boundary"],
+      "requiredObligations": ["compute", "compare", "falsify"]
+    },
+    {
+      "baselineQuestion": "Q3",
+      "coveredBy": ["Q3"],
+      "requiredLiterals": ["1179648", "gamma5-post-authority-physical-oracle-v1.json"],
+      "requiredConcepts": ["protected invariant", "Issue #1261", "Issue #1634"],
+      "requiredObligations": ["name", "protect", "reject invalid shortcut"]
+    },
+    {
+      "baselineQuestion": "Q4",
+      "coveredBy": ["Q4"],
+      "requiredLiterals": ["profiles.length === 0", "!currentConfig.qualificationProfileId", "COMMON_INPUT_QUALIFICATION_AUTHORITY_REQUIRED"],
+      "requiredConcepts": ["locked", "QUALIFIED", "engineer choice", "behavioral oracle"],
+      "requiredObligations": ["independently verify", "confirm guards", "falsify silent overwrite or binding"]
+    },
+    {
+      "baselineQuestion": "Q5",
+      "coveredBy": ["Q5"],
+      "requiredLiterals": ["no workflow YAML edits", "no merge without Owner disposition"],
+      "requiredConcepts": ["minimal patch", "protected unchanged domains", "negative test", "no-patch condition"],
+      "requiredObligations": ["define smallest action", "validate", "stop at boundary"]
+    }
+  ]
+}

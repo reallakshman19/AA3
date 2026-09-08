@@ -20,14 +20,14 @@ CUSTODY_EPOCH: 6
 
 BRANCH: chatgpt/lafea3-c3a-1716-post-merge-execution
 HEAD: d441800c1f0e590e50d9fbadcf7c1e4a05e5414a
-HEAD_ROLE: LEG_003_PREWORK_HEAD; subsequent ACTIVE/CURRENT/Issue synchronization commits are relay-only until execution observation
+HEAD_ROLE: LEG_003_PREWORK_HEAD; later sync commits are relay-only until execution observation
 BASE_MAIN: 4fb3548133f53e33d21cd0f3b3d471da592ae871
 PREVIOUS_PR: 1717 MERGED
 PREVIOUS_PR_HEAD: 1c0343a8068da70907dd1167a0562893a289dc87
 PREVIOUS_MERGE_COMMIT: 4fb3548133f53e33d21cd0f3b3d471da592ae871
-PR: PENDING_SUCCESSOR_PR
-PR_STATUS: NOT_OPENED_AT_EP0006
-MERGEABILITY: NOT_APPLICABLE_NO_SUCCESSOR_PR
+PR: 1718
+PR_STATUS: OPEN_DRAFT
+MERGEABILITY: UNKNOWN_AFTER_RELAY_SYNC
 REVIEWS: NONE
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: EXACT_MAIN_BM005_EXECUTION_OBSERVATION
@@ -50,8 +50,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0006_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0006_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586851577
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -86,7 +86,7 @@ LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-0
 LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-002-EVIDENCE.md
 NEXT_MATERIAL_LEG: LEG-003
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0006.md
-MATERIAL_LEG_STATUS: LEG_003_PREWORK_RECORDED
+MATERIAL_LEG_STATUS: LEG_003_PREWORK_RECORDED_AND_SYNCED
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
 HOSTED_EXECUTION_TARGET: exact merged main 4fb3548133f53e33d21cd0f3b3d471da592ae871
@@ -101,8 +101,8 @@ HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-PR #1717 is merged by explicit Owner authority. Exact main is `4fb3548133f53e33d21cd0f3b3d471da592ae871`. BM005 remained NOT_RUN at merge. A read-only exact-main Actions query immediately after merge returned zero runs even though the unchanged BM005 workflow watches the modified harness path on `push: main`.
+PR #1717 is merged by explicit Owner authority. Exact main is `4fb3548133f53e33d21cd0f3b3d471da592ae871`. BM005 remained NOT_RUN at merge. A read-only exact-main Actions query immediately after merge returned zero runs even though the unchanged BM005 workflow watches the modified harness path on `push: main`. EP-0006 is synchronized to issue comment `5586851577`; Draft PR #1718 is the successor relay surface.
 
 ## Exact next action
 
-Open a Draft successor PR for relay custody, synchronize EP-0006 to issue #1716, then re-query exact-main Actions scheduling. If no run exists, record LEG-003 as `NOT_RUN_TRIGGER_NOT_SCHEDULED` and stop. Only an actually executed harness FAIL may reopen an engineering owner boundary.
+Re-query exact-main Actions scheduling. If no run exists, record LEG-003 as `NOT_RUN_TRIGGER_NOT_SCHEDULED` and stop. Only an actually executed harness FAIL may reopen an engineering owner boundary.

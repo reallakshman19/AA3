@@ -2,11 +2,11 @@
 ISSUE_BASIS_ID: IB-0002
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1710
 ISSUE_SOURCE: https://github.com/reallaksh19/Advanced_Analysis/issues/1710
-ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-07
+ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-08
 PREVIOUS_ISSUE_BASIS: IB-0001
-CHANGE_AUTHORITY: INITIAL_CAPTURE
+CHANGE_AUTHORITY: Owner approval of RP-0001
 ISSUE_BASIS_STATUS: CURRENT
-CURRENT_ENDPOINT: EP-0005
+CURRENT_ENDPOINT: EP-0006
 
 ## Original task / acceptance ledger
 TASK-001 | Pull current GitHub main and preserve checkout. | PASS | Owner current session
@@ -22,7 +22,7 @@ INPUT-004 | Real practical project mesh-validation input. | UNRESOLVED | No new 
 
 ## Benchmark / oracle ledger
 BM-001 | Inherited public M4 runner on clean PR head. | FAIL | Source-pinned fixture
-BM-002 | Current-main imported/repaired M0-M4 runner. | FAIL | M0-M2 PASS; M3 FAIL; M4 BLOCKED; final/ exact code b76e33984
+BM-002 | Current-main imported/repaired M0-M4 runner. | FAIL | V1 failure retained; v2 M0-M3 PASS, M4 FAIL at shared sign classification; mesh-1710-m3v2-final/ exact code 5eadd65dd
 BM-003 | Existing meshing governance + applicable imports/build checks. | FAIL | Meshing/imports/shell-contract/self-test PASS; bundle-size build FAIL; see regression-receipt.json
 
 ## Roadmap ledger
@@ -35,5 +35,6 @@ Current-session exam waived by Owner. Future-child questions preserve #1535-.153
 
 
 ## Continuation
-TASK-005 | Implement approved RP-0001 M3 policy and execute frozen M4. | IN_PROGRESS | Owner 2026-09-08 approval; EP-0005
-RP-0001 implementation is now authorized. Original failed evidence remains immutable. Production sources and physics/oracle tolerances stay protected; practical/UI/non-affine work remains open in children.
+TASK-005 | Implement approved RP-0001 M3 policy and execute frozen M4. | PASS | LEG-003 complete; M4 failure retained and first wrong boundary isolated
+BM-004 | M3 v2 negative controls, source/schema/hash integrity. | PASS | 18 negative controls; 14 audit records; source-schema-check.json
+RP-0001 is implemented. RP-0002 is unapplied pending explicit Owner approval for shared acceptance behavior. Production source/physics/oracle limits are unchanged. Practical/UI/non-affine/reaction qualification and the full engineering negative suite remain open.

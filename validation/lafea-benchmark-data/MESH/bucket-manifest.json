@@ -3,12 +3,12 @@
   "bucketId": "MESH",
   "issue": "github:reallaksh19/Advanced_Analysis#1652",
   "benchmarkId": "BM-MESH",
-  "materialLeg": "ADV-MESH-1710/LEG-003",
-  "state": "M3_V2_OWNER_APPROVED_PENDING_EXECUTION",
+  "materialLeg": "ADV-MESH-1710/LEG-004",
+  "state": "M4_EXECUTION_WITH_OWNER_APPROVED_ROUNDOFF_CLASSIFIER",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "authority": {
     "benchmarkExecutionAuthorized": true,
-    "productionSourceMutationAuthorized": false,
+    "productionSourceMutationAuthorized": true,
     "thresholdMutationAuthorized": false,
     "shellThicknessFixtureAuthorityGranted": true,
     "m4PhysicsResponseFixtureAuthorityGranted": true,
@@ -20,7 +20,11 @@
     "temperatureAuthorityGranted": false,
     "executionAuthorizationSource": "issue #1652 EP-0030 and Owner 2026-09-07 #1710 implementation request",
     "m3AcceptancePolicyRevisionAuthorized": true,
-    "m3AcceptanceAuthorizationSource": "Owner 2026-09-08 ok proceed; #1710 RP-0001 and EP-0005"
+    "m3AcceptanceAuthorizationSource": "Owner 2026-09-08 ok proceed; #1710 RP-0001 and EP-0005",
+    "authorizedProductionSourcePaths": [
+      "src/core/lafea-meshing/mesh-convergence-framework.js"
+    ],
+    "productionSourceChangeAuthorizationSource": "Owner 2026-09-08 RP-0002 approval and EP-0007"
   },
   "scopeBoundary": {
     "allowed": [
@@ -35,7 +39,7 @@
     "forbidden": [
       "Benchmark-authored meshes or benchmark-only mesh adapters defining ladder meshes.",
       "Benchmark-side node merging to manufacture a conforming multi-patch shell seam.",
-      "Production source, threshold, solver/compiler, workflow or roadmap changes.",
+      "Production source changes outside the approved shared sign classifier; engineering percentage-limit, solver assembly/recovery, workflow or roadmap changes.",
       "M4 solver/compiler or convergence execution without recorded Owner authority or a contiguous M0-M3 PASS prefix.",
       "Physics values, response quantities or recovery methods outside the frozen M4 fixture.",
       "Convergence limit overrides, raw singular peak stress, moving maxima, cross-element stress averaging, release or temperature authority."
@@ -269,5 +273,6 @@
       ]
     }
   ],
-  "m3AcceptancePolicy": "BM-MESH-M3-MEASURED-REFINEMENT-v2"
+  "m3AcceptancePolicy": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+  "convergenceSignPolicy": "PAIR_RELATIVE_256_EPSILON_NO_PERCENTAGE_LIMIT_OVERRIDE"
 }

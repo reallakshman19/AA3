@@ -7,6 +7,10 @@ import { finiteNumber } from '../shared-analysis-contract/numeric.js';
  * systematically refined mesh levels are required for a production code
  * assessment unless a benchmark-qualified template exemption applies. Raw
  * singular peak stress is never an accepted convergence quantity.
+ * History values are retained unchanged. Only delta signs within the approved
+ * pair-relative 256*EPSILON band are treated as zero for behavior classification;
+ * percentage limits and the finest-level relative change remain independent.
+ * Invalid histories raise errors through canonicalQuantityHistory, with no fallback.
  */
 export const CONVERGENCE_QUANTITIES = Object.freeze([
   'STRAIN_ENERGY',
@@ -67,10 +71,17 @@ export function qualifyConvergence(history, limitOverride) {
   });
 }
 
+/** @param {readonly number[]} values @returns {'MONOTONIC'|'OSCILLATORY'|'NON_CONVERGENT'} */
 function classifyBehavior(values) {
+  /** @type {number[]} */
   const deltas = [];
   for (let i = 1; i < values.length; i += 1) deltas.push(values[i] - values[i - 1]);
-  const signs = deltas.map((d) => Math.sign(d));
+  const signs = deltas.map((delta, index) => {
+    // A large coarse value must not mask a meaningful later reversal.
+    const scale = Math.max(Math.abs(values[index]), Math.abs(values[index + 1]));
+    const roundoffBand = scale * (Number.EPSILON * 256);
+    return Math.abs(delta) <= roundoffBand ? 0 : Math.sign(delta);
+  });
   const nonZeroSigns = signs.filter((s) => s !== 0);
   if (nonZeroSigns.length === 0) return 'MONOTONIC';
   const allSameSign = nonZeroSigns.every((s) => s === nonZeroSigns[0]);

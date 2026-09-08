@@ -76,7 +76,9 @@
       "sourceId": "S-012",
       "role": "meshConvergenceFramework",
       "path": "src/core/lafea-meshing/mesh-convergence-framework.js",
-      "blobSha": "c06ebf7006b76b38de8c416f659152396d34976e"
+      "blobSha": "e7c5613d9a2ff1bb32fe20bc732d6bbf077b5b19",
+      "previousBlobSha": "c06ebf7006b76b38de8c416f659152396d34976e",
+      "changeAuthority": "Owner 2026-09-08 proceed next fix approves RP-0002; EP-0007 pair-scaled refinement"
     },
     {
       "sourceId": "S-013",
@@ -283,9 +285,13 @@
     "benchmarkM4PhysicsResponseFixtureOwnerAuthorized": true,
     "benchmarkM4PhysicsChosenFromSolverOutput": false,
     "solverExecutionAuthorizedByRegistry": false,
-    "productionSourceMutationAuthorized": false,
+    "productionSourceMutationAuthorized": true,
     "executionAuthorizationSource": "issue #1652 EP-0030 and Owner 2026-09-07 #1710 implementation request",
-    "m3AcceptancePolicyRevisionSource": "Owner 2026-09-08 #1710 RP-0001"
+    "m3AcceptancePolicyRevisionSource": "Owner 2026-09-08 #1710 RP-0001",
+    "authorizedProductionSourcePaths": [
+      "src/core/lafea-meshing/mesh-convergence-framework.js"
+    ],
+    "productionSourceChangeAuthorizationSource": "Owner RP-0002 approval; no solver/formulation or percentage-limit change"
   },
   "invalidationPolicy": "REFREEZE_IF_ANY_REFERENCED_BLOB_SHA_OR_OWNER_M2_M3_OR_M4_FIXTURE_REQUIREMENT_CHANGES"
 }

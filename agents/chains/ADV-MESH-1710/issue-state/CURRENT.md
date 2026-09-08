@@ -6,7 +6,7 @@ ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-08
 PREVIOUS_ISSUE_BASIS: IB-0002
 CHANGE_AUTHORITY: Owner approval of RP-0002
 ISSUE_BASIS_STATUS: CURRENT
-CURRENT_ENDPOINT: EP-0010
+CURRENT_ENDPOINT: EP-0011
 
 ## Original task / acceptance ledger
 TASK-001 | Pull current GitHub main and preserve checkout. | PASS | Owner current session
@@ -42,3 +42,5 @@ TASK-006 | Approved shared-classifier correction and focused validation. | PASS 
 
 TASK-007 | Execute four frozen source TASK-005 negative cases with positive controls. | PASS | LEG-005, EP-0010; distinct from this ledger TASK-005
 BM-005 | Frozen negative suite plus clean-head M0-M4 and unchanged solver evidence. | PASS | negative-final/, negative-m4-final/, negative-validation/; seven schemas/hashes PASS
+
+DELIVERY-001 | Owner requested handover and merge of existing PR #1715. | IN_PROGRESS | HANDOVER.md; merge authorized; build FAIL retained; roadmap stays OPEN

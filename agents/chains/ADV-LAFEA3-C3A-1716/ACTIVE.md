@@ -24,19 +24,19 @@ HEAD_ROLE: MATERIAL_LEG_001_HEAD; endpoint/ACTIVE synchronization commits after 
 BASE_MAIN: 27dde65f51e1b9d7e6d20a324510a50ea3631729
 PR: 1717
 PR_STATUS: OPEN_DRAFT
-MERGEABILITY: MERGEABLE_AT_MATERIAL_HEAD_REVIEW
+MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
 REVIEWS: NONE
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_CHECKS_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: LEG_001_MATERIAL_COMPLETE_EXECUTION_NOT_RUN
+ENGINEERING_STATE: LEG_001_MATERIAL_COMPLETE_EXECUTION_NOT_RUN__LEG_002_OWNER_AUTHORIZED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_CURRENT_CUSTODIAN
-WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
+WRITE_AUTHORITY: LEG_002_BOUNDED_PROGRESSION_AUTHORIZED
 AUTO_STATE: NOT_APPLICABLE
-COORDINATION_STATE: SAFE_NO_MAIN_DRIFT
+COORDINATION_STATE: SAFE_NO_MAIN_DRIFT_AT_LAST_OBSERVATION
 DEPENDENCIES: #1711 parent; #1710 roadmap; #1535/#1569 ordinary route/BM005; #1652/#1663 reconciled; #1715 merged benchmark baseline
 
 ISSUE_BASIS_ID: IB-0001
@@ -47,8 +47,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0003_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0003_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586235523
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -56,7 +56,7 @@ ROADMAP_ALIGNMENT: ALIGNED
 ROADMAP_DRIFT: NO_OWNER_INTENT_DRIFT_DETECTED
 ROADMAP_MUTATION_AUTHORITY: NONE
 
-OWNER_TEXT_OBSERVED: `proceed next`
+OWNER_TEXT_OBSERVED: `ok proceed`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 
 QUALIFICATION_PROFILE: FEA
@@ -82,11 +82,11 @@ LAST_MATERIAL_LEG: LEG-001
 LAST_MATERIAL_LEG_HEAD: ec26f2169faecc315721de37a8b791f632249c1c
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-001.md
 NEXT_MATERIAL_LEG: LEG-002
-MATERIAL_LEG_STATUS: LEG_001_RECORDED
+MATERIAL_LEG_STATUS: LEG_002_OWNER_AUTHORIZED_PREWORK_PENDING
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-001-EVIDENCE.md; executable checks unavailable
+HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-001-EVIDENCE.md; executable checks unavailable at LEG-001
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
@@ -95,8 +95,8 @@ HANDOVER_READY: FALSE
 
 LEG-001 isolated and repaired an evidence-custody omission: physical-probe evidence already retained `canonicalExecutionInputHash`, but convergence study evidence dropped it. The custody-only patch now preserves and validates that identity. #1663 is fully reconciled: 7/12 material blobs already identical on current main; 5/12 are stale/superseded by the merged/executed #1715 line; no disjoint material remains.
 
-Executable BM005/current convergence checks remain NOT_RUN because this session has no faithful mounted Node checkout and GitHub reports zero material-head statuses.
+EP-0003 is synchronized to Issue comment `5586235523`. The Owner has supplied a new progression command, so LEG-002 may proceed within the same protected authority envelope. Executable BM005/current convergence checks remain the first unresolved technical requirement.
 
 ## Exact next action
 
-On a faithful clean checkout, execute the focused convergence route check and then BM005 ordinary-route check, retaining exact head/clean-tree/stdout/stderr/exit/report hashes. No further material change occurs without a later exact `proceed next`. Do not merge.
+Begin LEG-002 by locating an existing faithful execution surface (project-local checkout or existing GitHub Actions workflow) for `node scripts/lafea.3-continuum-convergence-route-check.mjs` followed by `node scripts/lafea.3-bm005-ordinary-route-check.mjs`. Do not mutate workflow YAML. If no executable surface exists, retain NOT_RUN truth and improve only bounded evidence/diagnostic custody justified by source inspection. Do not merge.

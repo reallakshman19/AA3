@@ -126,12 +126,18 @@ try {
     meshHash: row.meshHash,
     solverModelHash: row.solverModelHash,
     executionHash: row.executionHash,
+    canonicalExecutionInputHash: row.canonicalExecutionInputHash,
     recoveryHash: row.recoveryHash,
     probeEvidenceHash: row.probeEvidenceHash,
     value: row.authoritativeValue,
     units: row.authoritativeUnits,
     meshMetadata: meshMetadata.get(row.levelId),
   }));
+  assert.equal(
+    rows.every((row) => /^sha256:[0-9a-f]{64}$/u.test(row.canonicalExecutionInputHash)),
+    true,
+    'BM005 convergence levels must retain canonical execution-input custody',
+  );
 
   const report = createBm005AuditReport({
     benchmarkDefinition,
@@ -159,6 +165,10 @@ try {
       convergenceClassification: convergence.study.classification,
       finalResultState: finalStage.lifecycleReadiness.resultState,
       meshReplayCount: meshMetadata.size,
+      canonicalExecutionInputHashes: rows.map((row) => ({
+        levelId: row.levelId,
+        canonicalExecutionInputHash: row.canonicalExecutionInputHash,
+      })),
     },
     diagnostics: reportDiagnostics(finalStage, convergence),
   });

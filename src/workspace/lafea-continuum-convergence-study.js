@@ -219,6 +219,10 @@ function normalizeLevelReceipts(value, definition) {
       meshHash: sha(row.meshHash, 'LAFEA3_CONVERGENCE_LEVEL_MESH_HASH_INVALID'),
       solverModelHash: sha(row.solverModelHash, 'LAFEA3_CONVERGENCE_LEVEL_SOLVER_HASH_INVALID'),
       executionHash: sha(row.executionHash, 'LAFEA3_CONVERGENCE_LEVEL_EXECUTION_HASH_INVALID'),
+      canonicalExecutionInputHash: sha(
+        row.canonicalExecutionInputHash,
+        'LAFEA3_CONVERGENCE_LEVEL_CANONICAL_INPUT_HASH_INVALID',
+      ),
       recoveryHash: sha(row.recoveryHash, 'LAFEA3_CONVERGENCE_LEVEL_RECOVERY_HASH_INVALID'),
       probeEvidenceHash: sha(row.probeEvidenceHash, 'LAFEA3_CONVERGENCE_LEVEL_PROBE_HASH_INVALID'),
       probeIdentityHash: row.probeIdentityHash,

@@ -49,7 +49,8 @@ ISSUE_CURRENT_STATE_ENDPOINT: EP-0011
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_DRIFT_PROJECTION
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_DRIFT_PROJECTION_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_ALIGNMENT: ALIGNED
@@ -91,8 +92,8 @@ HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-EP-0011/LEG-005 remain valid history for basis main `4fb35481...`. During final closure, live main advanced to `86e39646...` via merged #1649. The drift changes only the #1644/load-calc chain/check, one non-FEA runner line and one `master-data-ui.js` line; no LAFEA/BM005/workflow/roadmap authority file changed. Under pinned drift policy this is `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`, which requires independent coverage confirmation before writes. The exact-current-main BM005 target is now `86e39646...` and has zero Actions runs; its merge did not touch a BM005 watched path, so faithful local execution or safe current-head dispatch is required.
+EP-0011/LEG-005 remain valid history for basis main `4fb35481...`. During final closure, live main advanced to `86e39646...` via merged #1649. The drift changes only the #1644/load-calc chain/check, one non-FEA runner line and one `master-data-ui.js` line; no LAFEA/BM005/workflow/roadmap authority file changed. Under pinned drift policy this is `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`, which requires independent coverage confirmation before writes. The exact-current-main BM005 target is now `86e39646...` and has zero Actions runs; its merge did not touch a BM005 watched path, so faithful local execution or safe current-head dispatch is required. Mutable Issue drift projection is synchronized.
 
 ## Exact next action
 
-Project this drift into the mutable Issue Active comment, then remain READ_ONLY. Do not author engineering material work until independent coverage confirmation and genuinely new live-main execution/control-plane evidence exist. Only an actually executed live-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.
+Remain READ_ONLY. Do not author engineering material work until independent coverage confirmation and genuinely new live-main execution/control-plane evidence exist. Only an actually executed live-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.

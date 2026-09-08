@@ -4,8 +4,8 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-LAFEA3-C3A-1716
 MISSION: Reproduce current-main ordinary LAFEA.3 mesh-to-solver route, reconcile BM-MESH/#1663 dependency state, and isolate the first wrong/incomplete boundary before any engineering repair.
-ACTIVE_ENDPOINT: EP-0008
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0008.md
+ACTIVE_ENDPOINT: EP-0009
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0009.md
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
@@ -16,27 +16,26 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1716
 WORK_ITEM_MODE: EXCLUSIVE
 AGENT_INSTANCE_ID: chatgpt:94bae212-e461-4631-aa13-4ac68219ffb3
 ACTIVE_CUSTODIAN: ChatGPT GPT-5.6 Sol
-CUSTODY_EPOCH: 8
+CUSTODY_EPOCH: 9
 
 BRANCH: chatgpt/lafea3-c3a-1716-post-merge-execution
-HEAD: afee9606bdd64f4edc35a86877c5ff6330a62992
-HEAD_ROLE: LEG_004_PREWORK_HEAD; subsequent ACTIVE/CURRENT sync commits are relay-only until scheduler/dispatch observation
+HEAD: c8d5f619c681c0e438e077870fd97bcfbf17ae4d
+HEAD_ROLE: LEG_004_ENDPOINT_HEAD; subsequent sync commits are relay-only
 BASE_MAIN: 4fb3548133f53e33d21cd0f3b3d471da592ae871
 PREVIOUS_PR: 1717 MERGED
-PREVIOUS_MERGE_COMMIT: 4fb3548133f53e33d21cd0f3b3d471da592ae871
 PR: 1718
 PR_STATUS: OPEN_DRAFT
 MERGEABILITY: MERGEABLE_AT_LAST_OBSERVATION
 REVIEWS: NONE_AT_LAST_OBSERVATION
 UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_OBSERVATION
-REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_NOT_RUN; SCHEDULER_DISPATCH_ISOLATION_PENDING
+REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: LEG_004_SCHEDULER_DISPATCH_ISOLATION_PREWORK_READY
+ENGINEERING_STATE: LEG_004_COMPLETE_EXECUTION_CONTROL_PLANE_BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_CURRENT_CUSTODIAN
-WRITE_AUTHORITY: LEG_004_CONTROL_PLANE_ONLY
+WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
 AUTO_STATE: NOT_APPLICABLE
 COORDINATION_STATE: SAFE_POST_MERGE_MAIN_REPINNED
 DEPENDENCIES: #1711 parent; #1710 roadmap; #1535/#1569 ordinary route/BM005; #1652/#1663 reconciled; #1715 merged benchmark baseline; #1717 merged C3-A custody repair
@@ -46,11 +45,11 @@ ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5587636782
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0009_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -78,32 +77,32 @@ OWNER_QUALIFICATION_BASELINE_SOURCE: github:reallaksh19/Advanced_Analysis#1711/F
 OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/ADV-LAFEA3-C3A-1716/qualification-baselines/QB-ISSUE-1716-B.json
 OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
-LAST_MATERIAL_LEG: LEG-003
+LAST_MATERIAL_LEG: LEG-004
 LAST_MATERIAL_LEG_CLASS: EXECUTION_CONTROL_PLANE_ONLY
-LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-003.md
-LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-003-EVIDENCE.md
-NEXT_MATERIAL_LEG: LEG-004
-MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0008.md
-MATERIAL_LEG_STATUS: LEG_004_PREWORK_RECORDED_AND_SYNCED
+LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-004.md
+LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-004-EVIDENCE.md
+NEXT_MATERIAL_LEG: LEG-005
+MATERIAL_LEG_STATUS: LEG_004_RECORDED
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
 HOSTED_EXECUTION_TARGET: exact merged main 4fb3548133f53e33d21cd0f3b3d471da592ae871
-HOSTED_EXECUTION_CLASSIFICATION: NOT_RUN_TRIGGER_NOT_SCHEDULED
+HOSTED_EXECUTION_CLASSIFICATION: NOT_RUN_EXECUTION_CONTROL_PLANE_BLOCKED
+HOSTED_EXECUTION_SUBCLASS: TRIGGER_ELIGIBLE__RUN_NOT_SCHEDULED__CURRENT_HEAD_DISPATCH_UNAVAILABLE_IN_CONNECTED_SURFACE
 HOSTED_EXECUTION_RUN_ID: NONE
 HOSTED_EXECUTION_JOB_ID: NONE
 HOSTED_EXECUTION_ARTIFACT: NONE
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PREWORK_PASS_CONTROL_PLANE_DIAGNOSIS_PENDING
-HANDOVER_VALIDATION_EVIDENCE: EP-0008 plus retained LEG-003 evidence
+HANDOVER_VALIDATION_STATUS: PASS_CONTROL_PLANE__EXECUTABLE_ENGINEERING_NOT_RUN
+HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-004-EVIDENCE.md
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-LEG-003 proved exact-main BM005 scheduling absence. LEG-004 is authorized only to isolate that execution-control-plane boundary. The merged main changed the workflow-watched BM005 harness path while exact-main Actions runs remain zero. Repository runs dated 2026-09-08 are also zero, and #1718 itself is not BM005 path-eligible because it changes only chain/evidence files. EP-0008 is synchronized to Issue comment `5587636782`.
+The merged exact-main `push: main` event satisfied the unchanged BM005 workflow path filter, but no run was scheduled. Exact-main Actions runs are zero and repository Actions runs dated 2026-09-08 are zero. #1718 itself changes only chain/evidence files and cannot trigger BM005 through the workflow's PR path filter. The connected GitHub surface exposes inspection/rerun of existing jobs but no current-head workflow-dispatch creation. This is an execution-control-plane blocker, not BM005 FAIL.
 
 ## Exact next action
 
-Repeat exact-main/date/path observations after synchronized EP-0008 and classify whether the remaining blocker is repository Actions scheduling/dispatch availability rather than BM005 engineering behavior. Do not create trigger-only source changes, do not change workflow YAML, and do not merge PR #1718.
+Remain read-only. Require either faithful exact-main local execution receipts or restored GitHub Actions scheduling/current-head dispatch. Only an actually executed current-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.

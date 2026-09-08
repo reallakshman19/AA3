@@ -1,0 +1,326 @@
+{
+  "schema": "mesh-1710-m4-classification-diagnosis/v1",
+  "inputBasis": "[SIMULATED] frozen analytical fixtures through real production solvers",
+  "inputAuditHash": "sha256:2702bfb4d6e372e1c008bda15db33f36fa603edcaeddfd9070b269e7bea3099a",
+  "status": "FAIL",
+  "firstFailingBoundary": "SHARED_CONVERGENCE_SIGN_CLASSIFICATION",
+  "observations": [
+    {
+      "ladderId": "L3-T3",
+      "status": "PASS",
+      "solverQualifications": [
+        "ACCEPTED",
+        "ACCEPTED",
+        "ACCEPTED"
+      ],
+      "convergence": {
+        "accepted": true,
+        "results": [
+          {
+            "historyId": "L3-T3/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 1.942890293094028e-15,
+            "limit": 0.02,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          {
+            "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 5.494267765973833e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          {
+            "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P2",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 1.1246910502961662e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          {
+            "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P3",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.151750501411349e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        ],
+        "limitOverridesUsed": false
+      },
+      "histories": [
+        {
+          "historyId": "L3-T3/STRAIN_ENERGY",
+          "quantity": "STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.012500000000000002,
+            0.012499999999999999,
+            0.012499999999999975
+          ]
+        },
+        {
+          "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P1",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            1.85e-05,
+            1.8500000000000013e-05,
+            1.8500000000000023e-05
+          ]
+        },
+        {
+          "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P2",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            0.00012050000000000003,
+            0.00012050000000000003,
+            0.00012050000000000002
+          ]
+        },
+        {
+          "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P3",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            2.15e-05,
+            2.15e-05,
+            2.1500000000000008e-05
+          ]
+        }
+      ],
+      "maximumEnergyAbsoluteError": 2.6020852139652106e-17,
+      "maximumProbeAbsoluteError": 2.710505431213761e-20
+    },
+    {
+      "ladderId": "L3-T6",
+      "status": "FAIL",
+      "solverQualifications": [
+        "ACCEPTED",
+        "ACCEPTED",
+        "ACCEPTED"
+      ],
+      "convergence": {
+        "accepted": false,
+        "results": [
+          {
+            "historyId": "L3-T6/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 2.359223927328452e-15,
+            "limit": 0.02,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          {
+            "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.845987436181695e-15,
+            "limit": 0.01,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          {
+            "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P2",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 2.249382100592333e-16,
+            "limit": 0.01,
+            "behavior": "OSCILLATORY",
+            "accepted": false
+          },
+          {
+            "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P3",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 7.879376253528377e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        ],
+        "limitOverridesUsed": false
+      },
+      "histories": [
+        {
+          "historyId": "L3-T6/STRAIN_ENERGY",
+          "quantity": "STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.012500000000000025,
+            0.0125,
+            0.01250000000000003
+          ]
+        },
+        {
+          "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P1",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            1.8500000000000002e-05,
+            1.8500000000000036e-05,
+            1.8499999999999965e-05
+          ]
+        },
+        {
+          "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P2",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            0.0001205,
+            0.00012050000000000003,
+            0.0001205
+          ]
+        },
+        {
+          "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P3",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            2.1500000000000014e-05,
+            2.150000000000001e-05,
+            2.1499999999999994e-05
+          ]
+        }
+      ],
+      "maximumEnergyAbsoluteError": 2.949029909160572e-17,
+      "maximumProbeAbsoluteError": 3.7269449679189215e-20
+    },
+    {
+      "ladderId": "L3-Q8",
+      "status": "FAIL",
+      "solverQualifications": [
+        "ACCEPTED",
+        "ACCEPTED",
+        "ACCEPTED"
+      ],
+      "convergence": {
+        "accepted": false,
+        "results": [
+          {
+            "historyId": "L3-Q8/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 3.469446951953615e-16,
+            "limit": 0.02,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          {
+            "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 3.6628451773158913e-16,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          {
+            "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P2",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 0,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          }
+        ],
+        "limitOverridesUsed": false
+      },
+      "histories": [
+        {
+          "historyId": "L3-Q8/STRAIN_ENERGY",
+          "quantity": "STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.0024999999999999996,
+            0.0025,
+            0.002499999999999999
+          ]
+        },
+        {
+          "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P1",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            1.8499999999999996e-05,
+            1.8500000000000002e-05,
+            1.850000000000001e-05
+          ]
+        },
+        {
+          "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P2",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            3.6500000000000006e-05,
+            3.65e-05,
+            3.65e-05
+          ]
+        }
+      ],
+      "maximumEnergyAbsoluteError": 8.673617379884035e-19,
+      "maximumProbeAbsoluteError": 1.0164395367051604e-20
+    },
+    {
+      "ladderId": "L4-CST-DKT",
+      "status": "FAIL",
+      "solverQualifications": [
+        "ACCEPTED",
+        "ACCEPTED",
+        "ACCEPTED"
+      ],
+      "convergence": {
+        "accepted": false,
+        "results": [
+          {
+            "historyId": "L4-CST-DKT/STRAIN_ENERGY",
+            "quantity": "STRAIN_ENERGY",
+            "relativeChange": 1.1365908214600053e-15,
+            "limit": 0.02,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          },
+          {
+            "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PA-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 0,
+            "limit": 0.01,
+            "behavior": "MONOTONIC",
+            "accepted": true
+          },
+          {
+            "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PB-P1",
+            "quantity": "SELECTED_DISPLACEMENT",
+            "relativeChange": 2.6606188281852866e-16,
+            "limit": 0.01,
+            "behavior": "NON_CONVERGENT",
+            "accepted": false
+          }
+        ],
+        "limitOverridesUsed": false
+      },
+      "histories": [
+        {
+          "historyId": "L4-CST-DKT/STRAIN_ENERGY",
+          "quantity": "STRAIN_ENERGY",
+          "valuesByLevel": [
+            0.43956043956043955,
+            0.4395604395604396,
+            0.4395604395604391
+          ]
+        },
+        {
+          "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PA-P1",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            0.00037000000000000005,
+            0.0003699999999999999,
+            0.0003699999999999999
+          ]
+        },
+        {
+          "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PB-P1",
+          "quantity": "SELECTED_DISPLACEMENT",
+          "valuesByLevel": [
+            0.00163,
+            0.0016299999999999997,
+            0.0016300000000000002
+          ]
+        }
+      ],
+      "maximumEnergyAbsoluteError": 4.440892098500626e-16,
+      "maximumProbeAbsoluteError": 2.168404344971009e-19
+    }
+  ],
+  "productionPatchApplied": false,
+  "reactionEquilibriumQualification": "NOT_RUN",
+  "analyticalDifferencesAreAcceptanceGates": false
+}

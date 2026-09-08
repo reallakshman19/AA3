@@ -1,0 +1,4575 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "BM-MESH",
+  "runId": "mesh-1710-m3v2-final",
+  "generatedAt": "2026-09-08T02:07:51.135Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5eadd65ddd5716aaa4a371e454b08d69d2d61a78",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "MESH",
+  "stageId": "M3",
+  "methodResults": [
+    {
+      "methodId": "BM-MESH-M3",
+      "materialLeg": "ADV-MESH-1710/LEG-003",
+      "benchmarkClass": "STAGED_MESH_BENCHMARK",
+      "comparisonPolicy": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/lafea-mesh-benchmark-run.mjs",
+        "--stage",
+        "M4",
+        "--expected-head",
+        "5eadd65ddd5716aaa4a371e454b08d69d2d61a78",
+        "--run-id",
+        "mesh-1710-m3v2-final"
+      ],
+      "sourceCustody": [
+        {
+          "sourceId": "S-001",
+          "path": "src/workspace/lafea-mesh-producer-registry.js",
+          "expectedBlobSha": "b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6",
+          "observedBlobSha": "b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-002",
+          "path": "src/workspace/lafea-mesh-producer-binding.js",
+          "expectedBlobSha": "e8307066293314ad952608872db596cf1898d5c1",
+          "observedBlobSha": "e8307066293314ad952608872db596cf1898d5c1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-003",
+          "path": "src/workspace/lafea-mesh-producer-engine.js",
+          "expectedBlobSha": "36fe0e7cb8b95aab8ebc2532578a68a1eb75f558",
+          "observedBlobSha": "36fe0e7cb8b95aab8ebc2532578a68a1eb75f558",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-004",
+          "path": "src/workspace/lafea-shell-mesh-producer.js",
+          "expectedBlobSha": "6bb02be40673ce79bb3488905c4ee465ad6625df",
+          "observedBlobSha": "6bb02be40673ce79bb3488905c4ee465ad6625df",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-005",
+          "path": "src/workspace/lafea-mesh-geometry-topology-adapter.js",
+          "expectedBlobSha": "0dea937de150ca5a54cc7750c907fd3fafd7761c",
+          "observedBlobSha": "0dea937de150ca5a54cc7750c907fd3fafd7761c",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-006",
+          "path": "src/workspace/lafea-analysis-mesh-contract.js",
+          "expectedBlobSha": "c5b9b246321456d3514de4b9294de831b4a82c0e",
+          "observedBlobSha": "c5b9b246321456d3514de4b9294de831b4a82c0e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-007",
+          "path": "src/core/lafea-meshing/quality-gates.js",
+          "expectedBlobSha": "da21c333a5bc22e59c4b52c2c1ff135ee7460ebb",
+          "observedBlobSha": "da21c333a5bc22e59c4b52c2c1ff135ee7460ebb",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-008",
+          "path": "scripts/lafea.10-quality-gate-check.mjs",
+          "expectedBlobSha": "97fa853ba347a65e2ad451ff9bc16488f9d4b146",
+          "observedBlobSha": "97fa853ba347a65e2ad451ff9bc16488f9d4b146",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-009",
+          "path": "src/workspace/lafea-stage-analysis-adapter.js",
+          "expectedBlobSha": "899afb248fc9864bdbea44f34a4a675d3574e5fa",
+          "observedBlobSha": "899afb248fc9864bdbea44f34a4a675d3574e5fa",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-010",
+          "path": "validation/lafea-benchmark-data/B01/sources/source-registry.json",
+          "expectedBlobSha": "21d86d5884e42adb462c402ca94b1289c27884f3",
+          "observedBlobSha": "21d86d5884e42adb462c402ca94b1289c27884f3",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-011",
+          "path": "src/core/lafea-profile-contract/field-schemas.js",
+          "expectedBlobSha": "1f860b106834d16d0400ac2d758d9e38d8051711",
+          "observedBlobSha": "1f860b106834d16d0400ac2d758d9e38d8051711",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-012",
+          "path": "src/core/lafea-meshing/mesh-convergence-framework.js",
+          "expectedBlobSha": "c06ebf7006b76b38de8c416f659152396d34976e",
+          "observedBlobSha": "c06ebf7006b76b38de8c416f659152396d34976e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-013",
+          "path": "src/workspace/lafea-continuum-physical-probe.js",
+          "expectedBlobSha": "f1991fc17f0e799933917601b78c7a89af196df1",
+          "observedBlobSha": "f1991fc17f0e799933917601b78c7a89af196df1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-014",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json",
+          "expectedBlobSha": "7be1e34b9e35c35f27be4aae49dfc441090fad4b",
+          "observedBlobSha": "7be1e34b9e35c35f27be4aae49dfc441090fad4b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-015",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json",
+          "expectedBlobSha": "32436222284374cd94bad09ba4980ce64a0d28e8",
+          "observedBlobSha": "32436222284374cd94bad09ba4980ce64a0d28e8",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-016",
+          "path": "src/workspace/lafea-shell-multipatch-midsurface-contract.js",
+          "expectedBlobSha": "45158697eb552688f71b68ce09c9e33869f263f2",
+          "observedBlobSha": "45158697eb552688f71b68ce09c9e33869f263f2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-017",
+          "path": "src/workspace/lafea-shell-multipatch-mesh-core.js",
+          "expectedBlobSha": "b54063378d8265e5d5905975368b8094c251b8e7",
+          "observedBlobSha": "b54063378d8265e5d5905975368b8094c251b8e7",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-018",
+          "path": "src/workspace/lafea-domain-first-requests.js",
+          "expectedBlobSha": "51907e33fcf363e1d84fa491e7124a3c961529a0",
+          "observedBlobSha": "51907e33fcf363e1d84fa491e7124a3c961529a0",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-019",
+          "path": "src/core/lafea-meshing/mapped-mitc-mesh.js",
+          "expectedBlobSha": "4ad4740e3853cfec31ea372710713a8e270619f6",
+          "observedBlobSha": "4ad4740e3853cfec31ea372710713a8e270619f6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-020",
+          "path": "src/workspace/lafea-shell-thickness-basis.js",
+          "expectedBlobSha": "643b73a6c6589cb2b2dbaa2879246d6e3ef057f1",
+          "observedBlobSha": "643b73a6c6589cb2b2dbaa2879246d6e3ef057f1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-021",
+          "path": "scripts/lafea.4-fixtures.mjs",
+          "expectedBlobSha": "b3e68b24064221a7d35dd1fbb156addfc41667ef",
+          "observedBlobSha": "b3e68b24064221a7d35dd1fbb156addfc41667ef",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-022",
+          "path": "scripts/lafea-tech2-thickness-curvature-check.mjs",
+          "expectedBlobSha": "31348e942aeca59c17e7c00df3ab4732a60e1cb6",
+          "observedBlobSha": "31348e942aeca59c17e7c00df3ab4732a60e1cb6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-023",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json",
+          "expectedBlobSha": "b0e408cee23df76d247a9dc7a7ac2bc49c144094",
+          "observedBlobSha": "b0e408cee23df76d247a9dc7a7ac2bc49c144094",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-024",
+          "path": "validation/bucket-01/04-t3-patch-oracle.json",
+          "expectedBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8",
+          "observedBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-025",
+          "path": "scripts/lafea-bucket-01-t3-patch-check.mjs",
+          "expectedBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e",
+          "observedBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-026",
+          "path": "src/core/local-continuum/index.js",
+          "expectedBlobSha": "6c5184ec3044eef0ea48d1500985eb513e9f34d2",
+          "observedBlobSha": "6c5184ec3044eef0ea48d1500985eb513e9f34d2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-027",
+          "path": "scripts/lafea.4-production-route-benchmarks-check.mjs",
+          "expectedBlobSha": "da375442897a302027e15bb3400390ea3c715111",
+          "observedBlobSha": "da375442897a302027e15bb3400390ea3c715111",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-028",
+          "path": "src/core/local-shell/index.js",
+          "expectedBlobSha": "4af7ff09daae2b0e35edbabce627aa9b546485e2",
+          "observedBlobSha": "4af7ff09daae2b0e35edbabce627aa9b546485e2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-029",
+          "path": "src/core/local-shell/cst.js",
+          "expectedBlobSha": "ae140f4c8cfd74c009b3bd9743d1deed00dd89ea",
+          "observedBlobSha": "ae140f4c8cfd74c009b3bd9743d1deed00dd89ea",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-030",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json",
+          "expectedBlobSha": "7fcf6bea3c31a16973b953568bc9732401422a1b",
+          "observedBlobSha": "7fcf6bea3c31a16973b953568bc9732401422a1b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-031",
+          "path": "scripts/lib/lafea-mesh-benchmark-m4.mjs",
+          "expectedBlobSha": "69e286739a620ff8b5522d8225752c2780735f46",
+          "observedBlobSha": "69e286739a620ff8b5522d8225752c2780735f46",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-032",
+          "path": "scripts/lafea-mesh-benchmark-run.mjs",
+          "expectedBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+          "observedBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-033",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json",
+          "expectedBlobSha": "9f1889bc995e8774a363561a53f2427d384bf96a",
+          "observedBlobSha": "9f1889bc995e8774a363561a53f2427d384bf96a",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-034",
+          "path": "scripts/lib/lafea-mesh-benchmark-m3.mjs",
+          "expectedBlobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d",
+          "observedBlobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-035",
+          "path": "src/core/lafea-meshing/element-geometry.js",
+          "expectedBlobSha": "a99f90f19ed9b414689f875457558e29f667f69b",
+          "observedBlobSha": "a99f90f19ed9b414689f875457558e29f667f69b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-036",
+          "path": "src/workspace/lafea-analysis-mesh-quality.js",
+          "expectedBlobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341",
+          "observedBlobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341",
+          "status": "PASS"
+        }
+      ],
+      "sourceRefHashes": {
+        "validation/lafea-benchmark-data/MESH/bucket-manifest.json": "sha256:f36e0f8acb42ee80c6b7c2de833b2ba31b303ab039636c2c73845198544f3fc6",
+        "validation/lafea-benchmark-data/MESH/sources/source-registry.json": "sha256:2cd901039adc96bb16e3a1db908e5e5a5506a62d204fde3ed12dd18deca15583",
+        "validation/lafea-benchmark-data/MESH/geometry/cases.json": "sha256:a3ec24bebcc6ee19f35706d5063947533c184f25732790b08199a58526836a14",
+        "validation/lafea-benchmark-data/MESH/oracle/expected-values.json": "sha256:6e9adf0a08461b16ff1ed6cb393cbe2e2c36e16c05a910e075513bea4aff9d39",
+        "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json": "sha256:d8106bc24aa90cd71b380d3dbadb30a0fd2bf0b198af08086b662d9a5ec0dcb8",
+        "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json": "sha256:49856393c4c93cc20ce8165e83cce41cc8dd10d106293d894f49568d97ed116b",
+        "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json": "sha256:6646db49efeee9c559f1b6dbd1455e092227d30739ede9469343a51f8a0b4e60",
+        "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json": "sha256:73563cd2fead924cc2ff42ad318f43a899179deb9383598741f591cca352b635",
+        "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json": "sha256:c3efcc84142da3521e5e88d14ff92e1ac7567cf957cb625bd02948b228fa58db"
+      },
+      "evidence": {
+        "schema": "lafea-mesh-benchmark-stage-evidence/v1",
+        "status": "PASS",
+        "blocker": null,
+        "shellThicknessFixtureHash": "sha256:6646db49efeee9c559f1b6dbd1455e092227d30739ede9469343a51f8a0b4e60",
+        "acceptancePolicyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+        "acceptancePolicyFixtureHash": "sha256:c3efcc84142da3521e5e88d14ff92e1ac7567cf957cb625bd02948b228fa58db",
+        "shapeTrendDisposition": "RETAIN_DIAGNOSTIC_STATUS_SEPARATE_FROM_ADVANCEMENT",
+        "observations": [
+          {
+            "checkId": "M3-L3-T3",
+            "status": "PASS",
+            "acceptancePolicyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+            "legacyV1Status": "PASS",
+            "diagnosticStatus": "PASS",
+            "measuredRefinement": {
+              "policyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+              "status": "PASS",
+              "levelChecks": [
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                }
+              ],
+              "refinementChecks": [
+                {
+                  "coarseMaximum": 1.4142135623730951,
+                  "fineMaximum": 0.6415159638544502,
+                  "decreases": true,
+                  "status": "PASS"
+                },
+                {
+                  "coarseMaximum": 0.6415159638544502,
+                  "fineMaximum": 0.3168680883226287,
+                  "decreases": true,
+                  "status": "PASS"
+                }
+              ]
+            },
+            "ladderId": "L3-T3",
+            "stageId": "LAFEA.3",
+            "geometryCaseId": "M2-L-SHAPE-01",
+            "elementFamily": "T3",
+            "noProductionQualityBlock": true,
+            "seamConformingAcrossLevels": null,
+            "warpageDisposition": "NOT_APPLICABLE_CONTINUUM",
+            "sizeToThicknessDisposition": "NOT_APPLICABLE_CONTINUUM",
+            "thicknessFixture": null,
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:48d5798f0dd7dcf392ba519b3fe3d96415f4f10c15c7a259341114e688db34b3",
+                "nodeCount": 14,
+                "elementCount": 14,
+                "estimatedDofs": 28,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 14,
+                    "minimum": 1,
+                    "median": 1.118033988749895,
+                    "maximum": 1.4142135623730951,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.23606797749979,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000003",
+                          "N000002",
+                          "N000005"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 2,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 26.565051177077994,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000003",
+                          "N000002",
+                          "N000005"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 2,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.4472135954999579,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000003",
+                          "N000002",
+                          "N000005"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 2,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 14,
+                    "minimum": 1.118033988749895,
+                    "median": 1.4142135623730951,
+                    "maximum": 2.23606797749979,
+                    "worst": 2.23606797749979,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 14,
+                    "minimum": 26.565051177077994,
+                    "median": 45.00000000000001,
+                    "maximum": 53.13010235415599,
+                    "worst": 26.565051177077994,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 14,
+                    "minimum": 0.4472135954999579,
+                    "median": 0.7071067811865475,
+                    "maximum": 0.7999999999999998,
+                    "worst": 0.4472135954999579,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:a15a1c340922c0664ba8b5b55bf1b379d02715c1ab24d831af9bd62e12f7884b",
+                "nodeCount": 41,
+                "elementCount": 56,
+                "estimatedDofs": 82,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 56,
+                    "minimum": 0.40890698267830944,
+                    "median": 0.5047640787245233,
+                    "maximum": 0.6415159638544502,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.07110937212133,
+                      "element": {
+                        "elementId": "E000055",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000038",
+                          "N000040",
+                          "N000041"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000038",
+                          "x": 2.708346193415638,
+                          "y": 0.4664969367124732,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000040",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000041",
+                          "x": 3,
+                          "y": 1,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 28.66440901027768,
+                      "element": {
+                        "elementId": "E000055",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000038",
+                          "N000040",
+                          "N000041"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000038",
+                          "x": 2.708346193415638,
+                          "y": 0.4664969367124732,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000040",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000041",
+                          "x": 3,
+                          "y": 1,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.4796785392133901,
+                      "element": {
+                        "elementId": "E000055",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000038",
+                          "N000040",
+                          "N000041"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000038",
+                          "x": 2.708346193415638,
+                          "y": 0.4664969367124732,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000040",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000041",
+                          "x": 3,
+                          "y": 1,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 56,
+                    "minimum": 1.1003296503453315,
+                    "median": 1.3031065245238642,
+                    "maximum": 2.07110937212133,
+                    "worst": 2.07110937212133,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 56,
+                    "minimum": 28.66440901027768,
+                    "median": 46.614741099214726,
+                    "maximum": 56.08004158753553,
+                    "worst": 28.66440901027768,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 56,
+                    "minimum": 0.4796785392133901,
+                    "median": 0.7267481800526923,
+                    "maximum": 0.8298179498047511,
+                    "worst": 0.4796785392133901,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:7ab44a71bccd28203c80708d892febb81865592675addf9315ec3b3c7547eb0f",
+                "nodeCount": 126,
+                "elementCount": 202,
+                "estimatedDofs": 252,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 202,
+                    "minimum": 0.21357746188570528,
+                    "median": 0.25385284485366094,
+                    "maximum": 0.3168680883226287,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.0197964929575467,
+                      "element": {
+                        "elementId": "E000198",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000123",
+                          "N000124",
+                          "N000121"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000123",
+                          "x": 3,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000124",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000121",
+                          "x": 2.85083841527857,
+                          "y": 0.23690819449651612,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 29.551346552370404,
+                      "element": {
+                        "elementId": "E000198",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000123",
+                          "N000124",
+                          "N000121"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000123",
+                          "x": 3,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000124",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000121",
+                          "x": 2.85083841527857,
+                          "y": 0.23690819449651612,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.4932033457922652,
+                      "element": {
+                        "elementId": "E000198",
+                        "elementType": "T3",
+                        "nodeIds": [
+                          "N000123",
+                          "N000124",
+                          "N000121"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000123",
+                          "x": 3,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000124",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000121",
+                          "x": 2.85083841527857,
+                          "y": 0.23690819449651612,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 202,
+                    "minimum": 1.0075861188478574,
+                    "median": 1.1263660694821094,
+                    "maximum": 2.0197964929575467,
+                    "worst": 2.0197964929575467,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 202,
+                    "minimum": 29.551346552370404,
+                    "median": 54.15878450253766,
+                    "maximum": 59.66587279450005,
+                    "worst": 29.551346552370404,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 202,
+                    "minimum": 0.4932033457922652,
+                    "median": 0.8106428051457324,
+                    "maximum": 0.8630948846195228,
+                    "worst": 0.4932033457922652,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              }
+            ],
+            "refinementChecks": [
+              {
+                "fromLevelId": "L0",
+                "toLevelId": "L1",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              },
+              {
+                "fromLevelId": "L1",
+                "toLevelId": "L2",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              }
+            ],
+            "worstCaseTrendChecks": [
+              {
+                "metric": "ASPECT_RATIO",
+                "status": "PASS",
+                "worseDirection": "HIGHER",
+                "worstValues": [
+                  2.23606797749979,
+                  2.07110937212133,
+                  2.0197964929575467
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 2.23606797749979,
+                    "fineWorst": 2.07110937212133,
+                    "tolerance": 1.2710574864626038e-13,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 2.07110937212133,
+                    "fineWorst": 2.0197964929575467,
+                    "tolerance": 1.1772893754603786e-13,
+                    "holdsOrImproves": true
+                  }
+                ]
+              },
+              {
+                "metric": "MINIMUM_ANGLE_DEGREES",
+                "status": "PASS",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  26.565051177077994,
+                  28.66440901027768,
+                  29.551346552370404
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 26.565051177077994,
+                    "fineWorst": 28.66440901027768,
+                    "tolerance": 1.6293830077687335e-12,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 28.66440901027768,
+                    "fineWorst": 29.551346552370404,
+                    "tolerance": 1.6797995699772857e-12,
+                    "holdsOrImproves": true
+                  }
+                ]
+              },
+              {
+                "metric": "SCALED_JACOBIAN",
+                "status": "PASS",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  0.4472135954999579,
+                  0.4796785392133901,
+                  0.4932033457922652
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 0.4472135954999579,
+                    "fineWorst": 0.4796785392133901,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 0.4796785392133901,
+                    "fineWorst": 0.4932033457922652,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "checkId": "M3-L3-T6",
+            "status": "PASS",
+            "acceptancePolicyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+            "legacyV1Status": "FAIL",
+            "diagnosticStatus": "FAIL",
+            "measuredRefinement": {
+              "policyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+              "status": "PASS",
+              "levelChecks": [
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                }
+              ],
+              "refinementChecks": [
+                {
+                  "coarseMaximum": 1.4142135623730951,
+                  "fineMaximum": 0.6415159638544502,
+                  "decreases": true,
+                  "status": "PASS"
+                },
+                {
+                  "coarseMaximum": 0.6415159638544502,
+                  "fineMaximum": 0.3168680883226287,
+                  "decreases": true,
+                  "status": "PASS"
+                }
+              ]
+            },
+            "ladderId": "L3-T6",
+            "stageId": "LAFEA.3",
+            "geometryCaseId": "M2-L-SHAPE-01",
+            "elementFamily": "T6",
+            "noProductionQualityBlock": true,
+            "seamConformingAcrossLevels": null,
+            "warpageDisposition": "NOT_APPLICABLE_CONTINUUM",
+            "sizeToThicknessDisposition": "NOT_APPLICABLE_CONTINUUM",
+            "thicknessFixture": null,
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:aa062be8abdf0a7a716c3f49d4e7351eecb9511859bb564f27ac105815b5c83e",
+                "nodeCount": 41,
+                "elementCount": 14,
+                "estimatedDofs": 82,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 14,
+                    "minimum": 1,
+                    "median": 1.118033988749895,
+                    "maximum": 1.4142135623730951,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.23606797749979,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000005",
+                          "N000003",
+                          "N000014",
+                          "N000004",
+                          "N000009",
+                          "N000010"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000005",
+                          "x": 0,
+                          "y": 2,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000014",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000004",
+                          "x": 0,
+                          "y": 1.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000009",
+                          "x": 0.25,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000010",
+                          "x": 0.25,
+                          "y": 1.5,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000005",
+                              "N000003",
+                              "N000014",
+                              "N000004",
+                              "N000009",
+                              "N000010"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.4999999999999997,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.49999999999999994,
+                                "scaledJacobian": 0.44721359549995787
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.44721359549995787
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000003",
+                              "N000014",
+                              "N000005",
+                              "N000009",
+                              "N000010",
+                              "N000004"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000001,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000002,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5000000000000002,
+                                "scaledJacobian": 1
+                              }
+                            ],
+                            "minimumScaledJacobian": 1
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000014",
+                              "N000005",
+                              "N000003",
+                              "N000010",
+                              "N000004",
+                              "N000009"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000004,
+                                "scaledJacobian": 0.8944271909999161
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000001,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5000000000000002,
+                                "scaledJacobian": 0.8944271909999161
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8944271909999159
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 26.565051177077994,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000005",
+                          "N000003",
+                          "N000014",
+                          "N000004",
+                          "N000009",
+                          "N000010"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000005",
+                          "x": 0,
+                          "y": 2,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000014",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000004",
+                          "x": 0,
+                          "y": 1.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000009",
+                          "x": 0.25,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000010",
+                          "x": 0.25,
+                          "y": 1.5,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000005",
+                              "N000003",
+                              "N000014",
+                              "N000004",
+                              "N000009",
+                              "N000010"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.4999999999999997,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.49999999999999994,
+                                "scaledJacobian": 0.44721359549995787
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.44721359549995787
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000003",
+                              "N000014",
+                              "N000005",
+                              "N000009",
+                              "N000010",
+                              "N000004"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000001,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000002,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5000000000000002,
+                                "scaledJacobian": 1
+                              }
+                            ],
+                            "minimumScaledJacobian": 1
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000014",
+                              "N000005",
+                              "N000003",
+                              "N000010",
+                              "N000004",
+                              "N000009"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000004,
+                                "scaledJacobian": 0.8944271909999161
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000001,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5000000000000002,
+                                "scaledJacobian": 0.8944271909999161
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8944271909999159
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.4472135954999578,
+                      "element": {
+                        "elementId": "E000006",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000023",
+                          "N000025",
+                          "N000014",
+                          "N000024",
+                          "N000019",
+                          "N000018"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000023",
+                          "x": 1,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000025",
+                          "x": 1,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000014",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000024",
+                          "x": 1,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000019",
+                          "x": 0.75,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000018",
+                          "x": 0.75,
+                          "y": 0.5,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000023",
+                              "N000025",
+                              "N000014",
+                              "N000024",
+                              "N000019",
+                              "N000018"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999579
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.5000000000000006,
+                                "scaledJacobian": 0.4472135954999584
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.49999999999999994,
+                                "scaledJacobian": 0.44721359549995787
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.4472135954999578
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.4472135954999578
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000025",
+                              "N000014",
+                              "N000023",
+                              "N000019",
+                              "N000018",
+                              "N000024"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.49999999999999967,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.4999999999999999,
+                                "scaledJacobian": 1
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5,
+                                "scaledJacobian": 1
+                              }
+                            ],
+                            "minimumScaledJacobian": 1
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000014",
+                              "N000023",
+                              "N000025",
+                              "N000018",
+                              "N000024",
+                              "N000019"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.4999999999999999,
+                                "scaledJacobian": 0.8944271909999156
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.4999999999999997,
+                                "scaledJacobian": 0.8944271909999159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.5,
+                                "scaledJacobian": 0.8944271909999159
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8944271909999156
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 14,
+                    "minimum": 1.118033988749895,
+                    "median": 1.4142135623730951,
+                    "maximum": 2.23606797749979,
+                    "worst": 2.23606797749979,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 14,
+                    "minimum": 26.565051177077994,
+                    "median": 45.00000000000001,
+                    "maximum": 53.13010235415599,
+                    "worst": 26.565051177077994,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 14,
+                    "minimum": 0.4472135954999578,
+                    "median": 0.7071067811865475,
+                    "maximum": 1,
+                    "worst": 0.4472135954999578,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:abe78547f8fead15c90c9cd3c2201cd5fe31b691e63f4fa25a818f438247c48f",
+                "nodeCount": 137,
+                "elementCount": 56,
+                "estimatedDofs": 274,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 56,
+                    "minimum": 0.40890698267830944,
+                    "median": 0.5047640787245233,
+                    "maximum": 0.6415159638544502,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.07110937212133,
+                      "element": {
+                        "elementId": "E000055",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000126",
+                          "N000135",
+                          "N000137",
+                          "N000131",
+                          "N000136",
+                          "N000132"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000126",
+                          "x": 2.708346193415638,
+                          "y": 0.4664969367124732,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000135",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000137",
+                          "x": 3,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000131",
+                          "x": 2.854173096707819,
+                          "y": 0.4832484683562366,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000136",
+                          "x": 3,
+                          "y": 0.75,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000132",
+                          "x": 2.854173096707819,
+                          "y": 0.7332484683562366,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000126",
+                              "N000135",
+                              "N000137",
+                              "N000131",
+                              "N000136",
+                              "N000132"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218112,
+                                "scaledJacobian": 0.8169697315286334
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.8169697315286332
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.8169697315286332
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218126,
+                                "scaledJacobian": 0.816969731528633
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.1458269032921812,
+                                "scaledJacobian": 0.8169697315286323
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.14582690329218145,
+                                "scaledJacobian": 0.8169697315286321
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8169697315286321
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000135",
+                              "N000137",
+                              "N000126",
+                              "N000136",
+                              "N000132",
+                              "N000131"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.1458269032921811,
+                                "scaledJacobian": 0.9934667181703206
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218165,
+                                "scaledJacobian": 0.9934667181703211
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.1458269032921815,
+                                "scaledJacobian": 0.9934667181703213
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.9934667181703206
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000137",
+                              "N000126",
+                              "N000135",
+                              "N000132",
+                              "N000131",
+                              "N000136"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.4796785392133901
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.4796785392133901
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.4796785392133901
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218084,
+                                "scaledJacobian": 0.47967853921338965
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218118,
+                                "scaledJacobian": 0.4796785392133903
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.14582690329218104,
+                                "scaledJacobian": 0.4796785392133901
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.47967853921338965
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 28.66440901027768,
+                      "element": {
+                        "elementId": "E000055",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000126",
+                          "N000135",
+                          "N000137",
+                          "N000131",
+                          "N000136",
+                          "N000132"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000126",
+                          "x": 2.708346193415638,
+                          "y": 0.4664969367124732,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000135",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000137",
+                          "x": 3,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000131",
+                          "x": 2.854173096707819,
+                          "y": 0.4832484683562366,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000136",
+                          "x": 3,
+                          "y": 0.75,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000132",
+                          "x": 2.854173096707819,
+                          "y": 0.7332484683562366,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000126",
+                              "N000135",
+                              "N000137",
+                              "N000131",
+                              "N000136",
+                              "N000132"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218112,
+                                "scaledJacobian": 0.8169697315286334
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.8169697315286332
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.8169697315286332
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218126,
+                                "scaledJacobian": 0.816969731528633
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.1458269032921812,
+                                "scaledJacobian": 0.8169697315286323
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.14582690329218145,
+                                "scaledJacobian": 0.8169697315286321
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8169697315286321
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000135",
+                              "N000137",
+                              "N000126",
+                              "N000136",
+                              "N000132",
+                              "N000131"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.1458269032921811,
+                                "scaledJacobian": 0.9934667181703206
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218165,
+                                "scaledJacobian": 0.9934667181703211
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.1458269032921815,
+                                "scaledJacobian": 0.9934667181703213
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.9934667181703206
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000137",
+                              "N000126",
+                              "N000135",
+                              "N000132",
+                              "N000131",
+                              "N000136"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.4796785392133901
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.4796785392133901
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.4796785392133901
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218084,
+                                "scaledJacobian": 0.47967853921338965
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218118,
+                                "scaledJacobian": 0.4796785392133903
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.14582690329218104,
+                                "scaledJacobian": 0.4796785392133901
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.47967853921338965
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.5301207806093899,
+                      "element": {
+                        "elementId": "E000056",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000133",
+                          "N000135",
+                          "N000126",
+                          "N000134",
+                          "N000131",
+                          "N000130"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000133",
+                          "x": 3,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000135",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000126",
+                          "x": 2.708346193415638,
+                          "y": 0.4664969367124732,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000134",
+                          "x": 3,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000131",
+                          "x": 2.854173096707819,
+                          "y": 0.4832484683562366,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000130",
+                          "x": 2.854173096707819,
+                          "y": 0.2332484683562366,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000133",
+                              "N000135",
+                              "N000126",
+                              "N000134",
+                              "N000131",
+                              "N000130"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.5301207806093899
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.53012078060939
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218104,
+                                "scaledJacobian": 0.53012078060939
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218193,
+                                "scaledJacobian": 0.530120780609393
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218206,
+                                "scaledJacobian": 0.530120780609393
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.14582690329218154,
+                                "scaledJacobian": 0.5301207806093912
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.5301207806093899
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000135",
+                              "N000126",
+                              "N000133",
+                              "N000131",
+                              "N000130",
+                              "N000134"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.14582690329218104,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.1458269032921809,
+                                "scaledJacobian": 0.9934667181703214
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.1458269032921813,
+                                "scaledJacobian": 0.9934667181703213
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.9934667181703213
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.9934667181703213
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000126",
+                              "N000133",
+                              "N000135",
+                              "N000130",
+                              "N000134",
+                              "N000131"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.145826903292181,
+                                "scaledJacobian": 0.9028809846744816
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.1458269032921811,
+                                "scaledJacobian": 0.902880984674482
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.14582690329218106,
+                                "scaledJacobian": 0.902880984674482
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.145826903292181,
+                                "scaledJacobian": 0.9028809846744815
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.14582690329218137,
+                                "scaledJacobian": 0.9028809846744817
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.1458269032921815,
+                                "scaledJacobian": 0.9028809846744813
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.9028809846744813
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 56,
+                    "minimum": 1.1003296503453315,
+                    "median": 1.3031065245238642,
+                    "maximum": 2.07110937212133,
+                    "worst": 2.07110937212133,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 56,
+                    "minimum": 28.66440901027768,
+                    "median": 46.614741099214726,
+                    "maximum": 56.08004158753553,
+                    "worst": 28.66440901027768,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 56,
+                    "minimum": 0.5301207806093899,
+                    "median": 0.8919112068250838,
+                    "maximum": 1,
+                    "worst": 0.5301207806093899,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:c62abffaaf04f62fe69d81b867187c2379b08d5df5267d79e60bc326c84081e4",
+                "nodeCount": 453,
+                "elementCount": 202,
+                "estimatedDofs": 906,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 202,
+                    "minimum": 0.21357746188570528,
+                    "median": 0.25385284485366094,
+                    "maximum": 0.3168680883226287,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.0197964929575467,
+                      "element": {
+                        "elementId": "E000198",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000447",
+                          "N000449",
+                          "N000434",
+                          "N000448",
+                          "N000444",
+                          "N000443"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000447",
+                          "x": 3,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000449",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000434",
+                          "x": 2.85083841527857,
+                          "y": 0.23690819449651612,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000448",
+                          "x": 3,
+                          "y": 0.375,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000444",
+                          "x": 2.925419207639285,
+                          "y": 0.36845409724825806,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000443",
+                          "x": 2.925419207639285,
+                          "y": 0.24345409724825806,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000447",
+                              "N000449",
+                              "N000434",
+                              "N000448",
+                              "N000444",
+                              "N000443"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.9961703881461454
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.9961703881461454
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.9961703881461454
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035769,
+                                "scaledJacobian": 0.996170388146145
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035752,
+                                "scaledJacobian": 0.996170388146145
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03729039618035768,
+                                "scaledJacobian": 0.9961703881461452
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.996170388146145
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000449",
+                              "N000434",
+                              "N000447",
+                              "N000444",
+                              "N000443",
+                              "N000448"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.4932033457922652
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.4932033457922652
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.4932033457922652
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.0372903961803574,
+                                "scaledJacobian": 0.49320334579226455
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035758,
+                                "scaledJacobian": 0.4932033457922658
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03729039618035769,
+                                "scaledJacobian": 0.4932033457922683
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.49320334579226455
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000434",
+                              "N000447",
+                              "N000449",
+                              "N000443",
+                              "N000448",
+                              "N000444"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.8234602919552382
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.8234602919552382
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.8234602919552382
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.037290396180357614,
+                                "scaledJacobian": 0.8234602919552381
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035741,
+                                "scaledJacobian": 0.8234602919552387
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03729039618035769,
+                                "scaledJacobian": 0.8234602919552386
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8234602919552381
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 29.551346552370404,
+                      "element": {
+                        "elementId": "E000198",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000447",
+                          "N000449",
+                          "N000434",
+                          "N000448",
+                          "N000444",
+                          "N000443"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000447",
+                          "x": 3,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000449",
+                          "x": 3,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000434",
+                          "x": 2.85083841527857,
+                          "y": 0.23690819449651612,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000448",
+                          "x": 3,
+                          "y": 0.375,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000444",
+                          "x": 2.925419207639285,
+                          "y": 0.36845409724825806,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000443",
+                          "x": 2.925419207639285,
+                          "y": 0.24345409724825806,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000447",
+                              "N000449",
+                              "N000434",
+                              "N000448",
+                              "N000444",
+                              "N000443"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.9961703881461454
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.9961703881461454
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.9961703881461454
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035769,
+                                "scaledJacobian": 0.996170388146145
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035752,
+                                "scaledJacobian": 0.996170388146145
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03729039618035768,
+                                "scaledJacobian": 0.9961703881461452
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.996170388146145
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000449",
+                              "N000434",
+                              "N000447",
+                              "N000444",
+                              "N000443",
+                              "N000448"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.4932033457922652
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.4932033457922652
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.4932033457922652
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.0372903961803574,
+                                "scaledJacobian": 0.49320334579226455
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035758,
+                                "scaledJacobian": 0.4932033457922658
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03729039618035769,
+                                "scaledJacobian": 0.4932033457922683
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.49320334579226455
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000434",
+                              "N000447",
+                              "N000449",
+                              "N000443",
+                              "N000448",
+                              "N000444"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.8234602919552382
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.8234602919552382
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037290396180357455,
+                                "scaledJacobian": 0.8234602919552382
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.037290396180357614,
+                                "scaledJacobian": 0.8234602919552381
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03729039618035741,
+                                "scaledJacobian": 0.8234602919552387
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03729039618035769,
+                                "scaledJacobian": 0.8234602919552386
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.8234602919552381
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.49657823411350444,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "T6",
+                        "nodeIds": [
+                          "N000005",
+                          "N000003",
+                          "N000053",
+                          "N000004",
+                          "N000027",
+                          "N000028"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000005",
+                          "x": 0,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000053",
+                          "x": 0.15025629331244394,
+                          "y": 0.23736010389842,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000004",
+                          "x": 0,
+                          "y": 0.375,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000027",
+                          "x": 0.07512814665622197,
+                          "y": 0.24368005194921,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000028",
+                          "x": 0.07512814665622197,
+                          "y": 0.36868005194921,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": {
+                        "midsideOffsets": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "cyclicMappings": [
+                          {
+                            "shift": 0,
+                            "nodeIds": [
+                              "N000005",
+                              "N000003",
+                              "N000053",
+                              "N000004",
+                              "N000027",
+                              "N000028"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.4965782341135048
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.4965782341135048
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.4965782341135048
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.037564073328110965,
+                                "scaledJacobian": 0.4965782341135046
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.49657823411350444
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03756407332811099,
+                                "scaledJacobian": 0.49657823411350455
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.49657823411350444
+                          },
+                          {
+                            "shift": 1,
+                            "nodeIds": [
+                              "N000003",
+                              "N000053",
+                              "N000005",
+                              "N000027",
+                              "N000028",
+                              "N000004"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.9964803933248086
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.9964803933248086
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037564073328110986,
+                                "scaledJacobian": 0.9964803933248086
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03756407332811099,
+                                "scaledJacobian": 0.9964803933248091
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03756407332811101,
+                                "scaledJacobian": 0.9964803933248086
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.03756407332811101,
+                                "scaledJacobian": 0.9964803933248086
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.9964803933248086
+                          },
+                          {
+                            "shift": 2,
+                            "nodeIds": [
+                              "N000053",
+                              "N000005",
+                              "N000003",
+                              "N000028",
+                              "N000004",
+                              "N000027"
+                            ],
+                            "samples": [
+                              {
+                                "xi": 0,
+                                "eta": 0,
+                                "determinant": 0.037564073328110965,
+                                "scaledJacobian": 0.8233107298491154
+                              },
+                              {
+                                "xi": 1,
+                                "eta": 0,
+                                "determinant": 0.03756407332811095,
+                                "scaledJacobian": 0.823310729849115
+                              },
+                              {
+                                "xi": 0,
+                                "eta": 1,
+                                "determinant": 0.037564073328110965,
+                                "scaledJacobian": 0.8233107298491154
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.037564073328111,
+                                "scaledJacobian": 0.8233107298491156
+                              },
+                              {
+                                "xi": 0.6666666666666666,
+                                "eta": 0.16666666666666666,
+                                "determinant": 0.03756407332811101,
+                                "scaledJacobian": 0.8233107298491159
+                              },
+                              {
+                                "xi": 0.16666666666666666,
+                                "eta": 0.6666666666666666,
+                                "determinant": 0.037564073328111,
+                                "scaledJacobian": 0.8233107298491156
+                              }
+                            ],
+                            "minimumScaledJacobian": 0.823310729849115
+                          }
+                        ],
+                        "usage": "DIAGNOSIS_ONLY_NO_CONNECTIVITY_OR_METRIC_MUTATION"
+                      }
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 202,
+                    "minimum": 1.0075861188478574,
+                    "median": 1.1263660694821094,
+                    "maximum": 2.0197964929575467,
+                    "worst": 2.0197964929575467,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 202,
+                    "minimum": 29.551346552370404,
+                    "median": 54.15878450253766,
+                    "maximum": 59.66587279450005,
+                    "worst": 29.551346552370404,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 202,
+                    "minimum": 0.49657823411350444,
+                    "median": 0.8609514600321283,
+                    "maximum": 0.9995018178681213,
+                    "worst": 0.49657823411350444,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              }
+            ],
+            "refinementChecks": [
+              {
+                "fromLevelId": "L0",
+                "toLevelId": "L1",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              },
+              {
+                "fromLevelId": "L1",
+                "toLevelId": "L2",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              }
+            ],
+            "worstCaseTrendChecks": [
+              {
+                "metric": "ASPECT_RATIO",
+                "status": "PASS",
+                "worseDirection": "HIGHER",
+                "worstValues": [
+                  2.23606797749979,
+                  2.07110937212133,
+                  2.0197964929575467
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 2.23606797749979,
+                    "fineWorst": 2.07110937212133,
+                    "tolerance": 1.2710574864626038e-13,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 2.07110937212133,
+                    "fineWorst": 2.0197964929575467,
+                    "tolerance": 1.1772893754603786e-13,
+                    "holdsOrImproves": true
+                  }
+                ]
+              },
+              {
+                "metric": "MINIMUM_ANGLE_DEGREES",
+                "status": "PASS",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  26.565051177077994,
+                  28.66440901027768,
+                  29.551346552370404
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 26.565051177077994,
+                    "fineWorst": 28.66440901027768,
+                    "tolerance": 1.6293830077687335e-12,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 28.66440901027768,
+                    "fineWorst": 29.551346552370404,
+                    "tolerance": 1.6797995699772857e-12,
+                    "holdsOrImproves": true
+                  }
+                ]
+              },
+              {
+                "metric": "SCALED_JACOBIAN",
+                "status": "FAIL",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  0.4472135954999578,
+                  0.5301207806093899,
+                  0.49657823411350444
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 0.4472135954999578,
+                    "fineWorst": 0.5301207806093899,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 0.5301207806093899,
+                    "fineWorst": 0.49657823411350444,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "checkId": "M3-L3-Q8",
+            "status": "PASS",
+            "acceptancePolicyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+            "legacyV1Status": "PASS",
+            "diagnosticStatus": "PASS",
+            "measuredRefinement": {
+              "policyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+              "status": "PASS",
+              "levelChecks": [
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                }
+              ],
+              "refinementChecks": [
+                {
+                  "coarseMaximum": 1,
+                  "fineMaximum": 0.5,
+                  "decreases": true,
+                  "status": "PASS"
+                },
+                {
+                  "coarseMaximum": 0.5,
+                  "fineMaximum": 0.25,
+                  "decreases": true,
+                  "status": "PASS"
+                }
+              ]
+            },
+            "ladderId": "L3-Q8",
+            "stageId": "LAFEA.3",
+            "geometryCaseId": "M2-UNIT-SQUARE-01",
+            "elementFamily": "Q8",
+            "noProductionQualityBlock": true,
+            "seamConformingAcrossLevels": null,
+            "warpageDisposition": "NOT_APPLICABLE_CONTINUUM",
+            "sizeToThicknessDisposition": "NOT_APPLICABLE_CONTINUUM",
+            "thicknessFixture": null,
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:1756b2b38476708f7c3e26dc64f8068ee4e407a27d92f4467fc69df0435d6de2",
+                "nodeCount": 8,
+                "elementCount": 1,
+                "estimatedDofs": 16,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "OK",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 1,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 1,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "Q8",
+                        "nodeIds": [
+                          "N000001",
+                          "N000006",
+                          "N000008",
+                          "N000003",
+                          "N000004",
+                          "N000007",
+                          "N000005",
+                          "N000002"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000006",
+                          "x": 1,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000008",
+                          "x": 1,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000004",
+                          "x": 0.5,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 1,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 0.5,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 1,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "Q8",
+                        "nodeIds": [
+                          "N000001",
+                          "N000006",
+                          "N000008",
+                          "N000003",
+                          "N000004",
+                          "N000007",
+                          "N000005",
+                          "N000002"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000006",
+                          "x": 1,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000008",
+                          "x": 1,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000004",
+                          "x": 0.5,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 1,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 0.5,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 1,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "worst": 1,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": null,
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 1,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "worst": 1,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:19cc1ec32896b7c2de7d9282d4cd6f8cb3ecb1a89a4eea340950cb5e71ec15f6",
+                "nodeCount": 21,
+                "elementCount": 4,
+                "estimatedDofs": 42,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "OK",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 4,
+                    "minimum": 0.5,
+                    "median": 0.5,
+                    "maximum": 0.5,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 1,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "Q8",
+                        "nodeIds": [
+                          "N000001",
+                          "N000009",
+                          "N000011",
+                          "N000003",
+                          "N000006",
+                          "N000010",
+                          "N000007",
+                          "N000002"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000009",
+                          "x": 0.5,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000011",
+                          "x": 0.5,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000006",
+                          "x": 0.25,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000010",
+                          "x": 0.5,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 0.25,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 0.25,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 1,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "Q8",
+                        "nodeIds": [
+                          "N000001",
+                          "N000009",
+                          "N000011",
+                          "N000003",
+                          "N000006",
+                          "N000010",
+                          "N000007",
+                          "N000002"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000009",
+                          "x": 0.5,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000011",
+                          "x": 0.5,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000006",
+                          "x": 0.25,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000010",
+                          "x": 0.5,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 0.25,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 0.25,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 4,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "worst": 1,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": null,
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 4,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "worst": 1,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:39dc3479b5101dde307047764e1cccc4aec881b49cff8e91b6b8ed6e16ebb2c1",
+                "nodeCount": 65,
+                "elementCount": 16,
+                "estimatedDofs": 130,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "OK",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 16,
+                    "minimum": 0.25,
+                    "median": 0.25,
+                    "maximum": 0.25,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 1,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "Q8",
+                        "nodeIds": [
+                          "N000001",
+                          "N000015",
+                          "N000017",
+                          "N000003",
+                          "N000010",
+                          "N000016",
+                          "N000011",
+                          "N000002"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000015",
+                          "x": 0.25,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000017",
+                          "x": 0.25,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000010",
+                          "x": 0.125,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000016",
+                          "x": 0.25,
+                          "y": 0.125,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000011",
+                          "x": 0.125,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 0.125,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 1,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "Q8",
+                        "nodeIds": [
+                          "N000001",
+                          "N000015",
+                          "N000017",
+                          "N000003",
+                          "N000010",
+                          "N000016",
+                          "N000011",
+                          "N000002"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000015",
+                          "x": 0.25,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000017",
+                          "x": 0.25,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000010",
+                          "x": 0.125,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000016",
+                          "x": 0.25,
+                          "y": 0.125,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000011",
+                          "x": 0.125,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 0.125,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 16,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "worst": 1,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": null,
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 16,
+                    "minimum": 1,
+                    "median": 1,
+                    "maximum": 1,
+                    "worst": 1,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": null,
+                "seamConforming": null,
+                "maximumSeamPairDistance": null,
+                "sizeToThickness": null
+              }
+            ],
+            "refinementChecks": [
+              {
+                "fromLevelId": "L0",
+                "toLevelId": "L1",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              },
+              {
+                "fromLevelId": "L1",
+                "toLevelId": "L2",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              }
+            ],
+            "worstCaseTrendChecks": [
+              {
+                "metric": "ASPECT_RATIO",
+                "status": "PASS",
+                "worseDirection": "HIGHER",
+                "worstValues": [
+                  1,
+                  1,
+                  1
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 1,
+                    "fineWorst": 1,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 1,
+                    "fineWorst": 1,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  }
+                ]
+              },
+              {
+                "metric": "MINIMUM_ANGLE_DEGREES",
+                "status": "NOT_APPLICABLE",
+                "worstValues": [
+                  null,
+                  null,
+                  null
+                ]
+              },
+              {
+                "metric": "SCALED_JACOBIAN",
+                "status": "PASS",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  1,
+                  1,
+                  1
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 1,
+                    "fineWorst": 1,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 1,
+                    "fineWorst": 1,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "checkId": "M3-L4-CST-DKT",
+            "status": "PASS",
+            "acceptancePolicyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+            "legacyV1Status": "FAIL",
+            "diagnosticStatus": "FAIL",
+            "measuredRefinement": {
+              "policyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+              "status": "PASS",
+              "levelChecks": [
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                },
+                {
+                  "complete": true,
+                  "shellPass": true,
+                  "status": "PASS"
+                }
+              ],
+              "refinementChecks": [
+                {
+                  "coarseMaximum": 1.4142135623730951,
+                  "fineMaximum": 0.6029006806255569,
+                  "decreases": true,
+                  "status": "PASS"
+                },
+                {
+                  "coarseMaximum": 0.6029006806255569,
+                  "fineMaximum": 0.3108515430888314,
+                  "decreases": true,
+                  "status": "PASS"
+                }
+              ]
+            },
+            "ladderId": "L4-CST-DKT",
+            "stageId": "LAFEA.4",
+            "geometryCaseId": "M2-TWO-PATCH-SHELL-01",
+            "elementFamily": "CST_DKT_TRI3_THIN_SHELL_V1",
+            "noProductionQualityBlock": true,
+            "seamConformingAcrossLevels": true,
+            "warpageDisposition": "NOT_APPLICABLE_CST_DKT_TRI3_HAS_NO_QUAD_WARPAGE_METRIC",
+            "sizeToThicknessDisposition": "EVALUATED_FROZEN_1_5_MM_WITH_PRODUCTION_WARNING_SEMANTICS",
+            "thicknessFixture": {
+              "uniformThickness": 1.5,
+              "lengthUnit": "mm",
+              "minimumMultiple": 0.5,
+              "maximumMultiple": 2,
+              "outsideBandDisposition": "WARNING"
+            },
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:9f293149ed00fabffd9cd8e7fbbf403cfc4be2e14e93b5883b2a72274cb79bd5",
+                "nodeCount": 6,
+                "elementCount": 4,
+                "estimatedDofs": 30,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "OK",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 4,
+                    "minimum": 1.4142135623730951,
+                    "median": 1.4142135623730951,
+                    "maximum": 1.4142135623730951,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 1.4142135623730951,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000002",
+                          "N000001",
+                          "N000005"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 1,
+                          "y": 0,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 45.00000000000001,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000002",
+                          "N000001",
+                          "N000005"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 1,
+                          "y": 0,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.7071067811865475,
+                      "element": {
+                        "elementId": "E000001",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000002",
+                          "N000001",
+                          "N000005"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000002",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000001",
+                          "x": 0,
+                          "y": 0,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000005",
+                          "x": 1,
+                          "y": 0,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 4,
+                    "minimum": 1.4142135623730951,
+                    "median": 1.4142135623730951,
+                    "maximum": 1.4142135623730951,
+                    "worst": 1.4142135623730951,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 4,
+                    "minimum": 45.00000000000001,
+                    "median": 45.00000000000001,
+                    "maximum": 45.00000000000001,
+                    "worst": 45.00000000000001,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 4,
+                    "minimum": 0.7071067811865475,
+                    "median": 0.7071067811865475,
+                    "maximum": 0.7071067811865475,
+                    "worst": 0.7071067811865475,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": {
+                  "definition": "MAX_LONGEST_CORNER_EDGE_RATIO_ACROSS_SHARED_CORNER_EDGE_V1",
+                  "maximumAllowed": 1.5,
+                  "maximumObserved": 1,
+                  "adjacentEdgeCount": 3,
+                  "violatingAdjacencyCount": 0,
+                  "violatingAdjacencies": [],
+                  "qualification": "PASS"
+                },
+                "seamConforming": true,
+                "maximumSeamPairDistance": 0,
+                "sizeToThickness": {
+                  "sampleCount": 4,
+                  "minimum": 0.9428090415820635,
+                  "median": 0.9428090415820635,
+                  "maximum": 0.9428090415820635,
+                  "okCount": 4,
+                  "warningCount": 0,
+                  "blockCount": 0,
+                  "minimumMultiple": 0.5,
+                  "maximumMultiple": 2,
+                  "thickness": 1.5,
+                  "statusPolicy": "PRODUCTION_GATE_WARNING_OUTSIDE_BAND_NO_BENCHMARK_BLOCK_ESCALATION"
+                }
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:9c6cb0fc70cf48779593dbff7d3542e00ca2db83002e321cb261e4ad2a87dc3c",
+                "nodeCount": 19,
+                "elementCount": 24,
+                "estimatedDofs": 95,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "OK",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 24,
+                    "minimum": 0.3847596460079317,
+                    "median": 0.5128082896306996,
+                    "maximum": 0.6029006806255569,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 1.7948229202565222,
+                      "element": {
+                        "elementId": "E000006",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000006",
+                          "N000003",
+                          "N000007"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000006",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 0.50065306122449,
+                          "y": 0.664089680144675,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 33.859410793868584,
+                      "element": {
+                        "elementId": "E000006",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000006",
+                          "N000003",
+                          "N000007"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000006",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 0.50065306122449,
+                          "y": 0.664089680144675,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.557156975684273,
+                      "element": {
+                        "elementId": "E000006",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000006",
+                          "N000003",
+                          "N000007"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000006",
+                          "x": 0.5,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000003",
+                          "x": 0,
+                          "y": 1,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000007",
+                          "x": 0.50065306122449,
+                          "y": 0.664089680144675,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 24,
+                    "minimum": 1.1383039324378794,
+                    "median": 1.3286478644526065,
+                    "maximum": 1.7948229202565222,
+                    "worst": 1.7948229202565222,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 24,
+                    "minimum": 33.859410793868584,
+                    "median": 46.70627755932282,
+                    "maximum": 54.817506678657615,
+                    "worst": 33.859410793868584,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 24,
+                    "minimum": 0.557156975684273,
+                    "median": 0.7278283921762845,
+                    "maximum": 0.8173209886115835,
+                    "worst": 0.557156975684273,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": {
+                  "definition": "MAX_LONGEST_CORNER_EDGE_RATIO_ACROSS_SHARED_CORNER_EDGE_V1",
+                  "maximumAllowed": 1.5,
+                  "maximumObserved": 1.3269833508544213,
+                  "adjacentEdgeCount": 30,
+                  "violatingAdjacencyCount": 0,
+                  "violatingAdjacencies": [],
+                  "qualification": "PASS"
+                },
+                "seamConforming": true,
+                "maximumSeamPairDistance": 0,
+                "sizeToThickness": {
+                  "sampleCount": 24,
+                  "minimum": 0.2565064306719545,
+                  "median": 0.341872193087133,
+                  "maximum": 0.4019337870837046,
+                  "okCount": 0,
+                  "warningCount": 24,
+                  "blockCount": 0,
+                  "minimumMultiple": 0.5,
+                  "maximumMultiple": 2,
+                  "thickness": 1.5,
+                  "statusPolicy": "PRODUCTION_GATE_WARNING_OUTSIDE_BAND_NO_BENCHMARK_BLOCK_ESCALATION"
+                }
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:6b26641a035254c21293a238799dc20b5fabc84cf902e673f2a6e8fefa7351f9",
+                "nodeCount": 55,
+                "elementCount": 84,
+                "estimatedDofs": 275,
+                "resourceDisposition": "WITHIN_LIMITS",
+                "qualityWorstStatus": "WARNING",
+                "meshEvidence": {
+                  "complete": true,
+                  "measuredLengths": {
+                    "sampleCount": 84,
+                    "minimum": 0.21710184394945037,
+                    "median": 0.2592969607345953,
+                    "maximum": 0.3108515430888314,
+                    "valid": true
+                  },
+                  "worstElements": [
+                    {
+                      "selectedByMetric": "ASPECT_RATIO",
+                      "metricValue": 2.0240376667840216,
+                      "element": {
+                        "elementId": "E000080",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000047",
+                          "N000048",
+                          "N000045"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000047",
+                          "x": 2,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000048",
+                          "x": 2,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000045",
+                          "x": 1.85135660389972,
+                          "y": 0.237130684789283,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "MINIMUM_ANGLE_DEGREES",
+                      "metricValue": 29.48663964851338,
+                      "element": {
+                        "elementId": "E000080",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000047",
+                          "N000048",
+                          "N000045"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000047",
+                          "x": 2,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000048",
+                          "x": 2,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000045",
+                          "x": 1.85135660389972,
+                          "y": 0.237130684789283,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    },
+                    {
+                      "selectedByMetric": "SCALED_JACOBIAN",
+                      "metricValue": 0.4922205953291582,
+                      "element": {
+                        "elementId": "E000080",
+                        "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                        "nodeIds": [
+                          "N000047",
+                          "N000048",
+                          "N000045"
+                        ]
+                      },
+                      "nodes": [
+                        {
+                          "nodeId": "N000047",
+                          "x": 2,
+                          "y": 0.25,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000048",
+                          "x": 2,
+                          "y": 0.5,
+                          "z": 0
+                        },
+                        {
+                          "nodeId": "N000045",
+                          "x": 1.85135660389972,
+                          "y": 0.237130684789283,
+                          "z": 0
+                        }
+                      ],
+                      "t6Mapping": null
+                    }
+                  ]
+                },
+                "qualityDistributions": {
+                  "ASPECT_RATIO": {
+                    "sampleCount": 84,
+                    "minimum": 1.01987170716885,
+                    "median": 1.206289858124224,
+                    "maximum": 2.0240376667840216,
+                    "worst": 2.0240376667840216,
+                    "worseDirection": "HIGHER"
+                  },
+                  "MINIMUM_ANGLE_DEGREES": {
+                    "sampleCount": 84,
+                    "minimum": 29.48663964851338,
+                    "median": 51.13116104874545,
+                    "maximum": 59.208091592939745,
+                    "worst": 29.48663964851338,
+                    "worseDirection": "LOWER"
+                  },
+                  "SCALED_JACOBIAN": {
+                    "sampleCount": 84,
+                    "minimum": 0.4922205953291582,
+                    "median": 0.7785678057199344,
+                    "maximum": 0.8590322015867843,
+                    "worst": 0.4922205953291582,
+                    "worseDirection": "LOWER"
+                  }
+                },
+                "adjacentSizeRatio": {
+                  "definition": "MAX_LONGEST_CORNER_EDGE_RATIO_ACROSS_SHARED_CORNER_EDGE_V1",
+                  "maximumAllowed": 1.5,
+                  "maximumObserved": 1.2381209236630801,
+                  "adjacentEdgeCount": 114,
+                  "violatingAdjacencyCount": 0,
+                  "violatingAdjacencies": [],
+                  "qualification": "PASS"
+                },
+                "seamConforming": true,
+                "maximumSeamPairDistance": 0,
+                "sizeToThickness": {
+                  "sampleCount": 84,
+                  "minimum": 0.1447345626329669,
+                  "median": 0.17286464048973021,
+                  "maximum": 0.20723436205922094,
+                  "okCount": 0,
+                  "warningCount": 84,
+                  "blockCount": 0,
+                  "minimumMultiple": 0.5,
+                  "maximumMultiple": 2,
+                  "thickness": 1.5,
+                  "statusPolicy": "PRODUCTION_GATE_WARNING_OUTSIDE_BAND_NO_BENCHMARK_BLOCK_ESCALATION"
+                }
+              }
+            ],
+            "refinementChecks": [
+              {
+                "fromLevelId": "L0",
+                "toLevelId": "L1",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              },
+              {
+                "fromLevelId": "L1",
+                "toLevelId": "L2",
+                "targetRatio": 2,
+                "expectedTargetRatio": 2,
+                "meshChanged": true,
+                "nodeCountIncreased": true,
+                "elementCountIncreased": true,
+                "status": "PASS"
+              }
+            ],
+            "worstCaseTrendChecks": [
+              {
+                "metric": "ASPECT_RATIO",
+                "status": "FAIL",
+                "worseDirection": "HIGHER",
+                "worstValues": [
+                  1.4142135623730951,
+                  1.7948229202565222,
+                  2.0240376667840216
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 1.4142135623730951,
+                    "fineWorst": 1.7948229202565222,
+                    "tolerance": 1.0202387103712012e-13,
+                    "holdsOrImproves": false
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 1.7948229202565222,
+                    "fineWorst": 2.0240376667840216,
+                    "tolerance": 1.150532208830567e-13,
+                    "holdsOrImproves": false
+                  }
+                ]
+              },
+              {
+                "metric": "MINIMUM_ANGLE_DEGREES",
+                "status": "FAIL",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  45.00000000000001,
+                  33.859410793868584,
+                  29.48663964851338
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 45.00000000000001,
+                    "fineWorst": 33.859410793868584,
+                    "tolerance": 2.557953848736361e-12,
+                    "holdsOrImproves": false
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 33.859410793868584,
+                    "fineWorst": 29.48663964851338,
+                    "tolerance": 1.924684670136036e-12,
+                    "holdsOrImproves": false
+                  }
+                ]
+              },
+              {
+                "metric": "SCALED_JACOBIAN",
+                "status": "FAIL",
+                "worseDirection": "LOWER",
+                "worstValues": [
+                  0.7071067811865475,
+                  0.557156975684273,
+                  0.4922205953291582
+                ],
+                "pairChecks": [
+                  {
+                    "fromLevelId": "L0",
+                    "toLevelId": "L1",
+                    "coarseWorst": 0.7071067811865475,
+                    "fineWorst": 0.557156975684273,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": false
+                  },
+                  {
+                    "fromLevelId": "L1",
+                    "toLevelId": "L2",
+                    "coarseWorst": 0.557156975684273,
+                    "fineWorst": 0.4922205953291582,
+                    "tolerance": 5.684341886080802e-14,
+                    "holdsOrImproves": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "status": "PASS",
+      "predecessorGateSatisfied": true,
+      "advancementPolicy": "AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",
+      "elapsedMs": 427.259
+    }
+  ],
+  "caseStatus": "PASS",
+  "nextBenchmarkAuthorized": true,
+  "baselineDisposition": "ELIGIBLE_EXECUTION_BASELINE",
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "benchmarkAuthoredMeshUsed": false,
+    "benchmarkSideMeshMutationUsed": false,
+    "fabricatedPhysicsUsed": false,
+    "solverOrCompilerExecuted": false,
+    "benchmarkRegistrationGranted": true,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "recordHash": "sha256:ed9646519b4f898fbc16d8a8af41b94a59af135980d5e1f62fc859254edffcc5"
+}

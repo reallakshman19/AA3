@@ -1,0 +1,132 @@
+{
+  "schema": "lafea-mesh-m3-policy-check/v1",
+  "policyId": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
+  "exactHeadSha": "c568c460fc6d3ab2e7bd5db9eb52f722dbe2d512",
+  "inputAuditHash": "sha256:c4280b082a736c9ed20353a61666916c1f5ce9a17fb644c53586f4e589b99796",
+  "inputBasis": "[SIMULATED] public production-mesh fixture run; negative controls corrupt copies only",
+  "status": "PASS",
+  "negativeControls": [
+    {
+      "id": "UNCHANGED_ACTUAL_SIZE",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "NONFINITE_LENGTH",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "ZERO_LENGTH",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "NEGATIVE_LENGTH",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "MISSING_EVIDENCE",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "INCOMPLETE_EVIDENCE",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "WRONG_SAMPLE_COUNT",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "QUALITY_BLOCK",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "MISSING_QUALITY_STATUS",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "BROKEN_SEAM",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "MISSING_SEAM_DISTANCE",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "SEAM_GAP",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "ADJACENCY_BLOCK",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "MISSING_ADJACENCY",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "DUPLICATE_MESH",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "RESOURCE_LIMIT",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    },
+    {
+      "id": "INSUFFICIENT_LEVELS",
+      "status": "PASS",
+      "observedGateStatus": "FAIL"
+    }
+  ],
+  "mappingChecks": [
+    {
+      "levelId": "L0",
+      "elementId": "E000006",
+      "expectedDeterminant": 0.5,
+      "cyclicMinimumScaledJacobians": [
+        0.4472135954999578,
+        1,
+        0.8944271909999156
+      ],
+      "status": "PASS"
+    },
+    {
+      "levelId": "L1",
+      "elementId": "E000056",
+      "expectedDeterminant": 0.14582690329218106,
+      "cyclicMinimumScaledJacobians": [
+        0.5301207806093899,
+        0.9934667181703213,
+        0.9028809846744813
+      ],
+      "status": "PASS"
+    },
+    {
+      "levelId": "L2",
+      "elementId": "E000001",
+      "expectedDeterminant": 0.037564073328110986,
+      "cyclicMinimumScaledJacobians": [
+        0.49657823411350444,
+        0.9964803933248086,
+        0.823310729849115
+      ],
+      "status": "PASS"
+    }
+  ],
+  "sourcePinNegative": "SEPARATE_ISOLATED_PUBLIC_RUN_REQUIRED",
+  "solverExecutionAuthorizedByThisCheck": false
+}

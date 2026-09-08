@@ -1,0 +1,1923 @@
+{
+  "schema": "lafea-benchmark-audit-record/v1",
+  "programId": "BM-MESH",
+  "runId": "mesh-1710-m3v2-final",
+  "generatedAt": "2026-09-08T02:07:52.899Z",
+  "repository": "reallaksh19/Advanced_Analysis",
+  "exactHeadSha": "5eadd65ddd5716aaa4a371e454b08d69d2d61a78",
+  "trackedTreeClean": true,
+  "environment": {
+    "node": "v26.3.0",
+    "platform": "win32",
+    "arch": "x64",
+    "hostname": "Lakshman"
+  },
+  "caseId": "MESH",
+  "stageId": "M4",
+  "methodResults": [
+    {
+      "methodId": "BM-MESH-M4",
+      "materialLeg": "ADV-MESH-1710/LEG-003",
+      "benchmarkClass": "STAGED_MESH_BENCHMARK",
+      "comparisonPolicy": "FROZEN_PHYSICS_RESPONSE_THREE_LEVEL_PRODUCTION_SOLVER_CONVERGENCE_WITH_NO_LIMIT_OVERRIDES",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "scripts/lafea-mesh-benchmark-run.mjs",
+        "--stage",
+        "M4",
+        "--expected-head",
+        "5eadd65ddd5716aaa4a371e454b08d69d2d61a78",
+        "--run-id",
+        "mesh-1710-m3v2-final"
+      ],
+      "sourceCustody": [
+        {
+          "sourceId": "S-001",
+          "path": "src/workspace/lafea-mesh-producer-registry.js",
+          "expectedBlobSha": "b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6",
+          "observedBlobSha": "b5fccf89dfb99fd09c4faeb6ef1d7db9e08101a6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-002",
+          "path": "src/workspace/lafea-mesh-producer-binding.js",
+          "expectedBlobSha": "e8307066293314ad952608872db596cf1898d5c1",
+          "observedBlobSha": "e8307066293314ad952608872db596cf1898d5c1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-003",
+          "path": "src/workspace/lafea-mesh-producer-engine.js",
+          "expectedBlobSha": "36fe0e7cb8b95aab8ebc2532578a68a1eb75f558",
+          "observedBlobSha": "36fe0e7cb8b95aab8ebc2532578a68a1eb75f558",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-004",
+          "path": "src/workspace/lafea-shell-mesh-producer.js",
+          "expectedBlobSha": "6bb02be40673ce79bb3488905c4ee465ad6625df",
+          "observedBlobSha": "6bb02be40673ce79bb3488905c4ee465ad6625df",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-005",
+          "path": "src/workspace/lafea-mesh-geometry-topology-adapter.js",
+          "expectedBlobSha": "0dea937de150ca5a54cc7750c907fd3fafd7761c",
+          "observedBlobSha": "0dea937de150ca5a54cc7750c907fd3fafd7761c",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-006",
+          "path": "src/workspace/lafea-analysis-mesh-contract.js",
+          "expectedBlobSha": "c5b9b246321456d3514de4b9294de831b4a82c0e",
+          "observedBlobSha": "c5b9b246321456d3514de4b9294de831b4a82c0e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-007",
+          "path": "src/core/lafea-meshing/quality-gates.js",
+          "expectedBlobSha": "da21c333a5bc22e59c4b52c2c1ff135ee7460ebb",
+          "observedBlobSha": "da21c333a5bc22e59c4b52c2c1ff135ee7460ebb",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-008",
+          "path": "scripts/lafea.10-quality-gate-check.mjs",
+          "expectedBlobSha": "97fa853ba347a65e2ad451ff9bc16488f9d4b146",
+          "observedBlobSha": "97fa853ba347a65e2ad451ff9bc16488f9d4b146",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-009",
+          "path": "src/workspace/lafea-stage-analysis-adapter.js",
+          "expectedBlobSha": "899afb248fc9864bdbea44f34a4a675d3574e5fa",
+          "observedBlobSha": "899afb248fc9864bdbea44f34a4a675d3574e5fa",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-010",
+          "path": "validation/lafea-benchmark-data/B01/sources/source-registry.json",
+          "expectedBlobSha": "21d86d5884e42adb462c402ca94b1289c27884f3",
+          "observedBlobSha": "21d86d5884e42adb462c402ca94b1289c27884f3",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-011",
+          "path": "src/core/lafea-profile-contract/field-schemas.js",
+          "expectedBlobSha": "1f860b106834d16d0400ac2d758d9e38d8051711",
+          "observedBlobSha": "1f860b106834d16d0400ac2d758d9e38d8051711",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-012",
+          "path": "src/core/lafea-meshing/mesh-convergence-framework.js",
+          "expectedBlobSha": "c06ebf7006b76b38de8c416f659152396d34976e",
+          "observedBlobSha": "c06ebf7006b76b38de8c416f659152396d34976e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-013",
+          "path": "src/workspace/lafea-continuum-physical-probe.js",
+          "expectedBlobSha": "f1991fc17f0e799933917601b78c7a89af196df1",
+          "observedBlobSha": "f1991fc17f0e799933917601b78c7a89af196df1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-014",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json",
+          "expectedBlobSha": "7be1e34b9e35c35f27be4aae49dfc441090fad4b",
+          "observedBlobSha": "7be1e34b9e35c35f27be4aae49dfc441090fad4b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-015",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json",
+          "expectedBlobSha": "32436222284374cd94bad09ba4980ce64a0d28e8",
+          "observedBlobSha": "32436222284374cd94bad09ba4980ce64a0d28e8",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-016",
+          "path": "src/workspace/lafea-shell-multipatch-midsurface-contract.js",
+          "expectedBlobSha": "45158697eb552688f71b68ce09c9e33869f263f2",
+          "observedBlobSha": "45158697eb552688f71b68ce09c9e33869f263f2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-017",
+          "path": "src/workspace/lafea-shell-multipatch-mesh-core.js",
+          "expectedBlobSha": "b54063378d8265e5d5905975368b8094c251b8e7",
+          "observedBlobSha": "b54063378d8265e5d5905975368b8094c251b8e7",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-018",
+          "path": "src/workspace/lafea-domain-first-requests.js",
+          "expectedBlobSha": "51907e33fcf363e1d84fa491e7124a3c961529a0",
+          "observedBlobSha": "51907e33fcf363e1d84fa491e7124a3c961529a0",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-019",
+          "path": "src/core/lafea-meshing/mapped-mitc-mesh.js",
+          "expectedBlobSha": "4ad4740e3853cfec31ea372710713a8e270619f6",
+          "observedBlobSha": "4ad4740e3853cfec31ea372710713a8e270619f6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-020",
+          "path": "src/workspace/lafea-shell-thickness-basis.js",
+          "expectedBlobSha": "643b73a6c6589cb2b2dbaa2879246d6e3ef057f1",
+          "observedBlobSha": "643b73a6c6589cb2b2dbaa2879246d6e3ef057f1",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-021",
+          "path": "scripts/lafea.4-fixtures.mjs",
+          "expectedBlobSha": "b3e68b24064221a7d35dd1fbb156addfc41667ef",
+          "observedBlobSha": "b3e68b24064221a7d35dd1fbb156addfc41667ef",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-022",
+          "path": "scripts/lafea-tech2-thickness-curvature-check.mjs",
+          "expectedBlobSha": "31348e942aeca59c17e7c00df3ab4732a60e1cb6",
+          "observedBlobSha": "31348e942aeca59c17e7c00df3ab4732a60e1cb6",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-023",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json",
+          "expectedBlobSha": "b0e408cee23df76d247a9dc7a7ac2bc49c144094",
+          "observedBlobSha": "b0e408cee23df76d247a9dc7a7ac2bc49c144094",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-024",
+          "path": "validation/bucket-01/04-t3-patch-oracle.json",
+          "expectedBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8",
+          "observedBlobSha": "38cdab72f181eb4407a16aaa0753f8770d5989d8",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-025",
+          "path": "scripts/lafea-bucket-01-t3-patch-check.mjs",
+          "expectedBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e",
+          "observedBlobSha": "47cecae5a5a159ea1ee0e28a0d92990a88f1824e",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-026",
+          "path": "src/core/local-continuum/index.js",
+          "expectedBlobSha": "6c5184ec3044eef0ea48d1500985eb513e9f34d2",
+          "observedBlobSha": "6c5184ec3044eef0ea48d1500985eb513e9f34d2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-027",
+          "path": "scripts/lafea.4-production-route-benchmarks-check.mjs",
+          "expectedBlobSha": "da375442897a302027e15bb3400390ea3c715111",
+          "observedBlobSha": "da375442897a302027e15bb3400390ea3c715111",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-028",
+          "path": "src/core/local-shell/index.js",
+          "expectedBlobSha": "4af7ff09daae2b0e35edbabce627aa9b546485e2",
+          "observedBlobSha": "4af7ff09daae2b0e35edbabce627aa9b546485e2",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-029",
+          "path": "src/core/local-shell/cst.js",
+          "expectedBlobSha": "ae140f4c8cfd74c009b3bd9743d1deed00dd89ea",
+          "observedBlobSha": "ae140f4c8cfd74c009b3bd9743d1deed00dd89ea",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-030",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json",
+          "expectedBlobSha": "7fcf6bea3c31a16973b953568bc9732401422a1b",
+          "observedBlobSha": "7fcf6bea3c31a16973b953568bc9732401422a1b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-031",
+          "path": "scripts/lib/lafea-mesh-benchmark-m4.mjs",
+          "expectedBlobSha": "69e286739a620ff8b5522d8225752c2780735f46",
+          "observedBlobSha": "69e286739a620ff8b5522d8225752c2780735f46",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-032",
+          "path": "scripts/lafea-mesh-benchmark-run.mjs",
+          "expectedBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+          "observedBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-033",
+          "path": "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json",
+          "expectedBlobSha": "9f1889bc995e8774a363561a53f2427d384bf96a",
+          "observedBlobSha": "9f1889bc995e8774a363561a53f2427d384bf96a",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-034",
+          "path": "scripts/lib/lafea-mesh-benchmark-m3.mjs",
+          "expectedBlobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d",
+          "observedBlobSha": "3180bf50cb19e121377a985d2c97870c83d0d18d",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-035",
+          "path": "src/core/lafea-meshing/element-geometry.js",
+          "expectedBlobSha": "a99f90f19ed9b414689f875457558e29f667f69b",
+          "observedBlobSha": "a99f90f19ed9b414689f875457558e29f667f69b",
+          "status": "PASS"
+        },
+        {
+          "sourceId": "S-036",
+          "path": "src/workspace/lafea-analysis-mesh-quality.js",
+          "expectedBlobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341",
+          "observedBlobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341",
+          "status": "PASS"
+        }
+      ],
+      "sourceRefHashes": {
+        "validation/lafea-benchmark-data/MESH/bucket-manifest.json": "sha256:f36e0f8acb42ee80c6b7c2de833b2ba31b303ab039636c2c73845198544f3fc6",
+        "validation/lafea-benchmark-data/MESH/sources/source-registry.json": "sha256:2cd901039adc96bb16e3a1db908e5e5a5506a62d204fde3ed12dd18deca15583",
+        "validation/lafea-benchmark-data/MESH/geometry/cases.json": "sha256:a3ec24bebcc6ee19f35706d5063947533c184f25732790b08199a58526836a14",
+        "validation/lafea-benchmark-data/MESH/oracle/expected-values.json": "sha256:6e9adf0a08461b16ff1ed6cb393cbe2e2c36e16c05a910e075513bea4aff9d39",
+        "validation/lafea-benchmark-data/MESH/convergence/mesh-ladders.json": "sha256:d8106bc24aa90cd71b380d3dbadb30a0fd2bf0b198af08086b662d9a5ec0dcb8",
+        "validation/lafea-benchmark-data/MESH/convergence/fixed-probes.json": "sha256:49856393c4c93cc20ce8165e83cce41cc8dd10d106293d894f49568d97ed116b",
+        "validation/lafea-benchmark-data/MESH/convergence/shell-thickness.json": "sha256:6646db49efeee9c559f1b6dbd1455e092227d30739ede9469343a51f8a0b4e60",
+        "validation/lafea-benchmark-data/MESH/convergence/m4-physics-response.json": "sha256:73563cd2fead924cc2ff42ad318f43a899179deb9383598741f591cca352b635",
+        "validation/lafea-benchmark-data/MESH/convergence/m3-policy-v2.json": "sha256:c3efcc84142da3521e5e88d14ff92e1ac7567cf957cb625bd02948b228fa58db"
+      },
+      "evidence": {
+        "schema": "lafea-mesh-benchmark-stage-evidence/v1",
+        "status": "FAIL",
+        "blocker": null,
+        "m4PhysicsResponseFixtureHash": "sha256:73563cd2fead924cc2ff42ad318f43a899179deb9383598741f591cca352b635",
+        "solverExecuted": true,
+        "convergenceFramework": {
+          "minimumLevelCount": 3,
+          "limitOverridesUsed": false,
+          "quantities": [
+            "STRAIN_ENERGY",
+            "SELECTED_DISPLACEMENT"
+          ]
+        },
+        "observations": [
+          {
+            "checkId": "M4-L3-T3",
+            "ladderId": "L3-T3",
+            "stageId": "LAFEA.3",
+            "status": "PASS",
+            "solverExecuted": true,
+            "levelGate": {
+              "levelCount": 3,
+              "exempted": false
+            },
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:48d5798f0dd7dcf392ba519b3fe3d96415f4f10c15c7a259341114e688db34b3",
+                "nodeCount": 14,
+                "elementCount": 14,
+                "solverModelHash": "fnv1a64:b3013709b7feb17f",
+                "executionHash": "fnv1a64:e411519acdf87c03",
+                "resultPayloadHash": "fnv1a64:c75d6961e91a7289",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.012500000000000002,
+                "expectedAnalyticalStrainEnergy": 0.0125,
+                "analyticalStrainEnergyAbsoluteDelta": 1.734723475976807e-18,
+                "probes": [
+                  {
+                    "probeId": "L3-L-P1",
+                    "authoritativeValue": 0.0000185,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000005",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.165,
+                        "eta": 0.41,
+                        "lambda1": 0.425,
+                        "lambda2": 0.165,
+                        "lambda3": 0.41
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.41
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 1,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:48d5798f0dd7dcf392ba519b3fe3d96415f4f10c15c7a259341114e688db34b3",
+                      "solverModelHash": "fnv1a64:b3013709b7feb17f",
+                      "executionHash": "fnv1a64:e411519acdf87c03",
+                      "canonicalExecutionInputHash": "sha256:73de4317f4036a1c6c4ec66d51dbd27bc9e55031e061d43ddbe2428ceca730e4",
+                      "recoveryHash": "sha256:401fdda96a4160ee35d9c53902c4292c73f694c11426e24177e1394513fbd71f"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P2",
+                    "authoritativeValue": 0.00012050000000000003,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0001205,
+                    "analyticalAbsoluteDelta": 2.710505431213761e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000013",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.41000000000000014,
+                        "eta": 0.37,
+                        "lambda1": 0.21999999999999986,
+                        "lambda2": 0.41000000000000014,
+                        "lambda3": 0.37
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 2.41,
+                        "y": 0.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 1,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:48d5798f0dd7dcf392ba519b3fe3d96415f4f10c15c7a259341114e688db34b3",
+                      "solverModelHash": "fnv1a64:b3013709b7feb17f",
+                      "executionHash": "fnv1a64:e411519acdf87c03",
+                      "canonicalExecutionInputHash": "sha256:73de4317f4036a1c6c4ec66d51dbd27bc9e55031e061d43ddbe2428ceca730e4",
+                      "recoveryHash": "sha256:401fdda96a4160ee35d9c53902c4292c73f694c11426e24177e1394513fbd71f"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P3",
+                    "authoritativeValue": 0.0000215,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000215,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000004",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.05999999999999989,
+                        "eta": 0.7400000000000002,
+                        "lambda1": 0.19999999999999996,
+                        "lambda2": 0.05999999999999989,
+                        "lambda3": 0.7400000000000002
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.43,
+                        "y": 2.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.5,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:48d5798f0dd7dcf392ba519b3fe3d96415f4f10c15c7a259341114e688db34b3",
+                      "solverModelHash": "fnv1a64:b3013709b7feb17f",
+                      "executionHash": "fnv1a64:e411519acdf87c03",
+                      "canonicalExecutionInputHash": "sha256:73de4317f4036a1c6c4ec66d51dbd27bc9e55031e061d43ddbe2428ceca730e4",
+                      "recoveryHash": "sha256:401fdda96a4160ee35d9c53902c4292c73f694c11426e24177e1394513fbd71f"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:a15a1c340922c0664ba8b5b55bf1b379d02715c1ab24d831af9bd62e12f7884b",
+                "nodeCount": 41,
+                "elementCount": 56,
+                "solverModelHash": "fnv1a64:db15df62960e99ac",
+                "executionHash": "fnv1a64:e62d0c8d1041ab93",
+                "resultPayloadHash": "fnv1a64:84c3fb00a689d7fa",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.012499999999999999,
+                "expectedAnalyticalStrainEnergy": 0.0125,
+                "analyticalStrainEnergyAbsoluteDelta": 1.734723475976807e-18,
+                "probes": [
+                  {
+                    "probeId": "L3-L-P1",
+                    "authoritativeValue": 0.000018500000000000013,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 1.3552527156068805e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000018",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.8069315250255185,
+                        "eta": 0.13530126398891032,
+                        "lambda1": 0.05776721098557122,
+                        "lambda2": 0.8069315250255185,
+                        "lambda3": 0.13530126398891032
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.41
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.20053513944973062,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:a15a1c340922c0664ba8b5b55bf1b379d02715c1ab24d831af9bd62e12f7884b",
+                      "solverModelHash": "fnv1a64:db15df62960e99ac",
+                      "executionHash": "fnv1a64:e62d0c8d1041ab93",
+                      "canonicalExecutionInputHash": "sha256:38614740170b86c338f4f8aa8e4cfa500f2ee7c58f42c65209641c766cd595b3",
+                      "recoveryHash": "sha256:c5fadb17d7b9ea26b0712e15827dd361e6255fd758f3ba7f0ce552328f0c041f"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P2",
+                    "authoritativeValue": 0.00012050000000000003,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0001205,
+                    "analyticalAbsoluteDelta": 2.710505431213761e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000048",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.1009909668161831,
+                        "eta": 0.26897907118924097,
+                        "lambda1": 0.630029961994576,
+                        "lambda2": 0.1009909668161831,
+                        "lambda3": 0.26897907118924097
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 2.41,
+                        "y": 0.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.18899548124813415,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:a15a1c340922c0664ba8b5b55bf1b379d02715c1ab24d831af9bd62e12f7884b",
+                      "solverModelHash": "fnv1a64:db15df62960e99ac",
+                      "executionHash": "fnv1a64:e62d0c8d1041ab93",
+                      "canonicalExecutionInputHash": "sha256:38614740170b86c338f4f8aa8e4cfa500f2ee7c58f42c65209641c766cd595b3",
+                      "recoveryHash": "sha256:c5fadb17d7b9ea26b0712e15827dd361e6255fd758f3ba7f0ce552328f0c041f"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P3",
+                    "authoritativeValue": 0.0000215,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000215,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000014",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.07981989993924747,
+                        "eta": 0.41411092510491615,
+                        "lambda1": 0.5060691749558364,
+                        "lambda2": 0.07981989993924747,
+                        "lambda3": 0.41411092510491615
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.43,
+                        "y": 2.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.1308713951727877,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:a15a1c340922c0664ba8b5b55bf1b379d02715c1ab24d831af9bd62e12f7884b",
+                      "solverModelHash": "fnv1a64:db15df62960e99ac",
+                      "executionHash": "fnv1a64:e62d0c8d1041ab93",
+                      "canonicalExecutionInputHash": "sha256:38614740170b86c338f4f8aa8e4cfa500f2ee7c58f42c65209641c766cd595b3",
+                      "recoveryHash": "sha256:c5fadb17d7b9ea26b0712e15827dd361e6255fd758f3ba7f0ce552328f0c041f"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:7ab44a71bccd28203c80708d892febb81865592675addf9315ec3b3c7547eb0f",
+                "nodeCount": 126,
+                "elementCount": 202,
+                "solverModelHash": "fnv1a64:b6b38bf19c4ec855",
+                "executionHash": "fnv1a64:eae773f8a53062fa",
+                "resultPayloadHash": "fnv1a64:d9dc0670838d32bf",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.012499999999999975,
+                "expectedAnalyticalStrainEnergy": 0.0125,
+                "analyticalStrainEnergyAbsoluteDelta": 2.6020852139652106e-17,
+                "probes": [
+                  {
+                    "probeId": "L3-L-P1",
+                    "authoritativeValue": 0.000018500000000000023,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 2.371692252312041e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000039",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.15910064925306894,
+                        "eta": 0.3479124785733658,
+                        "lambda1": 0.4929868721735653,
+                        "lambda2": 0.15910064925306894,
+                        "lambda3": 0.3479124785733658
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.41000000000000003
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "jacobianDeterminant": 0.053331206217879706,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:7ab44a71bccd28203c80708d892febb81865592675addf9315ec3b3c7547eb0f",
+                      "solverModelHash": "fnv1a64:b6b38bf19c4ec855",
+                      "executionHash": "fnv1a64:eae773f8a53062fa",
+                      "canonicalExecutionInputHash": "sha256:618c3251e7e00e7c70f15b19fcaba762cd9166106577adc30f53b57aa70cbcf0",
+                      "recoveryHash": "sha256:ef3819ebda4fdd70c026b502948394d503bf6a63c63825eb73a06f3c1ea91131"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P2",
+                    "authoritativeValue": 0.00012050000000000002,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0001205,
+                    "analyticalAbsoluteDelta": 1.3552527156068805e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000173",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.2877415890892671,
+                        "eta": 0.5127326511980965,
+                        "lambda1": 0.1995257597126363,
+                        "lambda2": 0.2877415890892671,
+                        "lambda3": 0.5127326511980965
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 2.41,
+                        "y": 0.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.05530715865026183,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:7ab44a71bccd28203c80708d892febb81865592675addf9315ec3b3c7547eb0f",
+                      "solverModelHash": "fnv1a64:b6b38bf19c4ec855",
+                      "executionHash": "fnv1a64:eae773f8a53062fa",
+                      "canonicalExecutionInputHash": "sha256:618c3251e7e00e7c70f15b19fcaba762cd9166106577adc30f53b57aa70cbcf0",
+                      "recoveryHash": "sha256:ef3819ebda4fdd70c026b502948394d503bf6a63c63825eb73a06f3c1ea91131"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P3",
+                    "authoritativeValue": 0.000021500000000000008,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000215,
+                    "analyticalAbsoluteDelta": 6.776263578034403e-21,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000067",
+                      "elementType": "T3",
+                      "naturalCoordinates": {
+                        "xi": 0.03265032258826723,
+                        "eta": 0.19288301635210767,
+                        "lambda1": 0.774466661059625,
+                        "lambda2": 0.03265032258826723,
+                        "lambda3": 0.19288301635210767
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.42999999999999994,
+                        "y": 2.37
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "jacobianDeterminant": 0.05514590039948265,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:7ab44a71bccd28203c80708d892febb81865592675addf9315ec3b3c7547eb0f",
+                      "solverModelHash": "fnv1a64:b6b38bf19c4ec855",
+                      "executionHash": "fnv1a64:eae773f8a53062fa",
+                      "canonicalExecutionInputHash": "sha256:618c3251e7e00e7c70f15b19fcaba762cd9166106577adc30f53b57aa70cbcf0",
+                      "recoveryHash": "sha256:ef3819ebda4fdd70c026b502948394d503bf6a63c63825eb73a06f3c1ea91131"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              }
+            ],
+            "histories": [
+              {
+                "historyId": "L3-T3/STRAIN_ENERGY",
+                "quantity": "STRAIN_ENERGY",
+                "valuesByLevel": [
+                  0.012500000000000002,
+                  0.012499999999999999,
+                  0.012499999999999975
+                ]
+              },
+              {
+                "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P1",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.0000185,
+                  0.000018500000000000013,
+                  0.000018500000000000023
+                ]
+              },
+              {
+                "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P2",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.00012050000000000003,
+                  0.00012050000000000003,
+                  0.00012050000000000002
+                ]
+              },
+              {
+                "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P3",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.0000215,
+                  0.0000215,
+                  0.000021500000000000008
+                ]
+              }
+            ],
+            "convergence": {
+              "accepted": true,
+              "results": [
+                {
+                  "historyId": "L3-T3/STRAIN_ENERGY",
+                  "quantity": "STRAIN_ENERGY",
+                  "relativeChange": 1.942890293094028e-15,
+                  "limit": 0.02,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                },
+                {
+                  "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P1",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 5.494267765973833e-16,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                },
+                {
+                  "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P2",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 1.1246910502961662e-16,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                },
+                {
+                  "historyId": "L3-T3/SELECTED_DISPLACEMENT/L3-L-P3",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 3.151750501411349e-16,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                }
+              ],
+              "limitOverridesUsed": false
+            }
+          },
+          {
+            "checkId": "M4-L3-T6",
+            "ladderId": "L3-T6",
+            "stageId": "LAFEA.3",
+            "status": "FAIL",
+            "solverExecuted": true,
+            "levelGate": {
+              "levelCount": 3,
+              "exempted": false
+            },
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:aa062be8abdf0a7a716c3f49d4e7351eecb9511859bb564f27ac105815b5c83e",
+                "nodeCount": 41,
+                "elementCount": 14,
+                "solverModelHash": "fnv1a64:852b2d7d61ec66a2",
+                "executionHash": "fnv1a64:e648ad24eae1d0ee",
+                "resultPayloadHash": "fnv1a64:5c44d98ebbfc24f1",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.012500000000000025,
+                "expectedAnalyticalStrainEnergy": 0.0125,
+                "analyticalStrainEnergyAbsoluteDelta": 2.42861286636753e-17,
+                "probes": [
+                  {
+                    "probeId": "L3-L-P1",
+                    "authoritativeValue": 0.000018500000000000002,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 3.3881317890172014e-21,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000005",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.41,
+                        "eta": 0.42500000000000004,
+                        "lambda1": 0.16500000000000004,
+                        "lambda2": 0.41,
+                        "lambda3": 0.42500000000000004
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.3700000000000001,
+                        "y": 0.41000000000000003
+                      },
+                      "mappingResidual": 1.2412670766236366e-16,
+                      "jacobianDeterminant": 1.0000000000000002,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:aa062be8abdf0a7a716c3f49d4e7351eecb9511859bb564f27ac105815b5c83e",
+                      "solverModelHash": "fnv1a64:852b2d7d61ec66a2",
+                      "executionHash": "fnv1a64:e648ad24eae1d0ee",
+                      "canonicalExecutionInputHash": "sha256:fa1b91e72e53a2606ddaf425823ef3c41ace2026e45d5d245b0a047e855c6c30",
+                      "recoveryHash": "sha256:2bbd70aed0d556137fd9be6fa9deecd4196a2274b2c4073c220d70cd60f8d084"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P2",
+                    "authoritativeValue": 0.0001205,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0001205,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000013",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.37,
+                        "eta": 0.21999999999999986,
+                        "lambda1": 0.41000000000000014,
+                        "lambda2": 0.37,
+                        "lambda3": 0.21999999999999986
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 2.41,
+                        "y": 0.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 1.0000000000000002,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:aa062be8abdf0a7a716c3f49d4e7351eecb9511859bb564f27ac105815b5c83e",
+                      "solverModelHash": "fnv1a64:852b2d7d61ec66a2",
+                      "executionHash": "fnv1a64:e648ad24eae1d0ee",
+                      "canonicalExecutionInputHash": "sha256:fa1b91e72e53a2606ddaf425823ef3c41ace2026e45d5d245b0a047e855c6c30",
+                      "recoveryHash": "sha256:2bbd70aed0d556137fd9be6fa9deecd4196a2274b2c4073c220d70cd60f8d084"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P3",
+                    "authoritativeValue": 0.000021500000000000014,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000215,
+                    "analyticalAbsoluteDelta": 1.3552527156068805e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000004",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.1999999999999999,
+                        "eta": 0.05999999999999989,
+                        "lambda1": 0.7400000000000002,
+                        "lambda2": 0.1999999999999999,
+                        "lambda3": 0.05999999999999989
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.43,
+                        "y": 2.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.5000000000000001,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:aa062be8abdf0a7a716c3f49d4e7351eecb9511859bb564f27ac105815b5c83e",
+                      "solverModelHash": "fnv1a64:852b2d7d61ec66a2",
+                      "executionHash": "fnv1a64:e648ad24eae1d0ee",
+                      "canonicalExecutionInputHash": "sha256:fa1b91e72e53a2606ddaf425823ef3c41ace2026e45d5d245b0a047e855c6c30",
+                      "recoveryHash": "sha256:2bbd70aed0d556137fd9be6fa9deecd4196a2274b2c4073c220d70cd60f8d084"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:abe78547f8fead15c90c9cd3c2201cd5fe31b691e63f4fa25a818f438247c48f",
+                "nodeCount": 137,
+                "elementCount": 56,
+                "solverModelHash": "fnv1a64:561293e1bb11ddb2",
+                "executionHash": "fnv1a64:c39b2d7cf0b319ba",
+                "resultPayloadHash": "fnv1a64:d51565cc52312764",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.0125,
+                "expectedAnalyticalStrainEnergy": 0.0125,
+                "analyticalStrainEnergyAbsoluteDelta": 0,
+                "probes": [
+                  {
+                    "probeId": "L3-L-P1",
+                    "authoritativeValue": 0.000018500000000000036,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 3.7269449679189215e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000018",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.057767210985571145,
+                        "eta": 0.8069315250255187,
+                        "lambda1": 0.13530126398891018,
+                        "lambda2": 0.057767210985571145,
+                        "lambda3": 0.8069315250255187
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.4099999999999999
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "jacobianDeterminant": 0.20053513944973078,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:abe78547f8fead15c90c9cd3c2201cd5fe31b691e63f4fa25a818f438247c48f",
+                      "solverModelHash": "fnv1a64:561293e1bb11ddb2",
+                      "executionHash": "fnv1a64:c39b2d7cf0b319ba",
+                      "canonicalExecutionInputHash": "sha256:1d3e2bf3ad96bd1c3006d8f4695286c19931b6819b1854208d5b22983000346a",
+                      "recoveryHash": "sha256:a68dd36c1fe5f153a1ab9209ef57712f8454834f21eea696ebb26609426b1181"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P2",
+                    "authoritativeValue": 0.00012050000000000003,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0001205,
+                    "analyticalAbsoluteDelta": 2.710505431213761e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000048",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.1009909668161831,
+                        "eta": 0.26897907118924097,
+                        "lambda1": 0.630029961994576,
+                        "lambda2": 0.1009909668161831,
+                        "lambda3": 0.26897907118924097
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 2.41,
+                        "y": 0.37000000000000005
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "jacobianDeterminant": 0.18899548124813362,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:abe78547f8fead15c90c9cd3c2201cd5fe31b691e63f4fa25a818f438247c48f",
+                      "solverModelHash": "fnv1a64:561293e1bb11ddb2",
+                      "executionHash": "fnv1a64:c39b2d7cf0b319ba",
+                      "canonicalExecutionInputHash": "sha256:1d3e2bf3ad96bd1c3006d8f4695286c19931b6819b1854208d5b22983000346a",
+                      "recoveryHash": "sha256:a68dd36c1fe5f153a1ab9209ef57712f8454834f21eea696ebb26609426b1181"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P3",
+                    "authoritativeValue": 0.00002150000000000001,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000215,
+                    "analyticalAbsoluteDelta": 1.0164395367051604e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000014",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.5060691749558365,
+                        "eta": 0.07981989993924744,
+                        "lambda1": 0.4141109251049161,
+                        "lambda2": 0.5060691749558365,
+                        "lambda3": 0.07981989993924744
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.43,
+                        "y": 2.37
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.13087139517278812,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:abe78547f8fead15c90c9cd3c2201cd5fe31b691e63f4fa25a818f438247c48f",
+                      "solverModelHash": "fnv1a64:561293e1bb11ddb2",
+                      "executionHash": "fnv1a64:c39b2d7cf0b319ba",
+                      "canonicalExecutionInputHash": "sha256:1d3e2bf3ad96bd1c3006d8f4695286c19931b6819b1854208d5b22983000346a",
+                      "recoveryHash": "sha256:a68dd36c1fe5f153a1ab9209ef57712f8454834f21eea696ebb26609426b1181"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:c62abffaaf04f62fe69d81b867187c2379b08d5df5267d79e60bc326c84081e4",
+                "nodeCount": 453,
+                "elementCount": 202,
+                "solverModelHash": "fnv1a64:15f1d68be8537cfa",
+                "executionHash": "fnv1a64:d155d09c7f52357a",
+                "resultPayloadHash": "fnv1a64:481f3f00c347f179",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.01250000000000003,
+                "expectedAnalyticalStrainEnergy": 0.0125,
+                "analyticalStrainEnergyAbsoluteDelta": 2.949029909160572e-17,
+                "probes": [
+                  {
+                    "probeId": "L3-L-P1",
+                    "authoritativeValue": 0.000018499999999999965,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 3.3881317890172014e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000039",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.15910064925306894,
+                        "eta": 0.3479124785733658,
+                        "lambda1": 0.4929868721735653,
+                        "lambda2": 0.15910064925306894,
+                        "lambda3": 0.3479124785733658
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37000000000000005,
+                        "y": 0.4100000000000001
+                      },
+                      "mappingResidual": 1.2412670766236366e-16,
+                      "jacobianDeterminant": 0.053331206217879755,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:c62abffaaf04f62fe69d81b867187c2379b08d5df5267d79e60bc326c84081e4",
+                      "solverModelHash": "fnv1a64:15f1d68be8537cfa",
+                      "executionHash": "fnv1a64:d155d09c7f52357a",
+                      "canonicalExecutionInputHash": "sha256:de8e1847d7187bb0f5f99ccdef10da4d3e6f858db8feadc02e294e1a92e6feae",
+                      "recoveryHash": "sha256:1aad6018de216867b3bf8e1c55038339bfc04b52684d2c758d71964c4dba0e29"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P2",
+                    "authoritativeValue": 0.0001205,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0001205,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000173",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.2877415890892671,
+                        "eta": 0.5127326511980965,
+                        "lambda1": 0.1995257597126363,
+                        "lambda2": 0.2877415890892671,
+                        "lambda3": 0.5127326511980965
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 2.4099999999999997,
+                        "y": 0.3699999999999999
+                      },
+                      "mappingResidual": 4.577566798522237e-16,
+                      "jacobianDeterminant": 0.05530715865026182,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:c62abffaaf04f62fe69d81b867187c2379b08d5df5267d79e60bc326c84081e4",
+                      "solverModelHash": "fnv1a64:15f1d68be8537cfa",
+                      "executionHash": "fnv1a64:d155d09c7f52357a",
+                      "canonicalExecutionInputHash": "sha256:de8e1847d7187bb0f5f99ccdef10da4d3e6f858db8feadc02e294e1a92e6feae",
+                      "recoveryHash": "sha256:1aad6018de216867b3bf8e1c55038339bfc04b52684d2c758d71964c4dba0e29"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-L-P3",
+                    "authoritativeValue": 0.000021499999999999994,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000215,
+                    "analyticalAbsoluteDelta": 6.776263578034403e-21,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000067",
+                      "elementType": "T6",
+                      "naturalCoordinates": {
+                        "xi": 0.1928830163521076,
+                        "eta": 0.7744666610596251,
+                        "lambda1": 0.03265032258826728,
+                        "lambda2": 0.1928830163521076,
+                        "lambda3": 0.7744666610596251
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.43000000000000005,
+                        "y": 2.3700000000000006
+                      },
+                      "mappingResidual": 4.47545209131181e-16,
+                      "jacobianDeterminant": 0.055145900399482584,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:c62abffaaf04f62fe69d81b867187c2379b08d5df5267d79e60bc326c84081e4",
+                      "solverModelHash": "fnv1a64:15f1d68be8537cfa",
+                      "executionHash": "fnv1a64:d155d09c7f52357a",
+                      "canonicalExecutionInputHash": "sha256:de8e1847d7187bb0f5f99ccdef10da4d3e6f858db8feadc02e294e1a92e6feae",
+                      "recoveryHash": "sha256:1aad6018de216867b3bf8e1c55038339bfc04b52684d2c758d71964c4dba0e29"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              }
+            ],
+            "histories": [
+              {
+                "historyId": "L3-T6/STRAIN_ENERGY",
+                "quantity": "STRAIN_ENERGY",
+                "valuesByLevel": [
+                  0.012500000000000025,
+                  0.0125,
+                  0.01250000000000003
+                ]
+              },
+              {
+                "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P1",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.000018500000000000002,
+                  0.000018500000000000036,
+                  0.000018499999999999965
+                ]
+              },
+              {
+                "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P2",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.0001205,
+                  0.00012050000000000003,
+                  0.0001205
+                ]
+              },
+              {
+                "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P3",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.000021500000000000014,
+                  0.00002150000000000001,
+                  0.000021499999999999994
+                ]
+              }
+            ],
+            "convergence": {
+              "accepted": false,
+              "results": [
+                {
+                  "historyId": "L3-T6/STRAIN_ENERGY",
+                  "quantity": "STRAIN_ENERGY",
+                  "relativeChange": 2.359223927328452e-15,
+                  "limit": 0.02,
+                  "behavior": "NON_CONVERGENT",
+                  "accepted": false
+                },
+                {
+                  "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P1",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 3.845987436181695e-15,
+                  "limit": 0.01,
+                  "behavior": "NON_CONVERGENT",
+                  "accepted": false
+                },
+                {
+                  "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P2",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 2.249382100592333e-16,
+                  "limit": 0.01,
+                  "behavior": "OSCILLATORY",
+                  "accepted": false
+                },
+                {
+                  "historyId": "L3-T6/SELECTED_DISPLACEMENT/L3-L-P3",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 7.879376253528377e-16,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                }
+              ],
+              "limitOverridesUsed": false
+            }
+          },
+          {
+            "checkId": "M4-L3-Q8",
+            "ladderId": "L3-Q8",
+            "stageId": "LAFEA.3",
+            "status": "FAIL",
+            "solverExecuted": true,
+            "levelGate": {
+              "levelCount": 3,
+              "exempted": false
+            },
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:1756b2b38476708f7c3e26dc64f8068ee4e407a27d92f4467fc69df0435d6de2",
+                "nodeCount": 8,
+                "elementCount": 1,
+                "solverModelHash": "fnv1a64:bc840ff1df0dc756",
+                "executionHash": "fnv1a64:c4049d8e71f80b86",
+                "resultPayloadHash": "fnv1a64:7e45b20c6295fe76",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.0024999999999999996,
+                "expectedAnalyticalStrainEnergy": 0.0025,
+                "analyticalStrainEnergyAbsoluteDelta": 4.336808689942018e-19,
+                "probes": [
+                  {
+                    "probeId": "L3-Q8-P1",
+                    "authoritativeValue": 0.000018499999999999996,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 3.3881317890172014e-21,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000001",
+                      "elementType": "Q8",
+                      "naturalCoordinates": {
+                        "xi": -0.26,
+                        "eta": -0.18000000000000005
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.36999999999999994,
+                        "y": 0.41
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "jacobianDeterminant": 0.25,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:1756b2b38476708f7c3e26dc64f8068ee4e407a27d92f4467fc69df0435d6de2",
+                      "solverModelHash": "fnv1a64:bc840ff1df0dc756",
+                      "executionHash": "fnv1a64:c4049d8e71f80b86",
+                      "canonicalExecutionInputHash": "sha256:3776cb73cacc63ec2294caeaeef494cba87a841594be0f5762d8a9146eb3e18e",
+                      "recoveryHash": "sha256:05b9fb927a221fab88d9ec44dec9150841e16c1145d51b0cbc9a2144b6672c62"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-Q8-P2",
+                    "authoritativeValue": 0.000036500000000000006,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000365,
+                    "analyticalAbsoluteDelta": 6.776263578034403e-21,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000001",
+                      "elementType": "Q8",
+                      "naturalCoordinates": {
+                        "xi": 0.45999999999999996,
+                        "eta": 0.21999999999999997
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.7299999999999999,
+                        "y": 0.6099999999999999
+                      },
+                      "mappingResidual": 1.5700924586837752e-16,
+                      "jacobianDeterminant": 0.25,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:1756b2b38476708f7c3e26dc64f8068ee4e407a27d92f4467fc69df0435d6de2",
+                      "solverModelHash": "fnv1a64:bc840ff1df0dc756",
+                      "executionHash": "fnv1a64:c4049d8e71f80b86",
+                      "canonicalExecutionInputHash": "sha256:3776cb73cacc63ec2294caeaeef494cba87a841594be0f5762d8a9146eb3e18e",
+                      "recoveryHash": "sha256:05b9fb927a221fab88d9ec44dec9150841e16c1145d51b0cbc9a2144b6672c62"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:19cc1ec32896b7c2de7d9282d4cd6f8cb3ecb1a89a4eea340950cb5e71ec15f6",
+                "nodeCount": 21,
+                "elementCount": 4,
+                "solverModelHash": "fnv1a64:2501bc837075a724",
+                "executionHash": "fnv1a64:3c5d7e52c640d4fb",
+                "resultPayloadHash": "fnv1a64:dfcb8f954e87d466",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.0025,
+                "expectedAnalyticalStrainEnergy": 0.0025,
+                "analyticalStrainEnergyAbsoluteDelta": 0,
+                "probes": [
+                  {
+                    "probeId": "L3-Q8-P1",
+                    "authoritativeValue": 0.000018500000000000002,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 3.3881317890172014e-21,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000001",
+                      "elementType": "Q8",
+                      "naturalCoordinates": {
+                        "xi": 0.48,
+                        "eta": 0.6399999999999999
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.41
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.0625,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:19cc1ec32896b7c2de7d9282d4cd6f8cb3ecb1a89a4eea340950cb5e71ec15f6",
+                      "solverModelHash": "fnv1a64:2501bc837075a724",
+                      "executionHash": "fnv1a64:3c5d7e52c640d4fb",
+                      "canonicalExecutionInputHash": "sha256:fa4eb16fb0bc05b369a8b8d132b8a14d7692b1609e8ae60e320a8958c8fcdcad",
+                      "recoveryHash": "sha256:be240cffe4347a80f737ccfc537b35cd3466c7bf8d5a6126122f811269827f28"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-Q8-P2",
+                    "authoritativeValue": 0.0000365,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000365,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000004",
+                      "elementType": "Q8",
+                      "naturalCoordinates": {
+                        "xi": -0.08000000000000007,
+                        "eta": -0.56
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.73,
+                        "y": 0.6100000000000001
+                      },
+                      "mappingResidual": 1.1102230246251565e-16,
+                      "jacobianDeterminant": 0.06249999999999997,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:19cc1ec32896b7c2de7d9282d4cd6f8cb3ecb1a89a4eea340950cb5e71ec15f6",
+                      "solverModelHash": "fnv1a64:2501bc837075a724",
+                      "executionHash": "fnv1a64:3c5d7e52c640d4fb",
+                      "canonicalExecutionInputHash": "sha256:fa4eb16fb0bc05b369a8b8d132b8a14d7692b1609e8ae60e320a8958c8fcdcad",
+                      "recoveryHash": "sha256:be240cffe4347a80f737ccfc537b35cd3466c7bf8d5a6126122f811269827f28"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:39dc3479b5101dde307047764e1cccc4aec881b49cff8e91b6b8ed6e16ebb2c1",
+                "nodeCount": 65,
+                "elementCount": 16,
+                "solverModelHash": "fnv1a64:b09d9d920eb0c063",
+                "executionHash": "fnv1a64:dace89661c80b323",
+                "resultPayloadHash": "fnv1a64:da5bbc25ba5ac0e6",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.002499999999999999,
+                "expectedAnalyticalStrainEnergy": 0.0025,
+                "analyticalStrainEnergyAbsoluteDelta": 8.673617379884035e-19,
+                "probes": [
+                  {
+                    "probeId": "L3-Q8-P1",
+                    "authoritativeValue": 0.00001850000000000001,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000185,
+                    "analyticalAbsoluteDelta": 1.0164395367051604e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000006",
+                      "elementType": "Q8",
+                      "naturalCoordinates": {
+                        "xi": -0.040000000000000036,
+                        "eta": 0.2799999999999998
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.41
+                      },
+                      "mappingResidual": 0,
+                      "jacobianDeterminant": 0.015624999999999998,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:39dc3479b5101dde307047764e1cccc4aec881b49cff8e91b6b8ed6e16ebb2c1",
+                      "solverModelHash": "fnv1a64:b09d9d920eb0c063",
+                      "executionHash": "fnv1a64:dace89661c80b323",
+                      "canonicalExecutionInputHash": "sha256:705286e31d67426d04316a30b4ca22262719fb52fb3188f0c593e1a8518f8f3b",
+                      "recoveryHash": "sha256:fca2c24144cb5b531692f5c0fb121524200556c99ceb7a3e79b21cd32691e4aa"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  },
+                  {
+                    "probeId": "L3-Q8-P2",
+                    "authoritativeValue": 0.0000365,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.0000365,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR",
+                      "elementId": "E000011",
+                      "elementType": "Q8",
+                      "naturalCoordinates": {
+                        "xi": 0.8399999999999999,
+                        "eta": -0.1200000000000001
+                      },
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.7299999999999999,
+                        "y": 0.6099999999999999
+                      },
+                      "mappingResidual": 1.5700924586837752e-16,
+                      "jacobianDeterminant": 0.015625000000000007,
+                      "containmentCandidateCount": 1
+                    },
+                    "custody": {
+                      "sourceHash": "sha256:e7b06f12a95ce9f90d192b053b59b974f36721e6996fefe905ded671e428607e",
+                      "meshHash": "sha256:39dc3479b5101dde307047764e1cccc4aec881b49cff8e91b6b8ed6e16ebb2c1",
+                      "solverModelHash": "fnv1a64:b09d9d920eb0c063",
+                      "executionHash": "fnv1a64:dace89661c80b323",
+                      "canonicalExecutionInputHash": "sha256:705286e31d67426d04316a30b4ca22262719fb52fb3188f0c593e1a8518f8f3b",
+                      "recoveryHash": "sha256:fca2c24144cb5b531692f5c0fb121524200556c99ceb7a3e79b21cd32691e4aa"
+                    },
+                    "recoveryAuthority": "ELEMENT_SHAPE_INTERPOLATION"
+                  }
+                ]
+              }
+            ],
+            "histories": [
+              {
+                "historyId": "L3-Q8/STRAIN_ENERGY",
+                "quantity": "STRAIN_ENERGY",
+                "valuesByLevel": [
+                  0.0024999999999999996,
+                  0.0025,
+                  0.002499999999999999
+                ]
+              },
+              {
+                "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P1",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.000018499999999999996,
+                  0.000018500000000000002,
+                  0.00001850000000000001
+                ]
+              },
+              {
+                "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P2",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.000036500000000000006,
+                  0.0000365,
+                  0.0000365
+                ]
+              }
+            ],
+            "convergence": {
+              "accepted": false,
+              "results": [
+                {
+                  "historyId": "L3-Q8/STRAIN_ENERGY",
+                  "quantity": "STRAIN_ENERGY",
+                  "relativeChange": 3.469446951953615e-16,
+                  "limit": 0.02,
+                  "behavior": "NON_CONVERGENT",
+                  "accepted": false
+                },
+                {
+                  "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P1",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 3.6628451773158913e-16,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                },
+                {
+                  "historyId": "L3-Q8/SELECTED_DISPLACEMENT/L3-Q8-P2",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 0,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                }
+              ],
+              "limitOverridesUsed": false
+            }
+          },
+          {
+            "checkId": "M4-L4-CST-DKT",
+            "ladderId": "L4-CST-DKT",
+            "stageId": "LAFEA.4",
+            "status": "FAIL",
+            "solverExecuted": true,
+            "levelGate": {
+              "levelCount": 3,
+              "exempted": false
+            },
+            "levels": [
+              {
+                "levelId": "L0",
+                "globalTargetSize": 1,
+                "meshHash": "sha256:9f293149ed00fabffd9cd8e7fbbf403cfc4be2e14e93b5883b2a72274cb79bd5",
+                "nodeCount": 6,
+                "elementCount": 4,
+                "solverModelHash": "fnv1a64:b9f796e94541a456",
+                "executionHash": "fnv1a64:1c834c6111ad4b36",
+                "resultPayloadHash": "fnv1a64:f56b50140b67179e",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.43956043956043955,
+                "expectedAnalyticalStrainEnergy": 0.43956043956043955,
+                "analyticalStrainEnergyAbsoluteDelta": 0,
+                "probes": [
+                  {
+                    "probeId": "L4-PA-P1",
+                    "authoritativeValue": 0.00037000000000000005,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.00037,
+                    "analyticalAbsoluteDelta": 5.421010862427522e-20,
+                    "mapping": {
+                      "mappingClass": "INTERIOR_UNIQUE_OWNER_CST_TRIANGLE",
+                      "elementId": "E000001",
+                      "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                      "barycentricCoordinates": [
+                        0.41,
+                        0.22000000000000003,
+                        0.37000000000000005
+                      ],
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37000000000000005,
+                        "y": 0.41,
+                        "z": 0
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "containmentCandidateCount": 1,
+                      "crossElementAveragingUsed": false
+                    },
+                    "supportingNodalDisplacements": [
+                      {
+                        "nodeId": "N000002",
+                        "ux": 0
+                      },
+                      {
+                        "nodeId": "N000001",
+                        "ux": 0
+                      },
+                      {
+                        "nodeId": "N000005",
+                        "ux": 0.001
+                      }
+                    ],
+                    "recoveryAuthority": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX"
+                  },
+                  {
+                    "probeId": "L4-PB-P1",
+                    "authoritativeValue": 0.00163,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.00163,
+                    "analyticalAbsoluteDelta": 0,
+                    "mapping": {
+                      "mappingClass": "INTERIOR_UNIQUE_OWNER_CST_TRIANGLE",
+                      "elementId": "E000004",
+                      "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                      "barycentricCoordinates": [
+                        0.41000000000000003,
+                        0.21999999999999986,
+                        0.3700000000000001
+                      ],
+                      "mappedPhysicalCoordinate": {
+                        "x": 1.63,
+                        "y": 0.59,
+                        "z": 0
+                      },
+                      "mappingResidual": 0,
+                      "containmentCandidateCount": 1,
+                      "crossElementAveragingUsed": false
+                    },
+                    "supportingNodalDisplacements": [
+                      {
+                        "nodeId": "N000003",
+                        "ux": 0.002
+                      },
+                      {
+                        "nodeId": "N000004",
+                        "ux": 0.002
+                      },
+                      {
+                        "nodeId": "N000006",
+                        "ux": 0.001
+                      }
+                    ],
+                    "recoveryAuthority": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX"
+                  }
+                ]
+              },
+              {
+                "levelId": "L1",
+                "globalTargetSize": 0.5,
+                "meshHash": "sha256:9c6cb0fc70cf48779593dbff7d3542e00ca2db83002e321cb261e4ad2a87dc3c",
+                "nodeCount": 19,
+                "elementCount": 24,
+                "solverModelHash": "fnv1a64:b7f8665dc74337ff",
+                "executionHash": "fnv1a64:5b82338060eb9f39",
+                "resultPayloadHash": "fnv1a64:94fab7d00b92cb39",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.4395604395604396,
+                "expectedAnalyticalStrainEnergy": 0.43956043956043955,
+                "analyticalStrainEnergyAbsoluteDelta": 5.551115123125783e-17,
+                "probes": [
+                  {
+                    "probeId": "L4-PA-P1",
+                    "authoritativeValue": 0.0003699999999999999,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.00037,
+                    "analyticalAbsoluteDelta": 1.0842021724855044e-19,
+                    "mapping": {
+                      "mappingClass": "INTERIOR_UNIQUE_OWNER_CST_TRIANGLE",
+                      "elementId": "E000008",
+                      "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                      "barycentricCoordinates": [
+                        0.277942861163916,
+                        0.032078748575818404,
+                        0.6899783902602656
+                      ],
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37,
+                        "y": 0.41,
+                        "z": 0
+                      },
+                      "mappingResidual": 0,
+                      "containmentCandidateCount": 1,
+                      "crossElementAveragingUsed": false
+                    },
+                    "supportingNodalDisplacements": [
+                      {
+                        "nodeId": "N000007",
+                        "ux": 0.0005006530612244899
+                      },
+                      {
+                        "nodeId": "N000002",
+                        "ux": 0
+                      },
+                      {
+                        "nodeId": "N000004",
+                        "ux": 0.0003345714285714289
+                      }
+                    ],
+                    "recoveryAuthority": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX"
+                  },
+                  {
+                    "probeId": "L4-PB-P1",
+                    "authoritativeValue": 0.0016299999999999997,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.00163,
+                    "analyticalAbsoluteDelta": 2.168404344971009e-19,
+                    "mapping": {
+                      "mappingClass": "INTERIOR_UNIQUE_OWNER_CST_TRIANGLE",
+                      "elementId": "E000023",
+                      "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                      "barycentricCoordinates": [
+                        0.11997060827298343,
+                        0.21834575333295633,
+                        0.6616836383940602
+                      ],
+                      "mappedPhysicalCoordinate": {
+                        "x": 1.63,
+                        "y": 0.59,
+                        "z": 0
+                      },
+                      "mappingResidual": 0,
+                      "containmentCandidateCount": 1,
+                      "crossElementAveragingUsed": false
+                    },
+                    "supportingNodalDisplacements": [
+                      {
+                        "nodeId": "N000013",
+                        "ux": 0.0016699999999999994
+                      },
+                      {
+                        "nodeId": "N000015",
+                        "ux": 0.002
+                      },
+                      {
+                        "nodeId": "N000012",
+                        "ux": 0.0015006530612244897
+                      }
+                    ],
+                    "recoveryAuthority": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX"
+                  }
+                ]
+              },
+              {
+                "levelId": "L2",
+                "globalTargetSize": 0.25,
+                "meshHash": "sha256:6b26641a035254c21293a238799dc20b5fabc84cf902e673f2a6e8fefa7351f9",
+                "nodeCount": 55,
+                "elementCount": 84,
+                "solverModelHash": "fnv1a64:9322081748f08843",
+                "executionHash": "fnv1a64:9df176257a2c7871",
+                "resultPayloadHash": "fnv1a64:e6941c1207800732",
+                "solverQualification": "ACCEPTED",
+                "solverExecuted": true,
+                "strainEnergy": 0.4395604395604391,
+                "expectedAnalyticalStrainEnergy": 0.43956043956043955,
+                "analyticalStrainEnergyAbsoluteDelta": 4.440892098500626e-16,
+                "probes": [
+                  {
+                    "probeId": "L4-PA-P1",
+                    "authoritativeValue": 0.0003699999999999999,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.00037,
+                    "analyticalAbsoluteDelta": 1.0842021724855044e-19,
+                    "mapping": {
+                      "mappingClass": "INTERIOR_UNIQUE_OWNER_CST_TRIANGLE",
+                      "elementId": "E000012",
+                      "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                      "barycentricCoordinates": [
+                        0.4792198883624113,
+                        0.14845742902101228,
+                        0.3723226826165765
+                      ],
+                      "mappedPhysicalCoordinate": {
+                        "x": 0.37000000000000005,
+                        "y": 0.41,
+                        "z": 0
+                      },
+                      "mappingResidual": 5.551115123125783e-17,
+                      "containmentCandidateCount": 1,
+                      "crossElementAveragingUsed": false
+                    },
+                    "supportingNodalDisplacements": [
+                      {
+                        "nodeId": "N000011",
+                        "ux": 0.00026451474622770884
+                      },
+                      {
+                        "nodeId": "N000012",
+                        "ux": 0.00038108689724317905
+                      },
+                      {
+                        "nodeId": "N000017",
+                        "ux": 0.0005013503086419748
+                      }
+                    ],
+                    "recoveryAuthority": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX"
+                  },
+                  {
+                    "probeId": "L4-PB-P1",
+                    "authoritativeValue": 0.0016300000000000002,
+                    "units": "mm",
+                    "expectedAnalyticalValue": 0.00163,
+                    "analyticalAbsoluteDelta": 2.168404344971009e-19,
+                    "mapping": {
+                      "mappingClass": "INTERIOR_UNIQUE_OWNER_CST_TRIANGLE",
+                      "elementId": "E000071",
+                      "elementType": "CST_DKT_TRI3_THIN_SHELL_V1",
+                      "barycentricCoordinates": [
+                        0.16169941731908957,
+                        0.7919621480322949,
+                        0.046338434648615534
+                      ],
+                      "mappedPhysicalCoordinate": {
+                        "x": 1.63,
+                        "y": 0.59,
+                        "z": 0
+                      },
+                      "mappingResidual": 0,
+                      "containmentCandidateCount": 1,
+                      "crossElementAveragingUsed": false
+                    },
+                    "supportingNodalDisplacements": [
+                      {
+                        "nodeId": "N000040",
+                        "ux": 0.0017378634134230695
+                      },
+                      {
+                        "nodeId": "N000038",
+                        "ux": 0.0016155043251580604
+                      },
+                      {
+                        "nodeId": "N000037",
+                        "ux": 0.0015013503086419796
+                      }
+                    ],
+                    "recoveryAuthority": "UNIQUE_OWNER_CST_TRIANGLE_BARYCENTRIC_GLOBAL_UX"
+                  }
+                ]
+              }
+            ],
+            "histories": [
+              {
+                "historyId": "L4-CST-DKT/STRAIN_ENERGY",
+                "quantity": "STRAIN_ENERGY",
+                "valuesByLevel": [
+                  0.43956043956043955,
+                  0.4395604395604396,
+                  0.4395604395604391
+                ]
+              },
+              {
+                "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PA-P1",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.00037000000000000005,
+                  0.0003699999999999999,
+                  0.0003699999999999999
+                ]
+              },
+              {
+                "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PB-P1",
+                "quantity": "SELECTED_DISPLACEMENT",
+                "valuesByLevel": [
+                  0.00163,
+                  0.0016299999999999997,
+                  0.0016300000000000002
+                ]
+              }
+            ],
+            "convergence": {
+              "accepted": false,
+              "results": [
+                {
+                  "historyId": "L4-CST-DKT/STRAIN_ENERGY",
+                  "quantity": "STRAIN_ENERGY",
+                  "relativeChange": 1.1365908214600053e-15,
+                  "limit": 0.02,
+                  "behavior": "NON_CONVERGENT",
+                  "accepted": false
+                },
+                {
+                  "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PA-P1",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 0,
+                  "limit": 0.01,
+                  "behavior": "MONOTONIC",
+                  "accepted": true
+                },
+                {
+                  "historyId": "L4-CST-DKT/SELECTED_DISPLACEMENT/L4-PB-P1",
+                  "quantity": "SELECTED_DISPLACEMENT",
+                  "relativeChange": 2.6606188281852866e-16,
+                  "limit": 0.01,
+                  "behavior": "NON_CONVERGENT",
+                  "accepted": false
+                }
+              ],
+              "limitOverridesUsed": false
+            }
+          }
+        ]
+      },
+      "status": "FAIL",
+      "predecessorGateSatisfied": true,
+      "advancementPolicy": "AUTHORIZE_ONLY_CONTIGUOUS_PASS_PREFIX",
+      "elapsedMs": 1704.582
+    }
+  ],
+  "caseStatus": "FAIL",
+  "nextBenchmarkAuthorized": false,
+  "baselineDisposition": "NOT_ELIGIBLE",
+  "governance": {
+    "productionOutputGeneratedExpectedValues": false,
+    "benchmarkAuthoredMeshUsed": false,
+    "benchmarkSideMeshMutationUsed": false,
+    "fabricatedPhysicsUsed": false,
+    "solverOrCompilerExecuted": true,
+    "benchmarkRegistrationGranted": true,
+    "releaseAuthorityGranted": false,
+    "temperatureAuthorityGranted": false
+  },
+  "recordHash": "sha256:8e0d99d6d7fb1e1a0365aa3fe5f34071b1c7ae123bd25ffc8d2e44be687daad2"
+}

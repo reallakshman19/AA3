@@ -1,0 +1,48 @@
+{
+  "schema": "lafea-mesh-benchmark-program-run/v1",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "ADV-MESH-1710/LEG-003",
+  "runId": "mesh-1710-m3v2-gate-01",
+  "generatedAt": "2026-09-08T01:58:28.450Z",
+  "exactHeadSha": "ce8b725f727b7219daf36a5c8d95fd847a8df58b",
+  "requestedLastStage": "M3",
+  "stageOrder": [
+    "M0",
+    "M1",
+    "M2",
+    "M3"
+  ],
+  "stages": [
+    {
+      "stageId": "M0",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:2140d53dd2c5d0bee21e38b3e47e9f95ae80fa332478579e3d5fc348cf8f4505",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-gate-01\\M0\\audit-record.json"
+    },
+    {
+      "stageId": "M1",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:c4aa6fb14f3a229be44889bdbc3ea2e5afe08f5287b26e81e183519fa1d0f6fd",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-gate-01\\M1\\audit-record.json"
+    },
+    {
+      "stageId": "M2",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:7c79baa9086f72ca588b6fa70dbe0f0a471d92238522496550cf1629c088d41a",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-gate-01\\M2\\audit-record.json"
+    },
+    {
+      "stageId": "M3",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:73f3df082d1fbe0d02cbce218d8d9df485a4097aa717e09ee24543f2ef113808",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-gate-01\\M3\\audit-record.json"
+    }
+  ],
+  "overallStatus": "PASS",
+  "releaseAuthorityGranted": false,
+  "temperatureAuthorityGranted": false
+}

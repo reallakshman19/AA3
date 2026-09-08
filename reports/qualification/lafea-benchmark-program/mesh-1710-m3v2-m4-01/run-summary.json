@@ -1,0 +1,56 @@
+{
+  "schema": "lafea-mesh-benchmark-program-run/v1",
+  "benchmarkId": "BM-MESH",
+  "materialLeg": "ADV-MESH-1710/LEG-003",
+  "runId": "mesh-1710-m3v2-m4-01",
+  "generatedAt": "2026-09-08T02:04:10.593Z",
+  "exactHeadSha": "c568c460fc6d3ab2e7bd5db9eb52f722dbe2d512",
+  "requestedLastStage": "M4",
+  "stageOrder": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "stages": [
+    {
+      "stageId": "M0",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:0d59eaa42bcf3f6db7ad1e1e47c1af1a9703251f6c19a9fdfe2182b625b215e6",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-m4-01\\M0\\audit-record.json"
+    },
+    {
+      "stageId": "M1",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:c39eae768a6f637b99f2e94ac75bb4f803bd77dd0dfe2be6983c26d11fbd12f9",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-m4-01\\M1\\audit-record.json"
+    },
+    {
+      "stageId": "M2",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:8ce2ea9d6316d2e3d5e8e649c3d6af07ff8229ff38d7664b2e5d6b009b209565",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-m4-01\\M2\\audit-record.json"
+    },
+    {
+      "stageId": "M3",
+      "caseStatus": "PASS",
+      "nextBenchmarkAuthorized": true,
+      "recordHash": "sha256:c4280b082a736c9ed20353a61666916c1f5ce9a17fb644c53586f4e589b99796",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-m4-01\\M3\\audit-record.json"
+    },
+    {
+      "stageId": "M4",
+      "caseStatus": "FAIL",
+      "nextBenchmarkAuthorized": false,
+      "recordHash": "sha256:2702bfb4d6e372e1c008bda15db33f36fa603edcaeddfd9070b269e7bea3099a",
+      "recordPath": "reports\\qualification\\lafea-benchmark-program\\mesh-1710-m3v2-m4-01\\M4\\audit-record.json"
+    }
+  ],
+  "overallStatus": "FAIL",
+  "releaseAuthorityGranted": false,
+  "temperatureAuthorityGranted": false
+}

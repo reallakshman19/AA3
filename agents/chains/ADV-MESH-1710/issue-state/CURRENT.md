@@ -1,12 +1,12 @@
 # Current mesh integration state
-ISSUE_BASIS_ID: IB-0002
+ISSUE_BASIS_ID: IB-0003
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1710
 ISSUE_SOURCE: https://github.com/reallaksh19/Advanced_Analysis/issues/1710
 ISSUE_SOURCE_SNAPSHOT_AT: 2026-09-08
-PREVIOUS_ISSUE_BASIS: IB-0001
-CHANGE_AUTHORITY: Owner approval of RP-0001
+PREVIOUS_ISSUE_BASIS: IB-0002
+CHANGE_AUTHORITY: Owner approval of RP-0002
 ISSUE_BASIS_STATUS: CURRENT
-CURRENT_ENDPOINT: EP-0006
+CURRENT_ENDPOINT: EP-0007
 
 ## Original task / acceptance ledger
 TASK-001 | Pull current GitHub main and preserve checkout. | PASS | Owner current session
@@ -37,4 +37,5 @@ Current-session exam waived by Owner. Future-child questions preserve #1535-.153
 ## Continuation
 TASK-005 | Implement approved RP-0001 M3 policy and execute frozen M4. | PASS | LEG-003 complete; M4 failure retained and first wrong boundary isolated
 BM-004 | M3 v2 negative controls, source/schema/hash integrity. | PASS | 18 negative controls; 14 audit records; source-schema-check.json
-RP-0001 is implemented. RP-0002 is unapplied pending explicit Owner approval for shared acceptance behavior. Production source/physics/oracle limits are unchanged. Practical/UI/non-affine/reaction qualification and the full engineering negative suite remain open.
+RP-0001 is implemented. RP-0002 is approved and in progress under EP-0007. Production source/physics/oracle limits are unchanged. Practical/UI/non-affine/reaction qualification and the full engineering negative suite remain open.
+TASK-006 | Approved shared-classifier correction and focused validation. | IN_PROGRESS | EP-0007

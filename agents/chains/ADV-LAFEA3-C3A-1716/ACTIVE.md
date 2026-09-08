@@ -20,17 +20,17 @@ CUSTODY_EPOCH: 7
 
 BRANCH: chatgpt/lafea3-c3a-1716-post-merge-execution
 HEAD: be3e79218e0c934086f0ed8648ee962745bbebe8
-HEAD_ROLE: LEG_003_ENDPOINT_HEAD; later sync commits are relay-only
+HEAD_ROLE: LEG_003_ENDPOINT_HEAD; subsequent sync commits are relay-only
 BASE_MAIN: 4fb3548133f53e33d21cd0f3b3d471da592ae871
 PREVIOUS_PR: 1717 MERGED
 PREVIOUS_PR_HEAD: 1c0343a8068da70907dd1167a0562893a289dc87
 PREVIOUS_MERGE_COMMIT: 4fb3548133f53e33d21cd0f3b3d471da592ae871
 PR: 1718
 PR_STATUS: OPEN_DRAFT
-MERGEABILITY: UNKNOWN_PENDING_FINAL_REVIEW
-REVIEWS: NONE_AT_LAST_OBSERVATION
-UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_OBSERVATION
-REQUIRED_CHECKS: BM005_EXECUTABLE_ENGINEERING_NOT_RUN
+MERGEABILITY: MERGEABLE
+REVIEWS: NONE
+UNRESOLVED_REVIEW_THREADS: 0
+REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_NOT_RUN; COMMIT_STATUSES=0
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -50,8 +50,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0007_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0007_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586916059
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -85,7 +85,7 @@ LAST_MATERIAL_LEG_CLASS: EXECUTION_CONTROL_PLANE_ONLY
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-003.md
 LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-003-EVIDENCE.md
 NEXT_MATERIAL_LEG: LEG-004
-MATERIAL_LEG_STATUS: LEG_003_RECORDED
+MATERIAL_LEG_STATUS: LEG_003_RECORDED_AND_SYNCED
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
 HOSTED_EXECUTION_TARGET: exact merged main 4fb3548133f53e33d21cd0f3b3d471da592ae871
@@ -103,7 +103,7 @@ HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-PR #1717 is merged by explicit Owner authority and exact main is `4fb3548133f53e33d21cd0f3b3d471da592ae871`. The unchanged BM005 workflow watches the merged harness path on `push: main`, but exact-main Actions scheduling was observed twice as zero runs: once immediately after merge and once after synchronized EP-0006. BM005 therefore remains `NOT_RUN_TRIGGER_NOT_SCHEDULED`, with no run/job/checkout/log/artifact and no engineering FAIL.
+PR #1717 is merged by explicit Owner authority and exact main is `4fb3548133f53e33d21cd0f3b3d471da592ae871`. The unchanged BM005 workflow watches the merged harness path on `push: main`, but exact-main Actions scheduling was observed twice as zero runs: once immediately after merge and once after synchronized EP-0006. BM005 remains `NOT_RUN_TRIGGER_NOT_SCHEDULED`, with no run/job/checkout/log/artifact and no engineering FAIL. EP-0007 is synchronized to issue comment `5586916059`.
 
 ## Exact next action
 

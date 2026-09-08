@@ -1,15 +1,20 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-1644-DELIVERY
 MISSION: Repair Issue #1644 TASK-002 qualification-profile auto-bind fail-closed behavior.
-ACTIVE_ENDPOINT: EP-0007
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-1644-DELIVERY/endpoints/EP-0007.md
+ACTIVE_ENDPOINT: EP-0008
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-1644-DELIVERY/endpoints/EP-0008.md
 PR: 1649
 PR_STATUS: OPEN_DRAFT
 BRANCH: fix/1644-qualification-profile-auto-bind
-HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 0737ea3411b4d69c9ecdd984b1655b21b30aca15
-MATERIAL_HEAD: e7eb33656386725d6538725b0797b700f1976bec
-MAIN_OBSERVED: b4eb0cea9a7a73ddaec86210373ed6f3acb714eb
-STATE: AUTO_BLOCKED_ON_POST_BASIS_CONFIRMATION_AND_EXECUTABLE_VALIDATION
+HEAD_OBSERVED_BEFORE_ACTIVE_UPDATE: 76f201ea6fc380ed8a882cbf40fc94d33fb5c39e
+PRE_REBASE_HEAD: 8d8530345834bccfc5324d3b30716f6c45c80a2d
+REBASE_CONTENT_COMMIT: f6d8597785b65ed360d7a634873435def10e59b1
+MATERIAL_HEAD_ORIGIN: e7eb33656386725d6538725b0797b700f1976bec
+MAIN_OBSERVED: 27dde65f51e1b9d7e6d20a324510a50ea3631729
+REBASE_TARGET: 27dde65f51e1b9d7e6d20a324510a50ea3631729
+REBASE_METHOD: CONTENT_PRESERVING_SQUASH_REPLAY
+REBASE_PATH_OVERLAP: NONE
+STATE: REBASED_MERGEABLE_BLOCKED_ON_POST_BASIS_CONFIRMATION_AND_EXECUTABLE_VALIDATION
 ENGINEERING_STATE: BLOCKED
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: PASS
@@ -20,15 +25,17 @@ AUTO_BATCHES_COMPLETED: 0
 WORK_ITEM_SOURCE: GITHUB_ISSUE
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1644
 WORK_ITEM_MODE: EXCLUSIVE
-CUSTODY_EPOCH: 7
+CUSTODY_EPOCH: 8
 COORDINATION_STATE: CLEAR
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
-COMMON_PROTOCOL_BASIS: d709bcd61ab8ab4c9545b17923f56d505ac42c20
+COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 COMMON_PROTOCOL_STATUS: CURRENT
 LAST_VALID_OWNER_PROGRESSION_COMMAND: proceed next
 OWNER_AUTO_INSTRUCTION: proceed in next batches in auto mode
 OWNER_AUTO_INSTRUCTION_AT: 2026-09-05T04:49:36Z
+OWNER_REBASE_INSTRUCTION: rebase,checkmergablility
+OWNER_REBASE_INSTRUCTION_AT: 2026-09-08T11:37:23Z
 OWNER_MERGE_INSTRUCTION: merge
 MERGE_AUTHORIZATION_SOURCE: OWNER_CHAT:2026-09-05T03:57:40Z
 
@@ -36,10 +43,10 @@ ISSUE_BASIS_ID: IB-1644-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-1644-DELIVERY/issue-basis/IB-1644-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-1644-DELIVERY/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5548816556
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5548817255
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5549462609
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5584683824
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: doc/prelight_roamap.md@9267e6475ded4592d6755ade301c08ced7964fa0
@@ -68,6 +75,7 @@ MERGE_AUTHORITY: AUTHORIZED
 MERGE_AUTHORIZED: TRUE
 MERGE_EXECUTION_STATUS: BLOCKED_VALIDATION_AND_POST_BASIS_CONFIRMATION
 MERGEABILITY: MERGEABLE
+MERGEABILITY_EVIDENCE_HEAD: f6d8597785b65ed360d7a634873435def10e59b1
 REVIEWS: 0
 UNRESOLVED_REVIEW_THREADS: 0
 REQUIRED_CHECKS: NOT_RUN
@@ -77,7 +85,12 @@ LATEST_MATERIAL_LEG_FILE: agents/chains/ADV-1644-DELIVERY/material-legs/LEG-001.
 LATEST_MATERIAL_LEG_HEAD: e7eb33656386725d6538725b0797b700f1976bec
 NEW_MATERIAL_LEG_THIS_PROGRESSION: NONE
 
+REBASE_RESULT: SUCCESS_CONTENT_PRESERVED
+REBASE_PREVIOUS_MERGEABILITY: CONFLICTING
+REBASE_POST_CONTENT_MERGEABILITY: MERGEABLE
+REBASE_MAIN_DRIFT_COMMITS: 800
+REBASE_EXACT_CHANGED_PATH_OVERLAP: NONE
 AUTO_HARD_STOP: PENDING_INDEPENDENT_QUALIFICATION_COVERAGE_CONFIRMATION_AND_EXECUTABLE_VALIDATION
-CURRENT_BLOCKER: Owner AUTO intent is explicit, but AUTO cannot run while current-state authority is READ_ONLY/BLOCKED. Post-basis drift is MATERIAL_WITHIN_QUALIFIED_BOUNDARY with independent qualification-coverage confirmation still pending, and PR #1649 still has no executable engineering-validation evidence; focused/non-FEA/import/shell/build/diff gates remain NOT_RUN.
-LEG_DIAGNOSIS: The Q4 product defect remains repaired in LEG-001. Main is stable at b4eb0cea9a7a73ddaec86210373ed6f3acb714eb and does not overlap the repair files. No product test failure exists. Standing Owner merge authorization remains valid, but zero AUTO material batches may execute until both authority gates clear.
-EXACT_NEXT_ACTION: Obtain independent confirmation that QS-ISSUE-1644-0001 still covers the unchanged TASK-002 repair boundary after the non-overlapping main drift, and obtain actual execution of the focused/non-FEA/import/shell/build/diff gates from a faithful checkout/runner or authorized dispatch surface. When both are satisfied, re-ground exact head/main/reviews/statuses; AUTO may resume within the same approved scope and merge may execute under standing Owner authorization. On FAIL, stop AUTO and isolate only the first evidenced failing boundary.
+CURRENT_BLOCKER: Rebase/mergeability conflict is cleared, but two independent merge gates remain. First, material main drift is within the unchanged qualified TASK-002 boundary but still requires independent qualification-coverage confirmation. Second, focused/non-FEA/import/shell/build/diff executable validation remains NOT_RUN absent actual execution evidence.
+LEG_DIAGNOSIS: The Q4 product repair and its regression payload were replayed byte-for-byte onto current main. No engineering conflict resolution was needed because none of the 16 pre-rebase PR paths overlapped the 800-commit main drift. Rebase success and GitHub mergeability are not engineering PASS. Standing Owner merge authorization remains valid; no merge was requested or executed this turn.
+EXACT_NEXT_ACTION: Reconcile the final custody relay head for GitHub mergeability, Actions/statuses, reviews and threads. Preserve executable checks as NOT_RUN unless actual exact-head evidence exists. Merge remains blocked until independent qualification-coverage confirmation and required executable validation clear; on FAIL isolate only the first evidenced failing boundary.

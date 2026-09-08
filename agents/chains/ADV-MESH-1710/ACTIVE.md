@@ -2,8 +2,8 @@
 CHAIN_STATE_VERSION: 3
 CHAIN_ID: ADV-MESH-1710
 MISSION: Deliver the Owner-requested mesh roadmap and a bounded current-main BM-MESH execution repair.
-ACTIVE_ENDPOINT: EP-0008
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-MESH-1710/endpoints/EP-0008.md
+ACTIVE_ENDPOINT: EP-0010
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-MESH-1710/endpoints/EP-0010.md
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-MESH-1710/endpoints/EP-0009.md
 MATERIAL_HISTORY_ROOT_BASE: 695538dd713f2ef11fb00e54b86073f19d38684a
 CURRENT_MATERIAL_LEG: LEG-005
@@ -15,13 +15,13 @@ ACTIVE_CUSTODIAN: codex:566e91bf-cf53-4199-9c11-1ab8c92c0f60
 CUSTODY_EPOCH: 1
 COORDINATION_STATE: PARENT_INTEGRATION_FROM_PINNED_READ_ONLY_DEPENDENCY
 DEPENDENCIES: #1652 / PR #1663; children #1711, #1712, #1713, #1714
-AUTHORITY_DOMAIN: Owner-approved RP-0002 shared sign-classifier correction, focused checks and S-012 pin/evidence updates; preserve raw histories, physical oracles, percentage limits and solver mechanics.
+AUTHORITY_DOMAIN: Owner-authorized frozen TASK-005 execution and evidence; no production changes in LEG-005.
 BRANCH: codex/fea-mesh-roadmap-20260907
-HEAD: e7470c621456a9fdeb08ea570f46926fef1b829c
+HEAD: e94aa3209ce05201a8688366be891b5ee2d9313f
 MAIN_OBSERVED: 695538dd713f2ef11fb00e54b86073f19d38684a
 PR: https://github.com/reallaksh19/Advanced_Analysis/pull/1715
 PR_STATUS: DRAFT
-MERGEABILITY: MERGEABLE_OBSERVED_AT_c3970620b
+MERGEABILITY: MERGEABLE_OBSERVED_AT_efed06abf
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 ENGINEERING_STATE: IN_PROGRESS
@@ -32,9 +32,9 @@ AUTO_STATE: NOT_APPLICABLE
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 494a3684b6c00173ba8e6df497332edf58b47b60
 COMMON_PROTOCOL_STATUS: CURRENT
-PROTOCOL_RECONCILIATION: Required references read; live skill-tree diffs from 0ff80497 through 939382c are empty.
+PROTOCOL_RECONCILIATION: Live Common 494a368 skill tree unchanged from 939382c; required references already read.
 OWNER_PROGRESSION_COMMAND: OWNER_DIRECT
-OWNER_DIRECTIVE: Owner approved RP-0001 on 2026-09-08; current questionnaires remain waived and future-agent questions stay in child issues.
+OWNER_DIRECTIVE: Owner proceed next authorizes LEG-005; current questionnaires waived, future-agent questions in children.
 QUESTION_PACK_ACTION: SUPPRESSED_BY_OWNER
 QUESTION_DISPLAY: HIDE
 QUESTION_SET_STATUS: NOT_APPLICABLE
@@ -48,16 +48,16 @@ ROADMAP_MUTATION_AUTHORITY: NEW_GITHUB_PARENT_AND_CHILD_PLANS_ONLY_OWNER_REQUEST
 ISSUE_BASIS_ID: IB-0003
 ISSUE_BASIS_FILE: agents/chains/ADV-MESH-1710/issue-basis/IB-0003.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-MESH-1710/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0008
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0010
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5574255662
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5574255261
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5582040352
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: FAIL_OWNER_WAIVED_QUESTIONNAIRE_REQUIREMENTS
 CHAIN_HANDOVER_READY: FALSE
 HANDOVER_READY: FALSE
 CURRENT_BLOCKER: No M0-M4 execution blocker; build-size gate remains FAIL. Practical/UI qualification remains open.
-EXACT_NEXT_ACTION: Owner-authorized proceed next: execute four frozen TASK-005 engineering negatives after new prework.
-EXECUTED_CODE_HEAD: 9fb5d5bd4b606143fe334e4e6f018629b768f908
+EXACT_NEXT_ACTION: Inspect retained project input datasets and define first practical UI/import validation case under #1711/#1712.
+EXECUTED_CODE_HEAD: 798b2580fa0a42ac72342addcc8d6b5e99aec0a6
 HEAD_SEMANTICS: Last material/evidence head; subsequent commits update relay only.

@@ -23,7 +23,7 @@ EP0011_BASIS_MAIN: 4fb3548133f53e33d21cd0f3b3d471da592ae871
 LIVE_MAIN: 754bf8f4ac869b087063ac1181513f6012684e2f
 PR: 1718
 PR_STATUS: OPEN_DRAFT
-MERGEABILITY: NON_MERGEABLE_AT_POST_DRIFT_OBSERVATION
+MERGEABILITY: MERGEABLE_AT_POST_RECALC_OBSERVATION
 REVIEWS: NONE_AT_LAST_OBSERVATION
 UNRESOLVED_REVIEW_THREADS: 0_AT_LAST_OBSERVATION
 COMMIT_STATUSES: 0_AT_LAST_OBSERVATION
@@ -59,8 +59,8 @@ ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
 ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
-ISSUE_DRIFT_PROJECTION_STATUS: IN_SYNC_PENDING_RELAY
-ISSUE_PENDING_ACTIVITY_PROJECTION_STATUS: IN_SYNC_PENDING_RETARGET
+ISSUE_DRIFT_PROJECTION_STATUS: IN_SYNC
+ISSUE_PENDING_ACTIVITY_PROJECTION_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_ALIGNMENT: ALIGNED
@@ -113,8 +113,8 @@ HANDOVER_READY: FALSE
 
 PEND-001 remains Owner-deferred and unresolved from the earlier #1649 `MATERIAL_WITHIN_QUALIFIED_BOUNDARY` drift. The latest main increment from `86e39646...` to `754bf8f4...` is separately classified `METADATA_ONLY`: all 13 commits touch only the EMP.1 chain custody surface and do not alter the C3-A production trace, benchmark/oracle, workflow, roadmap, methodology, or release authority. This latest increment therefore does not create a new qualification boundary and does not satisfy PEND-001.
 
-The primary technical blocker remains faithful live-main execution. The exact-current-main BM005 target is now `754bf8f4...`, and its Actions query returns zero runs. BM005 remains NOT_RUN; there is no executed failure to justify engineering code changes. PR #1718 was observed non-mergeable after the base advanced and remains Owner-only / not authorized.
+The primary technical blocker remains faithful live-main execution. The exact-current-main BM005 target is now `754bf8f4...`, and its Actions query returns zero runs. BM005 remains NOT_RUN; there is no executed failure to justify engineering code changes. PR #1718 recalculated mergeable and remains Draft, Owner-only / not authorized.
 
 ## Exact next action
 
-Synchronize the live-main retarget and metadata-only drift receipt into the mutable Issue/PR projections, then remain READ_ONLY. Obtain a faithful live-main BM005 execution receipt or safe current-head dispatch/run. Material engineering writes remain blocked absent a separately valid authority path and an actually executed live-main failure. Do not merge PR #1718.
+Remain READ_ONLY. Obtain a faithful live-main BM005 execution receipt or safe current-head dispatch/run. Material engineering writes remain blocked absent a separately valid authority path and an actually executed live-main failure. Do not merge PR #1718.

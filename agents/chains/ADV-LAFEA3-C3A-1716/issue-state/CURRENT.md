@@ -15,7 +15,8 @@ COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_DRIFT_PROJECTION
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_DRIFT_PROJECTION_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -31,7 +32,7 @@ WRITE_AUTHORITY_DECISION: READ_ONLY
 
 | ID | Status | Current disposition |
 |---|---|---|
-| TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded through EP-0011; post-endpoint main drift is separately reconciled. |
+| TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded through EP-0011; post-endpoint main drift is separately reconciled and projected. |
 | TASK-002 | PASS_SOURCE_TRACE / EXECUTION_NOT_RUN | Public ordinary route traced; canonical execution-input custody preserved through convergence/BM005 evidence. |
 | TASK-003 | NOT_RUN_LIVE_MAIN_EXECUTION_REQUIRED | Old basis-main execution remained blocked; live main is now `86e39646...` and has no current-main execution receipt. |
 | TASK-004 | PASS_RECONCILED | #1663 material reconciliation complete: 7 already identical, 5 stale/superseded, 0 still-needed/disjoint. |
@@ -91,7 +92,8 @@ Exact-main consequence:
 - #1649 does not touch BM005 watched paths, so no automatic BM005 push-path run is expected for live main;
 - live-head Actions query returns `total_count=0`, `workflow_runs=[]`;
 - repository Actions dated 2026-09-08 remain zero;
-- faithful local execution or safe current-head dispatch is still required.
+- faithful local execution or safe current-head dispatch is still required;
+- mutable Issue drift projection is synchronized.
 
 ## Validation truth
 
@@ -101,6 +103,7 @@ PASS_CONTROL_PLANE:
 - changed-file set proves no LAFEA/BM005/workflow/roadmap source overlap;
 - pinned post-basis drift policy applied without self-granting write authority;
 - live-main Actions state checked;
+- mutable drift projection synchronized to the Issue Active comment;
 - protected numerical/source/oracle/release domains remain unchanged.
 
 NOT_RUN:
@@ -150,4 +153,4 @@ Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver to
 
 ## Exact next action
 
-Project the post-EP0011 drift into the mutable Issue Active comment, then remain READ_ONLY. Do not author engineering material work until independent coverage confirmation and genuinely new live-main execution/control-plane evidence exist. Only an actually executed live-main harness FAIL may reopen engineering code. PR #1718 remains not merge-authorized.
+Remain READ_ONLY. Do not author engineering material work until independent coverage confirmation and genuinely new live-main execution/control-plane evidence exist. Only an actually executed live-main harness FAIL may reopen engineering code. PR #1718 remains not merge-authorized.

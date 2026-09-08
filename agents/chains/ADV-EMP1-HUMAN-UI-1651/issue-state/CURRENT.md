@@ -3,11 +3,11 @@
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0040
 UPDATED_AT: 2026-09-08
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0040_COMMENT_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0040_COMMENT
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0040_COMMENT
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5589232243
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5589234001
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1651
 PARENT_ISSUE: 1651
 RECOVERY_CHILD_ISSUE: 1664
@@ -47,7 +47,7 @@ Owner instruction: `no independent review required, self check, fix merge, proce
 - unresolved review threads: 0 — no longer a blocker under Owner waiver;
 - status contexts: 0 — not PASS;
 - PR-triggered workflow runs: 0 — not PASS;
-- changed paths at self-check were chain custody only: `ACTIVE.md`, `EP-0038.md`, `EP-0039.md`, `CURRENT.md`; EP-0040 is an additional custody endpoint added before merge;
+- changed paths at self-check were chain custody only; EP-0040 is an additional custody endpoint added before merge;
 - no production `src/**`, test, workflow, WRC/Pressure, benchmark, route/code/release-authority paths were changed by this custody PR.
 
 Self-check satisfies the Owner-waived review/inspection gate only. It does **not** substitute for running the governed executable carrier and must not be recorded as engineering runtime PASS.
@@ -180,4 +180,4 @@ HUMAN_FACTOR_MAY_PROCEED: FALSE
 
 CURRENT_BLOCKER: governed P1-A executable validation on `695538dd713f2ef11fb00e54b86073f19d38684a` is still NOT_RUN. Independent review is no longer a blocker. P1-B and human-factor remain gated.
 
-EXACT_NEXT_ACTION: synchronize EP-0040 to #1651/#1664, perform final self-check and exact-head merge guard, then merge PR #1719 under current Owner authorization. After merge, preserve P1-A/P1-B/human-factor as pending. A further production/material mutation still requires an exact Owner progression command.
+EXACT_NEXT_ACTION: perform final self-check and exact-head merge guard, then merge PR #1719 under current Owner authorization. After merge, preserve P1-A/P1-B/human-factor as pending. A further production/material mutation still requires an exact Owner progression command.

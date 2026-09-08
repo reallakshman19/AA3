@@ -3,7 +3,8 @@
  * Execute frozen BM-MESH fixtures through production producers and solvers.
  * CLI inputs select the final stage, expected Git head and report identity;
  * outputs retain per-stage audit records, including the first runtime failure.
- * Missing authority or a failed predecessor blocks execution without fallback.
+ * NEGATIVE executes frozen invalid requests with positive controls, without solver execution
+ * or stage advancement. Missing authority or a failed predecessor blocks without fallback.
  */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -31,6 +32,7 @@ import {
 import {
   lafeaMeshGenerationConfiguration,
   planLafeaAnalysisMesh,
+  produceLafeaAnalysisMeshEvidence,
 } from '../src/workspace/lafea-mesh-producer-binding.js';
 import {
   LAFEA_SHELL_ANALYSIS_DOMAIN_SCHEMA,
@@ -60,6 +62,8 @@ import {
   LAFEA_SHELL_MULTIPATCH_ELEMENT,
   produceLafeaMultiPatchShellAnalysisMesh,
 } from '../src/workspace/lafea-shell-multipatch-mesh-core.js';
+import { createLafeaMeshGenerationIntentV2 } from '../src/workspace/lafea-domain-first-requests.js';
+import { mappedTransfiniteMesh } from '../src/core/lafea-meshing/mapped-mitc-mesh.js';
 import { finalizeAuditRecord, sha256File } from './lib/lafea-benchmark-audit.mjs';
 import { runMeshBenchmarkM4 } from './lib/lafea-mesh-benchmark-m4.mjs';
 import { inspectM3Mesh, M3_POLICY_ID, qualifyM3MeasuredRefinement } from './lib/lafea-mesh-benchmark-m3.mjs';
@@ -75,6 +79,8 @@ const LADDERS_PATH = path.join(BUCKET_ROOT, 'convergence/mesh-ladders.json');
 const PROBES_PATH = path.join(BUCKET_ROOT, 'convergence/fixed-probes.json');
 const THICKNESS_PATH = path.join(BUCKET_ROOT, 'convergence/shell-thickness.json');
 const M4_FIXTURE_PATH = path.join(BUCKET_ROOT, 'convergence/m4-physics-response.json');
+const NEGATIVE_PATH = path.join(BUCKET_ROOT, 'governance/negative-cases.json');
+const negativeCases = readJson(NEGATIVE_PATH);
 const M3_POLICY_PATH = path.join(BUCKET_ROOT, 'convergence/m3-policy-v2.json');
 const REPORT_ROOT = path.join(ROOT, 'reports/qualification/lafea-benchmark-program');
 const STAGE_ORDER = ['M0', 'M1', 'M2', 'M3', 'M4'];
@@ -112,10 +118,11 @@ if (custody.some((row) => row.status !== 'PASS')) {
 }
 
 const requestedLastStage = args.stage ?? 'M4';
-if (!STAGE_ORDER.includes(requestedLastStage)) {
-  throw new Error(`Unknown --stage ${requestedLastStage}. Expected one of ${STAGE_ORDER.join(', ')}.`);
+if (requestedLastStage !== 'NEGATIVE' && !STAGE_ORDER.includes(requestedLastStage)) {
+  throw new Error(`Unknown --stage ${requestedLastStage}. Expected NEGATIVE or one of ${STAGE_ORDER.join(', ')}.`);
 }
-const selectedStages = STAGE_ORDER.slice(0, STAGE_ORDER.indexOf(requestedLastStage) + 1);
+const selectedStages = requestedLastStage === 'NEGATIVE'
+  ? ['NEGATIVE'] : STAGE_ORDER.slice(0, STAGE_ORDER.indexOf(requestedLastStage) + 1);
 const runId = args.runId ?? defaultRunId(exactHeadSha);
 assert.match(runId, /^[A-Za-z0-9][A-Za-z0-9._-]*$/u, 'runId must be a single portable report-directory name.');
 const runDir = path.join(REPORT_ROOT, runId);
@@ -169,7 +176,7 @@ for (const stageId of selectedStages) {
       sourceCustody: custody,
       sourceRefHashes: Object.fromEntries([
         MANIFEST_PATH, REGISTRY_PATH, CASES_PATH, ORACLE_PATH, LADDERS_PATH,
-        PROBES_PATH, THICKNESS_PATH, M4_FIXTURE_PATH, M3_POLICY_PATH,
+        PROBES_PATH, THICKNESS_PATH, M4_FIXTURE_PATH, M3_POLICY_PATH, NEGATIVE_PATH,
       ].map((filePath) => [path.relative(ROOT, filePath).replaceAll('\\', '/'), sha256File(filePath)])),
       evidence,
       status: evidence.status,
@@ -178,8 +185,8 @@ for (const stageId of selectedStages) {
       elapsedMs: Number(elapsedMs.toFixed(3)),
     }],
     caseStatus: evidence.status,
-    nextBenchmarkAuthorized: evidence.status === 'PASS' && contiguousPass,
-    baselineDisposition: evidence.status === 'PASS' && contiguousPass
+    nextBenchmarkAuthorized: stageId !== 'NEGATIVE' && evidence.status === 'PASS' && contiguousPass,
+    baselineDisposition: stageId !== 'NEGATIVE' && evidence.status === 'PASS' && contiguousPass
       ? 'ELIGIBLE_EXECUTION_BASELINE'
       : 'NOT_ELIGIBLE',
     governance: {
@@ -236,6 +243,7 @@ function runStage(stageId, predecessorGateSatisfied) {
       observations: [],
     };
   }
+  if (stageId === 'NEGATIVE') return runNegativeCases();
   if (stageId === 'M0') return runM0();
   if (stageId === 'M1') return runM1();
   if (stageId === 'M2') return runM2();
@@ -257,6 +265,119 @@ function runStage(stageId, predecessorGateSatisfied) {
     shellMultiPatchObservation,
     fixtureHash: sha256File(M4_FIXTURE_PATH),
   });
+}
+
+/** Execute frozen single-factor rejections; retain unexpected failures without fallback. */
+function runNegativeCases() {
+  assert.equal(negativeCases.assertionPolicy, 'EXACT_ERROR_CODE_NOT_MESSAGE_REGEX');
+  assert.equal(negativeCases.authority.solverOrCompilerExecutionAuthorized, false);
+  assert.equal(negativeCases.cases.length, 4);
+  const observations = negativeCases.cases.map((definition) => {
+    try {
+      return { negativeCaseId: definition.negativeCaseId, ...executeNegativeCase(definition), status: 'PASS' };
+    } catch (error) {
+      return {
+        negativeCaseId: definition.negativeCaseId, status: 'FAIL',
+        expectedErrorCode: definition.expectedErrorCode,
+        errorCode: error?.code ?? error?.name, errorMessage: error?.message,
+        errorStack: error?.stack,
+      };
+    }
+  });
+  return {
+    schema: 'lafea-mesh-benchmark-stage-evidence/v1',
+    status: observations.every((row) => row.status === 'PASS') ? 'PASS' : 'FAIL',
+    inputBasis: '[SIMULATED] frozen TASK-005 geometry and invalid requests',
+    solverExecuted: false, observations,
+  };
+}
+
+/** @param {() => unknown} action @param {string} expectedCode @returns {string} */
+function requireExactRejection(action, expectedCode) {
+  /** @type {string | null} */
+  let observedCode = null;
+  assert.throws(action, (error) => {
+    observedCode = error.code;
+    assert.equal(observedCode, expectedCode);
+    return true;
+  });
+  return observedCode;
+}
+
+/** Frozen input definition selects one existing boundary; outputs retain both request variants. */
+function executeNegativeCase(definition) {
+  const input = definition.inputDefinition;
+  const expectedErrorCode = definition.expectedErrorCode;
+  const result = (positiveInput, negativeInput, positiveOutput, action) => ({
+    productionBoundary: definition.productionBoundary, expectedErrorCode,
+    positiveControl: { status: 'PASS', input: positiveInput, output: positiveOutput },
+    negativeInput, observedErrorCode: requireExactRejection(action, expectedErrorCode),
+  });
+  if (definition.negativeCaseId === 'MESH-NEG-OVER-CEILING') {
+    const { stage, configuration } = continuumMeshRequest(
+      input.geometryCaseId, input.elementFamily, input.globalTargetSize, 'NORMAL',
+    );
+    const positive = produceLafeaAnalysisMeshEvidence(stage, configuration);
+    assert.equal(positive.planned.plan.resourceDisposition, 'WITHIN_LIMITS');
+    const limited = { ...configuration, ...input.requestLimits };
+    const blocked = planLafeaAnalysisMesh(stage, limited);
+    assert.equal(blocked.plan.resourceDisposition, input.requirePlanDispositionBeforePublication);
+    return {
+      ...result({ stage, configuration }, { stage, configuration: limited }, positive.output,
+        () => produceLafeaAnalysisMeshEvidence(stage, limited)),
+      rejectedPlan: blocked.plan,
+    };
+  }
+  if (definition.negativeCaseId === 'MESH-NEG-UNAUTHORIZED-LAFEA3-FAMILY') {
+    const { stage, configuration } = continuumMeshRequest('M2-UNIT-SQUARE-01', 'T3', 1, 'NORMAL');
+    const { semanticHash, status, executionAuthorized, producerRef, producesMesh, reason, ...request } =
+      planLafeaAnalysisMesh(stage, configuration).intent;
+    const positive = createLafeaMeshGenerationIntentV2(request);
+    assert.equal(positive.semanticHash, semanticHash);
+    const invalid = { ...request, elementFamily: input.elementFamily };
+    return result(request, invalid, positive, () => createLafeaMeshGenerationIntentV2(invalid));
+  }
+  if (definition.negativeCaseId === 'MESH-NEG-NON-FOUR-SIDED-MAPPED-Q8') {
+    const [a, b, c, d] = requireCase('M2-UNIT-SQUARE-01').topology.outerLoop.vertices;
+    const counts = input.boundaryChainPointCounts;
+    const boundaries = {
+      bottom: boundaryChain(a, b, counts.bottom), top: boundaryChain(d, c, counts.bottom),
+      left: boundaryChain(a, d, counts.left), right: boundaryChain(b, c, counts.right),
+    };
+    const positive = mappedTransfiniteMesh(boundaries.bottom, boundaries.top, boundaries.left, boundaries.right);
+    assert.ok(positive.elements.length > 0);
+    assert.ok(positive.elements.every((element) => element.elementType === 'Q8'));
+    const invalid = { ...boundaries, top: boundaryChain(d, c, counts.top) };
+    return {
+      ...result(boundaries, invalid, positive,
+        () => mappedTransfiniteMesh(invalid.bottom, invalid.top, invalid.left, invalid.right)),
+      automaticProducerInvocation: false,
+      automaticProducerFallbackIsValid: definition.semanticQualification.automaticProducerFallbackIsValid,
+    };
+  }
+  if (definition.negativeCaseId === 'MESH-NEG-NONCONFORMING-MULTIPATCH-SEAM') {
+    const positive = multiPatchShellGeometry(requireCase(input.baseGeometryCaseId), 'NORMAL');
+    const { semanticHash, ...request } = positive;
+    const invalid = structuredClone(request);
+    const seam = invalid.seams[0];
+    const patch = invalid.patches.find((row) => row.patchId === seam.patchAId);
+    seam.segmentAId = patch.segments.find((row) => row.segmentId !== seam.segmentAId).segmentId;
+    assert.equal(createLafeaMultiPatchShellMidsurfaceGeometry(request).semanticHash, semanticHash);
+    return result(request, invalid, positive, () => createLafeaMultiPatchShellMidsurfaceGeometry(invalid));
+  }
+  throw new Error(`Unimplemented frozen negative ${definition.negativeCaseId}.`);
+}
+
+/** Boundary samples are primitive requests, not benchmark-authored mesh nodes.
+ * @param {number[]} start @param {number[]} end @param {number} count
+ * @returns {{x: number, y: number}[]}
+ */
+function boundaryChain(start, end, count) {
+  assert.ok(Number.isInteger(count) && count >= 2);
+  return Array.from({ length: count }, (_, index) => ({
+    x: Number(start[0]) + (Number(end[0]) - Number(start[0])) * index / (count - 1),
+    y: Number(start[1]) + (Number(end[1]) - Number(start[1])) * index / (count - 1),
+  }));
 }
 
 function runM0() {
@@ -656,7 +777,8 @@ function executeWorkerRequest(request) {
   throw new Error(`Unknown worker request kind ${request.kind}.`);
 }
 
-function continuumObservation(caseId, family, h, variant = 'NORMAL') {
+// Construct the frozen geometry/profile request shared by positive and negative checks.
+function continuumMeshRequest(caseId, family, h, variant) {
   const caseDef = requireCase(caseId);
   const geometry = continuumGeometry(caseDef, variant);
   const sourceHash = sha256File(CASES_PATH);
@@ -681,7 +803,12 @@ function continuumObservation(caseId, family, h, variant = 'NORMAL') {
     stageId: 'LAFEA.3', family, h,
     identity: `BM-MESH-${caseId}-${family}-H${encodeNumber(h)}`,
   });
-  const planned = planLafeaAnalysisMesh(stage, lafeaMeshGenerationConfiguration(profile));
+  return { stage, profile, configuration: lafeaMeshGenerationConfiguration(profile) };
+}
+
+function continuumObservation(caseId, family, h, variant = 'NORMAL') {
+  const { stage, profile, configuration } = continuumMeshRequest(caseId, family, h, variant);
+  const planned = planLafeaAnalysisMesh(stage, configuration);
   const mesh = canonicalLafeaAnalysisMesh(planned.generated.mesh);
   const quality = qualifyLafeaAnalysisMesh('LAFEA.3', mesh, profile);
   return {
@@ -1202,13 +1329,14 @@ function validateFrozenInputs() {
   assert.equal(m4Fixture.convergencePolicy.limitOverrides, null);
   for (const ladder of ladders.ladders) assert.equal(ladder.levelIds.at(-1), 'L2');
   const ids = new Set(registry.sources.map((row) => row.sourceId));
-  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023', 'S-030', 'S-031', 'S-032', 'S-033', 'S-034', 'S-035', 'S-036']) {
+  for (const sourceId of ['S-014', 'S-015', 'S-016', 'S-017', 'S-020', 'S-021', 'S-022', 'S-023', 'S-030', 'S-031', 'S-032', 'S-033', 'S-034', 'S-035', 'S-036', 'S-037']) {
     assert.ok(ids.has(sourceId), `Required BM-MESH source custody entry ${sourceId} is missing.`);
   }
 }
 
 function stageComparisonPolicy(stageId) {
   return {
+    NEGATIVE: 'EXACT_ERROR_CODE_WITH_VALID_POSITIVE_CONTROL',
     M0: 'PRODUCTION_CONTRACT_CONFORMANCE',
     M1: 'BYTE_STABLE_CANONICAL_MESH_HASH_ACROSS_REPLAY_PROCESS_AND_INPUT_ORDER',
     M2: 'FROZEN_CLOSED_FORM_AND_EXPLICIT_POLICY_COMPARISONS_WITH_PRODUCTION_MULTIPATCH_SEAM_IDENTITY',

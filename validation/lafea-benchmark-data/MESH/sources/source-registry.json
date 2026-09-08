@@ -198,7 +198,9 @@
       "sourceId": "S-032",
       "role": "benchmarkPublicStagedRunner",
       "path": "scripts/lafea-mesh-benchmark-run.mjs",
-      "blobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe"
+      "blobSha": "46021cb41eba8b8a14336ec8cd65461daba4cb51",
+      "previousBlobSha": "0f9d4fd115245de85f0226926180d5cac11ddcbe",
+      "changeAuthority": "Owner proceed next: frozen TASK-005 execution through existing audited runner; production unchanged"
     },
     {
       "sourceId": "S-033",
@@ -223,6 +225,12 @@
       "role": "productionAnalysisMeshQuality",
       "path": "src/workspace/lafea-analysis-mesh-quality.js",
       "blobSha": "953bf7e1121464016d46b2262ebc2da5f0d23341"
+    },
+    {
+      "sourceId": "S-037",
+      "role": "frozenTask005NegativeCases",
+      "path": "validation/lafea-benchmark-data/MESH/governance/negative-cases.json",
+      "blobSha": "2e587ed1e45fd9b1a4fa67ed7d50535f49541193"
     }
   ],
   "trace": {

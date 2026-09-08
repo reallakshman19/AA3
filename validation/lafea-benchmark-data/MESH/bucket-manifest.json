@@ -3,7 +3,7 @@
   "bucketId": "MESH",
   "issue": "github:reallaksh19/Advanced_Analysis#1652",
   "benchmarkId": "BM-MESH",
-  "materialLeg": "ADV-MESH-1710/LEG-004",
+  "materialLeg": "ADV-MESH-1710/LEG-005",
   "state": "M4_EXECUTION_WITH_OWNER_APPROVED_ROUNDOFF_CLASSIFIER",
   "baselineCommit": "80f335b750a13a06741a787106949bada1ad7f37",
   "authority": {
@@ -274,5 +274,14 @@
     }
   ],
   "m3AcceptancePolicy": "BM-MESH-M3-MEASURED-REFINEMENT-v2",
-  "convergenceSignPolicy": "PAIR_RELATIVE_256_EPSILON_NO_PERCENTAGE_LIMIT_OVERRIDE"
+  "convergenceSignPolicy": "PAIR_RELATIVE_256_EPSILON_NO_PERCENTAGE_LIMIT_OVERRIDE",
+  "negativeSuite": {
+    "stageSelection": "NEGATIVE",
+    "definitionSource": "S-037",
+    "runnerSource": "S-032",
+    "comparisonPolicy": "EXACT_ERROR_CODE_WITH_VALID_POSITIVE_CONTROL",
+    "solverOrCompilerExecuted": false,
+    "advancementAuthorized": false,
+    "authority": "Owner proceed next: execute frozen TASK-005 definitions without changing expected codes"
+  }
 }

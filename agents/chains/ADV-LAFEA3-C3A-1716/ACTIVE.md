@@ -48,8 +48,8 @@ ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0009
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0009_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5587694217
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -82,7 +82,7 @@ LAST_MATERIAL_LEG_CLASS: EXECUTION_CONTROL_PLANE_ONLY
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-004.md
 LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-004-EVIDENCE.md
 NEXT_MATERIAL_LEG: LEG-005
-MATERIAL_LEG_STATUS: LEG_004_RECORDED
+MATERIAL_LEG_STATUS: LEG_004_RECORDED_AND_SYNCED
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
 HOSTED_EXECUTION_TARGET: exact merged main 4fb3548133f53e33d21cd0f3b3d471da592ae871
@@ -101,7 +101,7 @@ HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-The merged exact-main `push: main` event satisfied the unchanged BM005 workflow path filter, but no run was scheduled. Exact-main Actions runs are zero and repository Actions runs dated 2026-09-08 are zero. #1718 itself changes only chain/evidence files and cannot trigger BM005 through the workflow's PR path filter. The connected GitHub surface exposes inspection/rerun of existing jobs but no current-head workflow-dispatch creation. This is an execution-control-plane blocker, not BM005 FAIL.
+The merged exact-main `push: main` event satisfied the unchanged BM005 workflow path filter, but no run was scheduled. Exact-main Actions runs are zero and repository Actions runs dated 2026-09-08 are zero. #1718 itself changes only chain/evidence files and cannot trigger BM005 through the workflow's PR path filter. The connected GitHub surface exposes inspection/rerun of existing jobs but no current-head workflow-dispatch creation. This is an execution-control-plane blocker, not BM005 FAIL. EP-0009 is synchronized to Issue comment `5587694217`.
 
 ## Exact next action
 

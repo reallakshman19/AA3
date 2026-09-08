@@ -4,8 +4,8 @@ CHAIN_STATE_VERSION: 3
 HANDOVER_PROTOCOL_VERSION: 2
 CHAIN_ID: ADV-LAFEA3-C3A-1716
 MISSION: Reproduce current-main ordinary LAFEA.3 mesh-to-solver route, reconcile BM-MESH/#1663 dependency state, and isolate the first wrong/incomplete boundary before any engineering repair.
-ACTIVE_ENDPOINT: EP-0002
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0002.md
+ACTIVE_ENDPOINT: EP-0003
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0003.md
 
 COMMON_PROTOCOL: engineering-pr-delivery-v2
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
@@ -16,39 +16,39 @@ WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1716
 WORK_ITEM_MODE: EXCLUSIVE
 AGENT_INSTANCE_ID: chatgpt:94bae212-e461-4631-aa13-4ac68219ffb3
 ACTIVE_CUSTODIAN: ChatGPT GPT-5.6 Sol
-CUSTODY_EPOCH: 2
+CUSTODY_EPOCH: 3
 
 BRANCH: chatgpt/lafea3-c3a-1716-current-main-route
-HEAD: 27f055b4c000e82de50848c0373ec1bf79f5e8c9
-HEAD_ROLE: QUALIFICATION_REFRESH_BOUNDARY; subsequent sync commits are relay-only
+HEAD: ec26f2169faecc315721de37a8b791f632249c1c
+HEAD_ROLE: MATERIAL_LEG_001_HEAD; endpoint/ACTIVE synchronization commits after this head are relay-only
 BASE_MAIN: 27dde65f51e1b9d7e6d20a324510a50ea3631729
 PR: 1717
 PR_STATUS: OPEN_DRAFT
-MERGEABILITY: MERGEABLE
+MERGEABILITY: MERGEABLE_AT_MATERIAL_HEAD_REVIEW
 REVIEWS: NONE
 UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: NONE_DECLARED_AT_BRANCH_BASIS; executable engineering/software validation remains NOT_RUN
+REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_CHECKS_NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
-ENGINEERING_STATE: READY_LEG_001_QUESTION_REFRESH_COMPLETE
+ENGINEERING_STATE: LEG_001_MATERIAL_COMPLETE_EXECUTION_NOT_RUN
 CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_CURRENT_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY_AWAITING_NEXT_OWNER_PROGRESSION
 AUTO_STATE: NOT_APPLICABLE
 COORDINATION_STATE: SAFE_NO_MAIN_DRIFT
-DEPENDENCIES: #1711 parent; #1710 roadmap; #1535/#1569 ordinary route/BM005; #1652/#1663 mesh dependency; #1715 merged benchmark baseline
+DEPENDENCIES: #1711 parent; #1710 roadmap; #1535/#1569 ordinary route/BM005; #1652/#1663 reconciled; #1715 merged benchmark baseline
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-basis/IB-0001.md
 ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0003
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5585660012
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0003_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0003_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -56,7 +56,7 @@ ROADMAP_ALIGNMENT: ALIGNED
 ROADMAP_DRIFT: NO_OWNER_INTENT_DRIFT_DETECTED
 ROADMAP_MUTATION_AUTHORITY: NONE
 
-OWNER_TEXT_OBSERVED: `proceed next, create q1 to q5`
+OWNER_TEXT_OBSERVED: `proceed next`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 
 QUALIFICATION_PROFILE: FEA
@@ -65,8 +65,8 @@ QUALIFICATION_SCOPE_ID: QSCOPE-1716-LAFEA3-C3A-EXECUTION-DEBUG
 QUESTION_SET_ID: QS-ADV-LAFEA3-C3A-1716-0002
 QUESTION_SET_FILE: agents/qualifications/ADV-LAFEA3-C3A-1716/QS-ADV-LAFEA3-C3A-1716-0002-questions.md
 QUESTION_SET_STATUS: CURRENT
-QUESTION_PACK_ACTION: REFRESHED_BY_EXPLICIT_OWNER_REQUEST
-QUESTION_DISPLAY: SHOW
+QUESTION_PACK_ACTION: REUSED
+QUESTION_DISPLAY: HIDE
 PREWORK_QUALIFICATION_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 QUESTION_SET_ADMISSION_STATUS: NOT_EVALUATED_ON_TAKEOVER
@@ -78,20 +78,25 @@ OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
 MATERIAL_HISTORY_ROOT_BASE: 27dde65f51e1b9d7e6d20a324510a50ea3631729
 MATERIAL_LEG_PREWORK_ENDPOINT_FILE: agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0002.md
-NEXT_MATERIAL_LEG: LEG-001
-MATERIAL_LEG_STATUS: NOT_STARTED
+LAST_MATERIAL_LEG: LEG-001
+LAST_MATERIAL_LEG_HEAD: ec26f2169faecc315721de37a8b791f632249c1c
+LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-001.md
+NEXT_MATERIAL_LEG: LEG-002
+MATERIAL_LEG_STATUS: LEG_001_RECORDED
 
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: source/PR/main/custody re-ground only; no project-local BM005 execution
+HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-001-EVIDENCE.md; executable checks unavailable
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-The Owner-requested C3-A execution/debug Q1-Q5 pack is refreshed, current, no-downgrade and synchronized. No material production/test/benchmark change occurred in this progression. Current-main BM005 execution and #1663 reconciliation remain unresolved, so no production patch is authorized by evidence.
+LEG-001 isolated and repaired an evidence-custody omission: physical-probe evidence already retained `canonicalExecutionInputHash`, but convergence study evidence dropped it. The custody-only patch now preserves and validates that identity. #1663 is fully reconciled: 7/12 material blobs already identical on current main; 5/12 are stale/superseded by the merged/executed #1715 line; no disjoint material remains.
+
+Executable BM005/current convergence checks remain NOT_RUN because this session has no faithful mounted Node checkout and GitHub reports zero material-head statuses.
 
 ## Exact next action
 
-A later exact `proceed next` begins material LEG-001 with current-main BM005/public-route reproduction plus #1663 file-by-file reconciliation. If reproduction exposes a real implementation failure, isolate the first wrong owner boundary and add the smallest focused failing regression before any repair. Do not merge.
+On a faithful clean checkout, execute the focused convergence route check and then BM005 ordinary-route check, retaining exact head/clean-tree/stdout/stderr/exit/report hashes. No further material change occurs without a later exact `proceed next`. Do not merge.

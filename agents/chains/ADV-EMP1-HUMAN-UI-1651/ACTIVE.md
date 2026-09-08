@@ -12,8 +12,8 @@ WORK_ITEM_MODE: EXCLUSIVE
 REPO: reallaksh19/Advanced_Analysis
 TASK: EMP.1 human-engineering UI hardening for issue #1651 / recovery #1664
 CHAIN: ADV-EMP1-HUMAN-UI-1651
-ENDPOINT: EP-0039
-ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0039.md
+ENDPOINT: EP-0040
+ACTIVE_ENDPOINT_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/endpoints/EP-0040.md
 ACTIVE_CUSTODIAN: GPT-5.6 Sol
 CUSTODY_STATE: HELD
 
@@ -39,24 +39,31 @@ REQUALIFICATION_REQUIRED_BY_DRIFT: FALSE
 
 ACTIVE_BRANCH: agent/emp1-1651-post-merge-validation-ep0038
 ACTIVE_PR: 1719
-ACTIVE_PR_STATUS: OPEN_DRAFT_CUSTODY_ONLY_OWNER_ONLY_NOT_AUTHORIZED
-PR_HEAD_AT_EP0039_START: 82333a35dadb4ef34ec2fbcb4143af615cd37f93
-PR_MERGEABLE_AT_EP0039_START: TRUE
-PR_REVIEWS_AT_EP0039_START: 0
-PR_UNRESOLVED_THREADS_AT_EP0039_START: 0
-PR_STATUS_CONTEXTS_AT_EP0039_START: 0
-PR_WORKFLOW_RUNS_AT_EP0039_START: 0
+ACTIVE_PR_STATUS: OWNER_AUTHORIZED_FOR_CUSTODY_MERGE_PENDING_FINAL_GUARD
+PR_HEAD_BEFORE_EP0040: c986de2e9fba240d966aadee7d53632a2f8a2700
+PR_MERGEABLE_BEFORE_EP0040: TRUE
+PR_REVIEWS_BEFORE_EP0040: 0
+PR_UNRESOLVED_THREADS_BEFORE_EP0040: 0
+PR_STATUS_CONTEXTS_BEFORE_EP0040: 0
+PR_WORKFLOW_RUNS_BEFORE_EP0040: 0
+PR_SELF_CHECK: PASS_CUSTODY_SCOPE_ONLY
+PR_PRODUCTION_PATHS_CHANGED: FALSE
+PR_WORKFLOW_PATHS_CHANGED: FALSE
 
-OWNER_MERGE_COMMAND: MERGE
-OWNER_MERGE_STATUS: CONSUMED_BY_PR_1708
-OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
-OWNER_PROGRESSION_STATUS: CONSUMED_BY_EP_0039_POST_MERGE_EXECUTABLE_EVIDENCE_WAIT
+OWNER_INSTRUCTION_EP0040: no independent review required, self check, fix merge, proceed. add to pending activities in your issue
+OWNER_INSTRUCTION_SCOPE: executable-evidence/review path + PR_1719 custody disposition
+OWNER_PROGRESSION_COMMAND: NONE_EXACT
+OWNER_PROGRESSION_STATUS: NOT_CONSUMED_PLAIN_PROCEED_NOT_NORMAL_PROGRESSION
+OWNER_MERGE_COMMAND: MERGE_WITHIN_CURRENT_INSTRUCTION
+OWNER_MERGE_STATUS: AUTHORIZED_FOR_PR_1719
+INDEPENDENT_REVIEW_REQUIREMENT: WAIVED_BY_OWNER
+SELF_CHECK_AUTHORITY: AUTHORIZED_BY_OWNER
 
 ENGINEERING_STATE: BLOCKED
 WRITE_AUTHORITY: READ_ONLY_AWAITING_POST_MERGE_EXECUTABLE_VALIDATION
 AUTO_STATE: NOT_APPLICABLE
-MERGE_AUTHORITY: OWNER_ONLY
-MERGE_AUTHORIZED: FALSE
+MERGE_AUTHORITY: AUTHORIZED
+MERGE_AUTHORIZED: TRUE
 
 QUALIFICATION_SCOPE_ID: QSCOPE-1651-EMP-TASK-SHELL-RECOVERY
 QUESTION_SET_ID: QS-ADV-EMP1-HUMAN-UI-1651-0006
@@ -69,12 +76,12 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-basis/IB-0001.md
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRENT.md
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0039
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0040
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588446856
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5588448716
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0040_COMMENT
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0040_COMMENT
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0040_COMMENT_SYNC
 
 ROADMAP: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED
@@ -97,15 +104,21 @@ VALIDATION_P1B_HEAD: 86e3964619abdf15027d6dd42f70e5c336dcb16c
 VALIDATION_P1B_FULL_EXECUTABLE: NOT_RUN_GATED_BY_P1A
 VALIDATION_STAGE17: NOT_RUN
 VALIDATION_HUMAN_FACTOR: NOT_RUN
-NEW_ADMISSIBLE_EXECUTABLE_EVIDENCE_AT_EP0039: NONE
 HUMAN_FACTOR_MAY_PROCEED: FALSE
+EXECUTABLE_EVIDENCE_WAIVED: FALSE
+EXECUTABLE_EVIDENCE_POLICY: independent review is waived; self-check satisfies review/inspection custody only and does not substitute for executing the governed carrier.
 HANDOVER_VALIDATION_STATUS: FAIL_NOT_RUN_MIX
+
+PENDING_ACTIVITY_1: P1-A governed executable carrier on exact 695538dd713f2ef11fb00e54b86073f19d38684a remains required. Independent review is waived; assistant self-check is accepted for review/inspection. Preserve NOT_RUN until actual execution.
+PENDING_ACTIVITY_2: after P1-A PASS, run P1-B on exact current-main target 86e3964619abdf15027d6dd42f70e5c336dcb16c unless later main drift requires target reconciliation.
+PENDING_ACTIVITY_3: only after executable PASS, perform desktop/narrow/CAUx human-factor acceptance and retain three screenshots.
+PENDING_ACTIVITY_4: reconcile TASK-001..005 and close #1664 then #1651 only if acceptance passes.
 
 ACCEPTANCE_TASK_001: SOURCE_RETAINED_LIVE_FINAL_PENDING
 ACCEPTANCE_TASK_002: SOURCE_RETAINED_PRESSURE_5X2_LIVE_FINAL_PENDING
 ACCEPTANCE_TASK_003: MERGED_TASK_SHELL_HUMAN_REOBSERVATION_PENDING
 ACCEPTANCE_TASK_004: CAUX_UI_SOURCE_RETAINED_KEYBOARD_VISUAL_PENDING
-ACCEPTANCE_TASK_005: PROTECTED_AUTHORITY_PRESERVED_THROUGH_EP0039
+ACCEPTANCE_TASK_005: PROTECTED_AUTHORITY_PRESERVED_THROUGH_EP0040
 
 BENCHMARK_CAUX: retained 8/8 within frozen 3%; worst relative 2.0355862430856293% Cu; worst absolute 26.786740343133943 kPa Du; governing Du/Du agreement; comparison only, non-authorizing
 BENCHMARK_PV_ELITE: REFERENCE_NOT_AVAILABLE / SOURCE_NOT_RETAINED / zero rows / no invented values, version or tolerance
@@ -117,6 +130,6 @@ HANDOVER_CONTENT_READY: TRUE
 CHAIN_HANDOVER_READY: TRUE
 HANDOVER_READY: FALSE
 
-AUTHORITY_BOUNDARY: EP-0039 is custody/evidence-wait only. No production src/**, WRC/Pressure mechanics, applicability/source authority, bounded-route authority, benchmark/tolerance authority, workflows, code-compliance, production authorization or release authority changed.
-CURRENT_BLOCKER: P1-A exact executable validation on merged EMP.1 integration 695538dd713f2ef11fb00e54b86073f19d38684a is NOT_RUN. P1-B current-main regression on 86e3964619abdf15027d6dd42f70e5c336dcb16c and all human-factor acceptance remain gated.
-EXACT_NEXT_ACTION: run node scripts/emp1-issue1651-executable-validation.mjs with PLAYWRIGHT_BROWSERS_PATH=0 on exact P1-A head 695538dd713f2ef11fb00e54b86073f19d38684a. Stop on any nonzero. Only PASS_EXECUTABLE_EXACT_HEAD_GATE_SEQUENCE permits P1-B on exact 86e3964619abdf15027d6dd42f70e5c336dcb16c; only both executable PASS observations permit desktop/narrow/CAUx human-factor acceptance. Evidence intake needs no new progression; any material mutation after a failed executable observation requires another exact Owner progression.
+AUTHORITY_BOUNDARY: EP-0040 records Owner review waiver, self-check authority, pending-activity clarification and PR #1719 merge authorization only. No production src/**, WRC/Pressure mechanics, applicability/source authority, bounded-route authority, benchmark/tolerance authority, workflows, code-compliance, production authorization or release authority changed. Executable validation is not waived.
+CURRENT_BLOCKER: governed P1-A executable validation on exact 695538dd713f2ef11fb00e54b86073f19d38684a remains NOT_RUN. Review independence is no longer a blocker. P1-B and human-factor remain gated.
+EXACT_NEXT_ACTION: finish EP-0040 Issue sync, re-ground final PR #1719 head/main/mergeability, self-check changed paths, mark Ready if mechanically required, and merge PR #1719 under current Owner authorization with expected-head protection. After merge preserve P1-A/P1-B/human-factor as pending. Plain `proceed` does not authorize a new material progression.

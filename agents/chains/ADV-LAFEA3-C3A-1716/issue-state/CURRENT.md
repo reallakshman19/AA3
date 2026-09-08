@@ -13,8 +13,8 @@ PR: 1717 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0002_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0002_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5585660012
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -27,7 +27,7 @@ MERGE_AUTHORIZED: FALSE
 | TASK-003 | NOT_RUN | Faithful execution of `node scripts/lafea.3-bm005-ordinary-route-check.mjs` remains unavailable through repository API inspection alone. |
 | TASK-004 | OPEN | #1663 file-by-file reconciliation pending. |
 | TASK-005 | BLOCKED_ON_REPRODUCTION | No production patch is justified until an actual first wrong boundary is demonstrated. |
-| TASK-006 | PASS_QUALIFICATION_REFRESH_PENDING_SYNC | Owner `proceed next, create q1 to q5` refreshed the current C3-A execution/debug qualification pack; Issue endpoint/Active synchronization is in progress. |
+| TASK-006 | PASS_QUALIFICATION_REFRESH_SYNCED | Owner `proceed next, create q1 to q5` refreshed the current C3-A execution/debug qualification pack and synchronized EP-0002/Active Issue projection. |
 
 ## Input ledger
 
@@ -88,4 +88,4 @@ This progression refreshed and displayed the current C3-A execution/debug qualif
 
 ## Exact next action
 
-Synchronize EP-0002 and the mutable Active Handover comment to issue #1716, record the endpoint comment ID, and stop. A later `proceed next` begins LEG-001 with current-main BM005/public-route reproduction plus #1663 file-by-file reconciliation. Do not merge.
+A later `proceed next` begins LEG-001 with current-main BM005/public-route reproduction plus #1663 file-by-file reconciliation. If reproduction exposes a real implementation failure, isolate the first wrong owner boundary and add the smallest focused failing regression before any repair. Do not merge.

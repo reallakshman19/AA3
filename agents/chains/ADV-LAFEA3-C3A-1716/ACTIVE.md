@@ -18,12 +18,13 @@ CUSTODY_EPOCH: 11
 
 BRANCH: chatgpt/lafea3-c3a-1716-post-merge-execution
 HEAD: e3e3c9f6fb40238c4599389565eaa677ae4eba2e
-HEAD_ROLE: LEG_005_ENDPOINT_HEAD; later sync commits are relay-only
-BASE_MAIN: 4fb3548133f53e33d21cd0f3b3d471da592ae871
+HEAD_ROLE: LEG_005_ENDPOINT_HEAD; later sync/drift commits are relay-only
+EP0011_BASIS_MAIN: 4fb3548133f53e33d21cd0f3b3d471da592ae871
+LIVE_MAIN: 86e3964619abdf15027d6dd42f70e5c336dcb16c
 PR: 1718
 PR_STATUS: OPEN_DRAFT
-MERGEABILITY: MERGEABLE_AT_PREWORK_OBSERVATION
-REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_NOT_RUN
+MERGEABILITY: UNKNOWN_PENDING_POST_DRIFT_RECHECK
+REQUIRED_CHECKS: EXECUTABLE_ENGINEERING_NOT_RUN_ON_LIVE_MAIN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -32,7 +33,14 @@ CUSTODY_STATE: HELD
 QUALIFICATION_STATE: NOT_REQUIRED_CURRENT_CUSTODIAN
 WRITE_AUTHORITY: READ_ONLY
 AUTO_STATE: NOT_APPLICABLE
-COORDINATION_STATE: SAFE_NO_MAIN_DRIFT
+COORDINATION_STATE: POST_EP0011_MAIN_DRIFT_RECONCILED_READ_ONLY
+
+POST_BASIS_DRIFT: MATERIAL_WITHIN_QUALIFIED_BOUNDARY
+QUALIFICATION_COVERAGE: INDEPENDENT_CONFIRMATION_REQUIRED
+CURRENT_STATE_AUTHORITY: BLOCKED
+POST_BASIS_LIVE_HEAD: 86e3964619abdf15027d6dd42f70e5c336dcb16c
+POST_BASIS_COMMITS: 8
+POST_BASIS_DRIFT_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/POST-EP0011-DRIFT-0001.md
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_BASIS_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-basis/IB-0001.md
@@ -41,7 +49,7 @@ ISSUE_CURRENT_STATE_ENDPOINT: EP-0011
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
 ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5588164073
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_DRIFT_PROJECTION
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_ALIGNMENT: ALIGNED
@@ -64,27 +72,27 @@ LAST_MATERIAL_LEG: LEG-005
 LAST_MATERIAL_LEG_CLASS: EXTERNAL_EXECUTION_EVIDENCE_RECONCILIATION_ONLY
 LAST_MATERIAL_LEG_RECEIPT: agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-005.md
 LAST_MATERIAL_LEG_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-005-EVIDENCE.md
-MATERIAL_LEG_STATUS: LEG_005_RECORDED_AND_SYNCED
-NEXT_MATERIAL_LEG: CONDITIONAL_ON_NEW_EXECUTION_OR_AUTHORITY_EVIDENCE
+MATERIAL_LEG_STATUS: LEG_005_RECORDED_AND_SYNCED_AT_BASIS_MAIN
+NEXT_MATERIAL_LEG: CONDITIONAL_ON_NEW_EXECUTION_OR_AUTHORITY_EVIDENCE_AND_COVERAGE_CONFIRMATION
 
 HOSTED_EXECUTION_WORKFLOW: .github/workflows/lafea3-bm005-qualification.yml
-HOSTED_EXECUTION_TARGET: 4fb3548133f53e33d21cd0f3b3d471da592ae871
-HOSTED_EXECUTION_CLASSIFICATION: NOT_RUN_EXECUTION_CONTROL_PLANE_BLOCKED
+HOSTED_EXECUTION_TARGET: 86e3964619abdf15027d6dd42f70e5c336dcb16c
+HOSTED_EXECUTION_CLASSIFICATION: NOT_RUN_AFTER_DISJOINT_MAIN_DRIFT
 HOSTED_EXECUTION_RUN_ID: NONE
 HOSTED_EXECUTION_JOB_ID: NONE
 HOSTED_EXECUTION_ARTIFACT: NONE
 
 HANDOVER_CONTENT_READY: TRUE
-HANDOVER_VALIDATION_STATUS: PASS_CONTROL_PLANE__EXECUTABLE_ENGINEERING_NOT_RUN
-HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-005-EVIDENCE.md
+HANDOVER_VALIDATION_STATUS: PASS_CONTROL_PLANE__LIVE_MAIN_EXECUTABLE_ENGINEERING_NOT_RUN
+HANDOVER_VALIDATION_EVIDENCE: agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-005-EVIDENCE.md; agents/chains/ADV-LAFEA3-C3A-1716/validation/POST-EP0011-DRIFT-0001.md
 CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
 HANDOVER_READY: FALSE
 
 ## Current blocker / diagnosis
 
-LEG-005 found no new exact-main execution evidence after synchronized EP-0010. Exact-main Actions and repository Actions dated 2026-09-08 remain zero; Issue #1716 contains no faithful exact-main execution receipt; PR #1718 comments remain empty; no current-head workflow-dispatch creation action is available. BM005 remains NOT_RUN because the execution control plane is blocked, not because the harness failed. EP-0011 is synchronized to Issue comment `5588164073`.
+EP-0011/LEG-005 remain valid history for basis main `4fb35481...`. During final closure, live main advanced to `86e39646...` via merged #1649. The drift changes only the #1644/load-calc chain/check, one non-FEA runner line and one `master-data-ui.js` line; no LAFEA/BM005/workflow/roadmap authority file changed. Under pinned drift policy this is `MATERIAL_WITHIN_QUALIFIED_BOUNDARY`, which requires independent coverage confirmation before writes. The exact-current-main BM005 target is now `86e39646...` and has zero Actions runs; its merge did not touch a BM005 watched path, so faithful local execution or safe current-head dispatch is required.
 
 ## Exact next action
 
-Remain READ_ONLY. Do not author another identical scheduler-observation leg absent new execution/control-plane evidence or material main/authority drift. Only an actually executed current-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.
+Project this drift into the mutable Issue Active comment, then remain READ_ONLY. Do not author engineering material work until independent coverage confirmation and genuinely new live-main execution/control-plane evidence exist. Only an actually executed live-main harness FAIL may reopen engineering code. PR #1718 is not merge-authorized.

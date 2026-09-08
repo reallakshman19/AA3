@@ -14,8 +14,8 @@ SUCCESSOR_PR: 1718 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0009_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0009_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5587694217
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -73,7 +73,7 @@ Receipt: `agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-004.md`.
 
 Evidence: `agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-004-EVIDENCE.md`.
 
-Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0009.md`.
+Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0009.md`; Issue endpoint comment `5587694217`.
 
 Accepted classification:
 
@@ -104,7 +104,7 @@ PASS_CONTROL_PLANE:
 - exact-main and repository-date zero-run observations repeated after synchronized EP-0008;
 - #1718 path-filter ineligibility proven;
 - historical runner failure separated from current scheduler absence;
-- LEG-004 evidence and receipt recorded;
+- LEG-004 evidence/receipt and EP-0009 repository↔Issue projection synchronized;
 - protected numerical/workflow/oracle/roadmap/release domains unchanged.
 
 NOT_RUN:

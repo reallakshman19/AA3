@@ -13,8 +13,8 @@ PR: 1717 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0003_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0003_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586235523
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -24,10 +24,10 @@ MERGE_AUTHORIZED: FALSE
 |---|---|---|
 | TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded; write-ahead EP-0002 existed before LEG-001 material commit. |
 | TASK-002 | PASS_SOURCE_TRACE / EXECUTION_NOT_RUN | Public ordinary-route custody was traced far enough to isolate a missing canonical execution-input identity at convergence evidence; current-main execution remains NOT_RUN. |
-| TASK-003 | NOT_RUN | Faithful execution of `node scripts/lafea.3-bm005-ordinary-route-check.mjs` remains unavailable through connected repository APIs alone. |
+| TASK-003 | NOT_RUN | Faithful execution of `node scripts/lafea.3-bm005-ordinary-route-check.mjs` remains unresolved; LEG-002 is authorized to seek an existing execution surface without workflow mutation. |
 | TASK-004 | PASS_RECONCILED | All 12 non-relay material files introduced by #1663 were reconciled by exact Git blob identity: 7 already identical, 5 stale/superseded, 0 still-needed/disjoint. |
 | TASK-005 | PASS_MINIMAL_REPAIR_SOURCE / EXECUTION_NOT_RUN | First incomplete boundary repaired by propagating existing `canonicalExecutionInputHash` custody through convergence evidence and BM005 audit; no numerical mechanics or authority changed. |
-| TASK-006 | PASS_RELAY_PENDING_ISSUE_SYNC | LEG-001 evidence/receipt and EP-0003 are being recorded; Issue projection synchronization follows this repository relay commit. |
+| TASK-006 | PASS_RELAY_SYNCED | LEG-001 evidence/receipt, repository EP-0003, immutable Issue endpoint comment `5586235523`, and Active handover are synchronized. |
 
 ## Input ledger
 
@@ -39,7 +39,7 @@ MERGE_AUTHORIZED: FALSE
 | INPUT-004 | AVAILABLE_WITH_STALE_HISTORICAL_LEDGER | #1535/#1569 ordinary route exists; historical runner-provisioning narrative is not used as current execution truth. |
 | INPUT-005 | AVAILABLE_PROTECTED | BM005 definition/source registry/Richards Lamé oracle unchanged. |
 | INPUT-006 | AVAILABLE | Common pinned basis `487b856330797f6421d2ac0a8583d3a85ebde990` |
-| INPUT-007 | UNRESOLVED_IN_THIS_TOOL_SESSION | no faithful project-local Node/Playwright execution surface exposed by connected GitHub APIs |
+| INPUT-007 | LEG_002_OPEN | Locate an existing faithful execution surface; GitHub repository APIs alone do not execute project-local Node. |
 
 ## Benchmark / oracle ledger
 
@@ -71,7 +71,8 @@ PASS by connected source/diff/blob inspection:
 - exactly one material commit after the EP-0002 prework boundary;
 - four scoped files only, 32 additions / 0 deletions;
 - no FEM formulation, quadrature, stiffness/load assembly, mesher mathematics, quality/convergence threshold, oracle/tolerance, B02 source, workflow, roadmap or release-authority change;
-- #1663 reconciliation complete by exact Git blob identity.
+- #1663 reconciliation complete by exact Git blob identity;
+- EP-0003 repository↔Issue synchronization complete at Issue comment `5586235523`.
 
 NOT_RUN:
 - `node scripts/lafea.3-continuum-convergence-route-check.mjs`;
@@ -81,7 +82,7 @@ NOT_RUN:
 - `npm run build`;
 - faithful-checkout `git diff --check`.
 
-GitHub material-head commit status contains zero statuses. No NOT_RUN item is promoted to PASS.
+No NOT_RUN item is promoted to PASS.
 
 ## Roadmap ledger
 
@@ -110,13 +111,13 @@ TAKEOVER_QUALIFICATION_READY: TRUE
 OWNER_QUALIFICATION_BASELINE_MANIFEST: agents/chains/ADV-LAFEA3-C3A-1716/qualification-baselines/QB-ISSUE-1716-B.json
 OWNER_QUALIFICATION_BASELINE_STATUS: SATISFIED
 
-OWNER_TEXT_OBSERVED: `proceed next`
+OWNER_TEXT_OBSERVED: `ok proceed`
 OWNER_PROGRESSION_COMMAND: PROCEED_NEXT
 
 ## Protected boundary
 
-LEG-001 changed evidence custody only. Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver tolerances, mesh-quality and convergence policy, B02 source authority, workflow/release authority and unsupported geometry envelope remain unchanged.
+LEG-001 changed evidence custody only. Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver tolerances, mesh-quality and convergence policy, B02 source authority, workflow/release authority and unsupported geometry envelope remain unchanged. LEG-002 may inspect and use existing execution infrastructure but may not mutate `.github/workflows/**` merely to obtain PASS.
 
 ## Exact next action
 
-On a faithful clean checkout, execute `node scripts/lafea.3-continuum-convergence-route-check.mjs` followed by `node scripts/lafea.3-bm005-ordinary-route-check.mjs`, retaining exact head, clean-tree state, stdout/stderr/exit and report hashes. A later exact Owner `proceed next` is required before any further material change. Do not merge.
+Begin LEG-002 by locating an existing faithful execution surface for `node scripts/lafea.3-continuum-convergence-route-check.mjs` followed by `node scripts/lafea.3-bm005-ordinary-route-check.mjs`. Prefer an existing GitHub Actions/manual-dispatch path if one already provides checkout and Node; do not create or edit workflow YAML. Retain exact head, clean-tree state, stdout/stderr/exit and report hashes where execution is possible. Do not merge.

@@ -19,14 +19,15 @@ ACTIVE_CUSTODIAN: ChatGPT GPT-5.6 Sol
 CUSTODY_EPOCH: 1
 
 BRANCH: chatgpt/lafea3-c3a-1716-current-main-route
-HEAD: PENDING_PREWORK_COMMIT_SHA
+HEAD: 7b8f6c1c59a4179cc2fa3fd4dd26370c30aba934
+HEAD_ROLE: PREWORK_BOUNDARY; subsequent branch commits are relay-only Issue synchronization until material LEG-001 begins
 BASE_MAIN: 27dde65f51e1b9d7e6d20a324510a50ea3631729
-PR: NONE_AT_PREWORK
-PR_STATUS: NOT_OPENED
-MERGEABILITY: NOT_APPLICABLE_NO_PR
-REVIEWS: NONE
-UNRESOLVED_REVIEW_THREADS: 0
-REQUIRED_CHECKS: NONE_DECLARED_AT_BRANCH_BASIS; executable validation still required by engineering scope
+PR: 1717
+PR_STATUS: OPEN_DRAFT
+MERGEABILITY: UNKNOWN_DRAFT_CONNECTOR_REPORTED_FALSE
+REVIEWS: NONE_AT_SYNC
+UNRESOLVED_REVIEW_THREADS: 0_AT_SYNC
+REQUIRED_CHECKS: NONE_DECLARED_AT_BRANCH_BASIS; executable engineering/software validation remains NOT_RUN
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -44,10 +45,10 @@ ISSUE_BASIS_STATUS: CURRENT
 ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-LAFEA3-C3A-1716/issue-state/CURRENT.md
 ISSUE_CURRENT_STATE_BASIS: IB-0001
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0001
-ISSUE_CHAIN_ROOT_COMMENT_ID: PENDING_SYNC
-ISSUE_ACTIVE_HANDOVER_COMMENT_ID: PENDING_SYNC
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_SYNC
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN_AT_PREWORK_COMMIT
+ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5585247978
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAPS: docs/IntegratedLAFEAroadmap.md@fe93b134c2dd467105dc6dbbe39ed838a468649a; docs/conceptcumroadmapLAFEA.md@088f4cebfd954e5d1e37da855c95142712463a31; github:#1710; github:#1711
 ROADMAP_REVIEW_STATUS: COMPLETE
@@ -81,14 +82,14 @@ NEXT_MATERIAL_LEG: LEG-001
 HANDOVER_CONTENT_READY: TRUE
 HANDOVER_VALIDATION_STATUS: NOT_RUN
 HANDOVER_VALIDATION_EVIDENCE: prework source/artifact inspection only; no project execution
-CHAIN_HANDOVER_READY: FALSE_PENDING_ISSUE_SYNC
+CHAIN_HANDOVER_READY: TRUE
 TAKEOVER_QUALIFICATION_READY: TRUE
-HANDOVER_READY: FALSE
+HANDOVER_READY: FALSE — executable handover validation remains NOT_RUN and material progression is intentionally blocked
 
 ## Current blocker / diagnosis
 
-No material coding is authorized yet because the Owner text did not invoke one of the three exact Common progression commands. This relay-only prework is allowed; production/test/benchmark changes stop here until an exact progression phrase is supplied.
+The sub-issue, exclusive branch, Draft PR, Issue Basis/current state, prework endpoint and FEA takeover pack are established and synchronized. No material coding is authorized yet because the Owner text did not invoke one of the three exact Common progression commands. Production/test/benchmark changes stop here until an exact progression phrase is supplied.
 
 ## Exact next action
 
-Commit this relay-only prework, open a Draft PR, synchronize CHAIN_ROOT / ACTIVE / ENDPOINT issue comments and record their IDs. Then stop. Ordinary first material progression is `proceed next`, after which LEG-001 begins with current-main public-route reproduction/dependency reconciliation rather than a speculative solver/mesher patch.
+Owner invokes `proceed next` for the ordinary one-batch progression. Then LEG-001 starts with current-main public-route reproduction and #1663 dependency reconciliation; a production repair is allowed only after a specific first wrong boundary is demonstrated. Do not merge.

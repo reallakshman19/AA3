@@ -79,9 +79,9 @@ ISSUE_CURRENT_STATE_FILE: agents/chains/ADV-EMP1-HUMAN-UI-1651/issue-state/CURRE
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0040
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5549975772
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5549975074
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0040_COMMENT
-RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: PENDING_EP0040_COMMENT
-ISSUE_HANDOVER_SYNC_STATUS: STALE_PENDING_EP0040_COMMENT_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5589232243
+RECOVERY_CHILD_CHECKPOINT_COMMENT_ID: 5589234001
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ROADMAP: EMP_TAB_UI_RECOMMENDATIONS.md@d616a4ea014d583c9709a872c3af3896dea9011e
 ROADMAP_ALIGNMENT: STALE_STATUS_BUT_SCOPE_ALIGNED
@@ -132,4 +132,4 @@ HANDOVER_READY: FALSE
 
 AUTHORITY_BOUNDARY: EP-0040 records Owner review waiver, self-check authority, pending-activity clarification and PR #1719 merge authorization only. No production src/**, WRC/Pressure mechanics, applicability/source authority, bounded-route authority, benchmark/tolerance authority, workflows, code-compliance, production authorization or release authority changed. Executable validation is not waived.
 CURRENT_BLOCKER: governed P1-A executable validation on exact 695538dd713f2ef11fb00e54b86073f19d38684a remains NOT_RUN. Review independence is no longer a blocker. P1-B and human-factor remain gated.
-EXACT_NEXT_ACTION: finish EP-0040 Issue sync, re-ground final PR #1719 head/main/mergeability, self-check changed paths, mark Ready if mechanically required, and merge PR #1719 under current Owner authorization with expected-head protection. After merge preserve P1-A/P1-B/human-factor as pending. Plain `proceed` does not authorize a new material progression.
+EXACT_NEXT_ACTION: re-ground final PR #1719 head/main/mergeability, self-check changed paths, mark Ready if mechanically required, and merge PR #1719 under current Owner authorization with expected-head protection. After merge preserve P1-A/P1-B/human-factor as pending. Plain `proceed` does not authorize a new material progression.

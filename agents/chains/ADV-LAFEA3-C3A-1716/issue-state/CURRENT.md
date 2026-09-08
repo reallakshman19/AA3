@@ -2,7 +2,7 @@
 
 ISSUE_BASIS_ID: IB-0001
 ISSUE_CURRENT_STATE_BASIS: IB-0001
-ISSUE_CURRENT_STATE_ENDPOINT: EP-0006
+ISSUE_CURRENT_STATE_ENDPOINT: EP-0007
 WORK_ITEM_KEY: github:reallaksh19/Advanced_Analysis#1716
 PARENT_ISSUE: github:reallaksh19/Advanced_Analysis#1711
 PROGRAM_ROADMAP_ISSUE: github:reallaksh19/Advanced_Analysis#1710
@@ -15,8 +15,8 @@ SUCCESSOR_PR: 1718 OPEN_DRAFT
 COMMON_PROTOCOL_BASIS: 487b856330797f6421d2ac0a8583d3a85ebde990
 ISSUE_CHAIN_ROOT_COMMENT_ID: 5585244514
 ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 5585241527
-ISSUE_LATEST_ENDPOINT_COMMENT_ID: 5586851577
-ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: PENDING_EP0007_SYNC
+ISSUE_HANDOVER_SYNC_STATUS: PENDING_EP0007_SYNC
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
 
@@ -24,12 +24,12 @@ MERGE_AUTHORIZED: FALSE
 
 | ID | Status | Current disposition |
 |---|---|---|
-| TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded; write-ahead boundaries exist through EP-0006. |
+| TASK-001 | PASS_PREWORK_SOURCE | Common/project/roadmap/main/issue custody re-grounded; write-ahead boundaries exist through EP-0007. |
 | TASK-002 | PASS_SOURCE_TRACE / EXECUTION_NOT_RUN | Public ordinary route traced; canonical execution-input custody preserved through convergence/BM005 evidence. |
-| TASK-003 | NOT_RUN_TRIGGER_NOT_SCHEDULED | PR-head reopen produced no Actions run; post-merge exact-main push observation also initially has zero runs. No harness execution exists. |
+| TASK-003 | NOT_RUN_TRIGGER_NOT_SCHEDULED | PR-head reopen and exact merged-main push observations both produced no Actions run. No harness execution exists. |
 | TASK-004 | PASS_RECONCILED | #1663 material reconciliation complete: 7 already identical, 5 stale/superseded, 0 still-needed/disjoint. |
 | TASK-005 | PASS_MINIMAL_REPAIR_SOURCE / EXECUTION_NOT_RUN | LEG-001 custody repair merged in #1717 without numerical mechanics/authority change; execution remains unproven. |
-| TASK-006 | IN_PROGRESS_POST_MERGE | #1717 merged by explicit Owner authority; EP-0006 synchronized; LEG-003 exact-main execution observation is next. |
+| TASK-006 | PASS_POST_MERGE_CONTROL_PLANE / EXECUTION_NOT_RUN | #1717 merged by explicit Owner authority; exact main re-pinned; LEG-003 proves exact-main workflow was still not scheduled. |
 
 ## Input ledger
 
@@ -41,7 +41,7 @@ MERGE_AUTHORIZED: FALSE
 | INPUT-004 | AVAILABLE_WITH_STALE_HISTORICAL_LEDGER | #1535/#1569 route exists; historical runner narratives are not current execution truth. |
 | INPUT-005 | AVAILABLE_PROTECTED | BM005 definition/source registry/Richards Lamé oracle unchanged. |
 | INPUT-006 | AVAILABLE_CURRENT | Common pinned basis `487b856330797f6421d2ac0a8583d3a85ebde990`; project overlay re-grounded on exact merged main. |
-| INPUT-007 | BLOCKED_EXTERNAL_EXECUTION | unchanged BM005 workflow present; exact-main Actions scheduling initially absent; local faithful checkout unavailable in this session. |
+| INPUT-007 | BLOCKED_EXTERNAL_EXECUTION | unchanged BM005 workflow present, but exact-main Actions scheduling absent; local faithful checkout unavailable in this session. |
 
 ## Benchmark / oracle ledger
 
@@ -49,14 +49,14 @@ MERGE_AUTHORIZED: FALSE
 |---|---|---|
 | BM-001 | PASS_EXECUTED_HISTORICAL_BASIS | BM-MESH M0-M4 at clean `798b2580...`; not current-head BM005. |
 | BM-002 | PASS_EXECUTED_HISTORICAL_BASIS | four frozen BM-MESH negatives + positive controls. |
-| BM-003 | NOT_RUN_TRIGGER_NOT_SCHEDULED | merged-main BM005 ordinary route at `4fb35481...`; initial exact-main Actions observation zero runs. |
+| BM-003 | NOT_RUN_TRIGGER_NOT_SCHEDULED | merged-main BM005 ordinary route at `4fb35481...`; exact-main Actions queries returned zero runs twice. |
 | BM-004 | AVAILABLE_PROTECTED | independent Richards Lamé oracle/source custody unchanged. |
 | BM-005 | NOT_RUN | practical project/import/browser acceptance. |
 | BM-006 | NOT_RUN | non-affine/reaction-equilibrium qualification. |
 
 ## Merge ledger
 
-PR #1717 was re-grounded immediately before merge: open, mergeable, exact head `1c0343a8068da70907dd1167a0562893a289dc87`, no submitted reviews, no unresolved review threads, zero reported commit statuses. Owner text `merge, proceed next` explicitly authorized merge and one successor bounded progression. The PR was marked ready and merged with expected-head protection. Merge commit/current main is `4fb3548133f53e33d21cd0f3b3d471da592ae871`.
+PR #1717 was re-grounded immediately before merge: open, mergeable, exact head `1c0343a8068da70907dd1167a0562893a289dc87`, no submitted reviews, no unresolved review threads and zero reported commit statuses. Owner text `merge, proceed next` explicitly authorized merge and one successor bounded progression. The PR was marked ready and merged with expected-head protection. Merge commit/current main is `4fb3548133f53e33d21cd0f3b3d471da592ae871`.
 
 The merge consumed explicit merge authorization for #1717 only. Successor PR #1718 remains Owner-only and not authorized.
 
@@ -64,34 +64,39 @@ The merge consumed explicit merge authorization for #1717 only. Successor PR #17
 
 LEG-001 receipt/evidence: `material-legs/LEG-001.md` and `validation/LEG-001-EVIDENCE.md`; material head `ec26f2169faecc315721de37a8b791f632249c1c`.
 
-LEG-002 receipt/evidence: `material-legs/LEG-002.md` and `validation/LEG-002-EVIDENCE.md`; PR execution-trigger head `aeae5bf14736a457bd98d8935a66df11d04bced2`. Classification remains `NOT_RUN_TRIGGER_NOT_SCHEDULED`.
+LEG-002 receipt/evidence: `material-legs/LEG-002.md` and `validation/LEG-002-EVIDENCE.md`; PR execution-trigger head `aeae5bf14736a457bd98d8935a66df11d04bced2`; result `NOT_RUN_TRIGGER_NOT_SCHEDULED`.
 
-## LEG-003 prework
+## LEG-003 evidence
 
-Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0006.md`. Issue endpoint comment: `5586851577`. Successor Draft PR: #1718.
+Prework endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0006.md`  
+Receipt: `agents/chains/ADV-LAFEA3-C3A-1716/material-legs/LEG-003.md`  
+Evidence: `agents/chains/ADV-LAFEA3-C3A-1716/validation/LEG-003-EVIDENCE.md`  
+Successor endpoint: `agents/chains/ADV-LAFEA3-C3A-1716/endpoints/EP-0007.md`
 
-Scope is execution/control-plane only. Observe exact merged-main scheduling for unchanged `.github/workflows/lafea3-bm005-qualification.yml`; inspect jobs/logs/artifacts only if a run exists; otherwise retain NOT_RUN. No numerical or workflow patch is authorized by scheduler absence.
+The unchanged `.github/workflows/lafea3-bm005-qualification.yml` watches the merged BM005 harness path on `push: main`. The exact main SHA `4fb35481...` was queried for Actions runs immediately after merge and again after EP-0006 Issue synchronization. Both returned `total_count=0` and `workflow_runs=[]`.
 
-A read-only query immediately after merge returned zero Actions runs for exact main `4fb35481...`. This observation is repeated after synchronized EP-0006 before LEG-003 is receipted.
+Classification: `BM005_EXACT_MAIN = NOT_RUN_TRIGGER_NOT_SCHEDULED`.
+
+There is no current run ID, job ID, checkout step, Node process, stdout/stderr, exit code or artifact. This is not a benchmark FAIL and not engineering PASS. It is an external scheduling/control-plane blocker.
 
 ## Validation truth
 
 PASS_CONTROL_PLANE:
 - explicit Owner merge authority consumed exactly once for #1717;
-- expected-head merge succeeded;
-- exact post-merge main re-pinned;
+- expected-head merge succeeded and exact main independently re-pinned;
 - Common/project overlay re-grounded;
-- EP-0006 repository↔Issue projection synchronized;
-- Draft PR #1718 established for successor custody;
-- no solver/formulation/quadrature/mesher/oracle/tolerance/B02/workflow/roadmap/release mutation in LEG-003 prework.
+- EP-0006 synchronized before final exact-main observation;
+- watched merge path proven;
+- exact-main Actions scheduling observed twice as zero runs;
+- no solver/formulation/quadrature/mesher/oracle/tolerance/B02/workflow/roadmap/release mutation.
 
 NOT_RUN:
 - `node scripts/lafea.3-continuum-convergence-route-check.mjs`;
 - `node scripts/lafea.3-bm005-ordinary-route-check.mjs`;
+- BM005 report/artifact hashes;
 - `npm run check:lafea-meshing`;
 - `npm run check:imports`;
-- `npm run build`;
-- report/artifact hashes requiring execution.
+- `npm run build`.
 
 No NOT_RUN item is promoted to PASS.
 
@@ -131,4 +136,4 @@ Independent oracle, sign convention, T3/T6/Q8 formulation/integration, solver to
 
 ## Exact next action
 
-Repeat exact-main Actions observation. If no run exists, record LEG-003 `NOT_RUN_TRIGGER_NOT_SCHEDULED` and stop. Only an actually executed harness FAIL may reopen an engineering owner boundary.
+Remain read-only. A future progression needs either faithful exact-main local execution receipts for the focused convergence/BM005 Node commands or restored GitHub Actions scheduling. Only an actually executed harness FAIL may reopen engineering code. PR #1718 is relay/evidence custody only and is not merge-authorized.

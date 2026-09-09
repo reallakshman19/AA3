@@ -102,6 +102,19 @@ const STATE_LABELS = Object.freeze({
     'The bounded local-correlation route is not authorized for engineering use.',
   EMP1_C_BOUNDED_ROUTE_EXECUTOR_NOT_AUTHORIZED:
     'The bounded local-correlation route has no authorized executor.',
+  EMP1_ENGINEERING_RESULT_REVIEW: 'Engineering result review',
+  EMP1_ENGINEERING_REVIEW_CURRENT_EXECUTION_REQUIRED:
+    'A current EMP.1 execution is required before engineering review.',
+  EMP1_ENGINEERING_REVIEW_EXECUTION_NOT_CURRENT:
+    'The retained execution is not current; re-run before engineering review.',
+  EMP1_ENGINEERING_REVIEW_INPUT_CURRENTNESS_REQUIRED:
+    'Input currentness is required before engineering review.',
+  EMP1_ENGINEERING_REVIEW_ROUTE_AUTHORITY_CURRENTNESS_REQUIRED:
+    'Current route authority is required before engineering review.',
+  EMP1_ENGINEERING_REVIEW_CURRENT_C_RESULT_REQUIRED:
+    'A current step C result is required before engineering review.',
+  OWNER_DECLARED_REQUIRED_ABOVE_GAMMA_5:
+    'Owner declaration required above gamma 5',
   NONZERO_DIFFERENTIAL_PRESSURE:
     'Differential pressure must be zero on this route.',
   NONUNITY_STRESS_CONCENTRATION:

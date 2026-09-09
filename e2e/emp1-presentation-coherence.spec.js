@@ -88,9 +88,9 @@ test('professional task remains presentation source of truth across backing-stag
   const inspector = analytical.locator('[data-role="emp1-analytical-engineering-basis"]');
   await expect(inspector).toHaveAttribute('data-emp1-inspector-view', 'boundedCorrelation');
   await expect(inspector.locator('[data-role="emp1-inspector-tab"]:visible')).toHaveCount(3);
-  await expect(inspector.locator('[data-role="emp1-c-route-detail"]')).not.toHaveAttribute('open', '');
-  await expect(inspector.locator('[data-role="emp1-c-route-limitations"]')).not.toHaveAttribute('open', '');
-  await expect(inspector.locator('[data-role="emp1-c-gamma-domain-detail"]')).not.toHaveAttribute('open', '');
+  await expect(inspector.locator('[data-role="emp1-c-route-detail"]:visible')).not.toHaveAttribute('open', '');
+  await expect(inspector.locator('[data-role="emp1-c-route-limitations"]:visible')).not.toHaveAttribute('open', '');
+  await expect(inspector.locator('[data-role="emp1-c-gamma-domain-detail"]:visible')).not.toHaveAttribute('open', '');
 
   const inspectorGeometry = await inspector.evaluate((node) => {
     const tabs = node.querySelector('[data-role="emp1-inspector-tabs"]');

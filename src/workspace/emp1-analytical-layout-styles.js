@@ -49,6 +49,7 @@ export const EMP1_ANALYTICAL_LAYOUT_STYLES = `
 [data-role="emp1-workflow-details"]>summary{cursor:pointer;font-weight:600}
 [data-role="emp1-workflow-details"][open]{position:absolute;inset-inline:0;top:calc(100% + 6px);z-index:30;max-height:min(56vh,520px);overflow:auto;overscroll-behavior:contain;padding:10px;border:1px solid currentColor;border-radius:8px;background:#07111f;box-shadow:0 12px 32px rgba(0,0,0,.45)}
 [data-role="emp1-workflow-details"][open]>summary{position:sticky;top:-10px;z-index:1;margin:-10px -10px 8px;padding:10px;background:#07111f;border-bottom:1px solid currentColor}
+[data-role="emp1-workflow"]:has([data-role="emp1-workflow-details"][open])::after{content:"";display:block;height:18px}
 @media(max-width:1050px){
   .lafea-analytical-calc[data-emp1-split-console]{grid-template-rows:auto auto minmax(0,1fr);height:clamp(420px,72dvh,680px);max-height:calc(100dvh - 120px);min-height:0}
   .emp1-split-console__mode-tabs{display:flex;overflow-x:auto;scrollbar-width:thin}

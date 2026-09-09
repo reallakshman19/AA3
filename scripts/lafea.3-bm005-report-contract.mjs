@@ -197,7 +197,11 @@ function observationRows(value, definition) {
     return freeze({
       levelId: row.levelId,
       h: finite(row.h, 'BM005_REPORT_H_INVALID'),
-      meshProfileHash: hash(row.meshProfileHash, 'BM005_REPORT_PROFILE_HASH_INVALID'),
+      // Mesh profile hashes use FNV-1a 64-bit (see semanticHash in
+      // src/core/shared-primitives/canonical-json.js), not sha256 like every other
+      // hash here — lafea-continuum-convergence-study.js's normalizeLevelReceipts
+      // already treats this field leniently (text(), not sha()) for the same reason.
+      meshProfileHash: text(row.meshProfileHash, 'BM005_REPORT_PROFILE_HASH_INVALID'),
       meshHash: hash(row.meshHash, 'BM005_REPORT_MESH_HASH_INVALID'),
       solverModelHash: hash(row.solverModelHash, 'BM005_REPORT_SOLVER_HASH_INVALID'),
       executionHash: hash(row.executionHash, 'BM005_REPORT_EXECUTION_HASH_INVALID'),

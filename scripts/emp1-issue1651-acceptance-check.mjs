@@ -190,7 +190,7 @@ assert.ok(source.carrier.includes(paths.sampleOrchestrationStatic),
 for (const required of [
   'inspectProjectLocalChromium',
   'lafea-stage17-browser-preflight/v1',
-  'withProjectLocalPlaywrightEnv',
+  'resolvePlaywrightRuntimeEnv',
 ]) assert.ok(source.carrier.includes(required), `Stage-17 browser preflight contract missing: ${required}`);
 
 // LEG-013: one cross-platform entrypoint must preserve the exact five Node gates,

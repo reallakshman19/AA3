@@ -51,10 +51,10 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
   const workflowDetails = root.locator('[data-role="emp1-workflow-details"]');
   await expect(workflowDetails).toHaveCount(1);
   await expect(workflowDetails).not.toHaveAttribute('open', '');
-  await workflowDetails.locator('summary').click();
+  await workflowDetails.locator(':scope > summary').click();
   await expect(workflowDetails).toHaveAttribute('open', '');
   scans.push({ view: 'workflow:readiness-review-custody', leaks: await scanVisibleLeaks(page) });
-  await workflowDetails.locator('summary').click();
+  await workflowDetails.locator(':scope > summary').click();
 
   // Inspector availability is task-contextual. Visit every inspector tab that is
   // actually selectable for every professional task rather than clicking hidden

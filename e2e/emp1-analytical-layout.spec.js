@@ -26,6 +26,11 @@ test('EMP.1 split console bounds work, inspector and evidence without responsive
   await expect(workflow.locator('[data-role="emp1-professional-step"]')).toHaveCount(7);
   await expect(workflow.locator('[data-role="emp1-workflow-details"]')).not.toHaveAttribute('open', '');
 
+  // loadEmp1QualificationSample() awaits runEmp1Product() internally; wait for
+  // that async product transaction to actually finish (surfacing the
+  // execution summary) before taking a synchronous layout-surface snapshot.
+  await expect(analytical.locator('[data-role="emp1-product-execution-summary"]')).toHaveCount(1);
+
   await assertUniqueLayoutSurfaceManifest(analytical);
   await assertEngineerFacingCardinality(analytical);
   await assertSingleVisibleInspector(analytical, 'engineeringEvidence');
@@ -212,7 +217,7 @@ async function assertVisibleInputGroups(analytical, expectedGroups) {
 }
 
 async function assertSingleVisibleInspector(analytical, expectedSurfaceId) {
-  const visible = await analytical.locator('[data-emp1-layout-region="BASIS_RAIL"][data-emp1-inspector-view]').evaluateAll((nodes) => nodes
+  const visible = await analytical.locator('[data-emp1-layout-region="BASIS_RAIL"][data-emp1-layout-surface][data-emp1-inspector-view]').evaluateAll((nodes) => nodes
     .filter((node) => !node.hidden && getComputedStyle(node).display !== 'none')
     .map((node) => node.dataset.emp1LayoutSurface));
   expect(visible).toEqual([expectedSurfaceId]);
@@ -221,7 +226,7 @@ async function assertSingleVisibleInspector(analytical, expectedSurfaceId) {
 }
 
 async function assertSelectedEvidence(analytical, expectedSurfaceId) {
-  const selected = await analytical.locator('[data-emp1-layout-region="EVIDENCE_WORKSPACE"][data-emp1-evidence-view]').evaluateAll((nodes) => nodes
+  const selected = await analytical.locator('[data-emp1-layout-region="EVIDENCE_WORKSPACE"][data-emp1-layout-surface][data-emp1-evidence-view]').evaluateAll((nodes) => nodes
     .filter((node) => !node.hidden)
     .map((node) => node.dataset.emp1LayoutSurface));
   expect(selected).toEqual([expectedSurfaceId]);

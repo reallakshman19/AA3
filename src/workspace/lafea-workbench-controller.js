@@ -273,8 +273,18 @@ export class LafeaWorkbenchController {
         error.code = applied.code ?? 'EMP1_QUALIFICATION_SAMPLE_RUN_INPUT_REJECTED';
         throw error;
       }
-      this.store.selectStage('LAFEA.2');
       const execution = await this.runEmp1Product();
+      // importDocument(sample.bDocument, 'LAFEA.2') above made B the active
+      // stage as an intrinsic side effect of importing into it (as any real
+      // B import would). That is correct for a deliberate single-document
+      // import, but "load complete sample" is one bulk convenience action,
+      // not the caller choosing to look at B - so restore A as active here.
+      // runEmp1Product() itself reads stages['LAFEA.1']/['LAFEA.2'] directly
+      // and does not depend on which stage is active. Leaving activeStageId
+      // on B would otherwise make reconcileSelectionWithBackingStage (in
+      // emp1-analytical-layout.js) jump the professional-workflow task to
+      // SECTION_SCREENING instead of staying on the loaded BASIS_SOURCE task.
+      this.store.selectStage('LAFEA.1');
       return Object.freeze({
         schema: sample.schema,
         status: execution?.status ?? 'FAILED',

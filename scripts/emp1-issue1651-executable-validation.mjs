@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   inspectProjectLocalChromium,
-  withProjectLocalPlaywrightEnv,
+  resolvePlaywrightRuntimeEnv,
 } from './lib/project-local-playwright-browser.mjs';
 
 const root = process.cwd();
@@ -70,7 +70,7 @@ runStep({
   phase: 'FOCUSED_PLAYWRIGHT',
   executable: process.execPath,
   args: [playwrightCli, 'test', ...focusedPlaywright],
-  env: withProjectLocalPlaywrightEnv(),
+  env: resolvePlaywrightRuntimeEnv(preflight),
 });
 
 runStep({
@@ -78,7 +78,7 @@ runStep({
   phase: 'STAGE17',
   executable: process.execPath,
   args: [path.join(root, stage17)],
-  env: withProjectLocalPlaywrightEnv(),
+  env: resolvePlaywrightRuntimeEnv(preflight),
 });
 
 console.log(JSON.stringify({

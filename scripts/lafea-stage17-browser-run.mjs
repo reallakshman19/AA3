@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import {
   inspectProjectLocalChromium,
-  withProjectLocalPlaywrightEnv,
+  resolvePlaywrightRuntimeEnv,
 } from './lib/project-local-playwright-browser.mjs';
 
 const root = process.cwd();
@@ -27,7 +27,7 @@ function runNodeScript(relativePath) {
 function runPlaywright(args) {
   const result = spawnSync(process.execPath, [cli, 'test', '--config=playwright.lafea-visible.config.js', ...args], {
     cwd: root,
-    env: withProjectLocalPlaywrightEnv(),
+    env: resolvePlaywrightRuntimeEnv(browserPreflight),
     stdio: 'inherit',
   });
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);

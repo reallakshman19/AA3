@@ -9,8 +9,21 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   const workbench = productionView.locator('[data-role="lafea-workbench"]');
   await workbench.locator(':scope > [data-lafea-slot="navigation"] [data-product-id="EMP.1"]').click();
   const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
-  const step = (id) => analytical.locator(`[data-role="emp1-step"][data-emp1-step="${id}"]`);
   const run = workbench.locator('[data-role="lafea-run"]');
+  // The A/B/C backing-stage switch now lives behind the "Technical backing
+  // calculators" disclosure, nested inside the outer "Readiness, review and
+  // technical custody" disclosure - open both (each is recreated on every
+  // re-render, so this can't be done once and assumed to stick) before
+  // clicking a backing step.
+  // A professional-workflow step whose preferredBackingStageId targets A/B
+  // switches backing stage itself (see emp1-professional-workflow-view.js);
+  // clicking it is both the backing-stage switch and the task selection that
+  // makes that stage's controls actually render, in one action.
+  const PROFESSIONAL_TASK_FOR_BACKING_STEP = { A: 'BASIS_SOURCE', B: 'SECTION_SCREENING' };
+  const stepLocator = (id) => analytical.locator(
+    `[data-role="emp1-professional-step"][data-emp1-professional-step="${PROFESSIONAL_TASK_FOR_BACKING_STEP[id]}"]`,
+  );
+  const step = async (id) => stepLocator(id).click();
 
   const mockA = workbench.locator('[data-role="lafea-mock"]');
   if (await mockA.isVisible()) await mockA.click();
@@ -18,7 +31,7 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   await run.click();
   await expect(analytical.locator('[data-role="lafea-result-highlights"]')).toContainText('Max |transferred force|');
 
-  await step('B').click();
+  await step('B');
   const mockB = workbench.locator('[data-role="lafea-mock"]');
   if (await mockB.isVisible()) await mockB.click();
   let currentness = analytical.locator('[data-role="emp1-b-source-currentness"]');
@@ -34,7 +47,11 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   await run.click();
   await expect(analytical.locator('[data-role="lafea-result-highlights"]')).toContainText('Governing nominal von Mises');
 
-  await step('A').click();
+  await step('A');
+  // Backing onto A alone lands on the BASIS_SOURCE professional task by
+  // default (reconcileSelectionWithBackingStage in emp1-analytical-layout.js);
+  // the LOAD_CASES input group specifically lives under the LOADS task.
+  await analytical.locator('[data-role="emp1-professional-step"][data-emp1-professional-step="LOADS"]').click();
   const loadGroup = analytical.locator('.lafea-doc-group-editor[data-input-group="LOAD_CASES"]');
   const forceX = loadGroup.locator(
     '[data-role="lafea-governed-input"][data-descriptor-id="LAFEA.1.load.force.x"]',
@@ -55,14 +72,25 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   await expect(run).toBeEnabled();
   await run.click();
 
-  await step('B').click();
+  await step('B');
   currentness = analytical.locator('[data-role="emp1-b-source-currentness"]');
   refresh = analytical.locator('[data-role="emp1-refresh-b-from-a"]');
   await expect(currentness).toHaveAttribute('data-state', 'STALE_A_EVIDENCE_REFRESH_AVAILABLE');
-  await expect(step('B')).toContainText('STALE A EVIDENCE');
+  await expect(stepLocator('B')).toHaveAttribute('title', /Section screening stale/u);
   await expect(refresh).toBeEnabled();
   await expect(run).toBeDisabled();
   await expect(run).toHaveAttribute('data-emp1-currentness-gate', 'BLOCKED');
+  // The stale blocker lives in the "results" evidence surface; the refresh
+  // control, currentness state and screening-term factor live in the
+  // "screeningCustody" evidence surface (createEmp1BSourceCustodyCard in
+  // lafea-guided-workflow-view.js, wired in via screeningLoadCustody in
+  // lafea-analytical-calc-content.js). Both stay display:none unless the
+  // evidence console is expanded *and* that specific view is selected -
+  // switch between the two views to reach each.
+  const evidenceToggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
+  const evidenceTab = (view) => analytical.locator(`[data-role="emp1-evidence-tab"][data-emp1-evidence-view="${view}"]`);
+  if ((await evidenceToggle.getAttribute('aria-expanded')) !== 'true') await evidenceToggle.click();
+  await evidenceTab('results').click();
   await expect(analytical.locator('[data-role="emp1-b-stale-result-blocker"]')).toBeVisible();
   await expect(analytical.locator(
     '[data-role="lafea-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
@@ -76,6 +104,7 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
   });
   expect(staleCustody.bRetainedExecutionStatus).toBe('QUALIFIED');
 
+  await evidenceTab('screeningCustody').click();
   await refresh.click();
   currentness = analytical.locator('[data-role="emp1-b-source-currentness"]');
   refresh = analytical.locator('[data-role="emp1-refresh-b-from-a"]');
@@ -93,7 +122,11 @@ test('EMP.1 user refreshes B from rerun A without losing B-owned screening input
     return {
       aExecutionStatus: a.execution?.status ?? null,
       bExecution: b.execution,
-      aModelHash: a.document?.semanticHash ?? null,
+      // The raw LAFEA.1 stage document never carries semanticHash itself;
+      // refreshEmp1BSourceEvidence() (emp1-a-to-b-refresh.js) copies B's
+      // foundationModel from A's *canonical* model (execution.canonicalInput),
+      // which is what actually carries that hash.
+      aModelHash: a.execution?.canonicalInput?.semanticHash ?? null,
       bSourceModelHash: b.document?.sourceEvidence?.foundationModel?.semanticHash ?? null,
       bFactor: b.document.screeningCases
         .find((row) => row.screeningCaseId === 'CASE-B').mechanicalTerms

@@ -65,7 +65,7 @@ runPlaywright([
 runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
-  'production exposes one EMP.1 product with A/B retained engines and C visibly blocked',
+  'production exposes one EMP.1 product with A/B retained engines and C bounded-authorized',
 ]);
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);

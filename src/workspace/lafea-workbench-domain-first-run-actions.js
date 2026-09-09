@@ -94,7 +94,7 @@ export function createLafeaWorkbenchDomainFirstRunActions(context) {
       retainLafeaBcLoadGlyphDisplayProjection(bcLoadGlyphProjection);
       c.domainFirstExecution.retain(stageId, freeze({
         ...outcome.execution,
-        runTransaction: transaction,
+        runTransaction: { ...transaction, status: receipt.status },
         runTransactionReceipt: receipt,
         runtimeSolverDiagnostics,
         bcLoadGlyphProjection,

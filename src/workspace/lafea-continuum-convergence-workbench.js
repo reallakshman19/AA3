@@ -33,10 +33,15 @@ export function createLafeaContinuumConvergenceWorkbench(baseStore) {
       const parents = frozenParents(initialStage);
       retained = null;
 
+      // definition.probe is already normalized by createLafeaContinuumPhysicalProbe
+      // (it carries an added probeIdentityHash), and that function is not idempotent:
+      // exactKeys rejects its own output. Re-derive the raw probe fields before
+      // handing them to evaluateContinuumPhysicalProbe, which normalizes again.
+      const { probeIdentityHash: _probeIdentityHash, ...rawProbe } = definition.probe;
       for (const level of definition.convergenceDefinition.levels) {
         const meshProfile = executeLevel(baseStore, baseProfile, definition, level, parents);
         const solvedStage = baseStore.getState().stages[STAGE_ID];
-        const probeEvidence = baseStore.evaluateContinuumPhysicalProbe(definition.probe, STAGE_ID);
+        const probeEvidence = baseStore.evaluateContinuumPhysicalProbe(rawProbe, STAGE_ID);
         if (!probeEvidence || probeEvidence.status !== 'PASS') {
           fail('LAFEA3_CONVERGENCE_PROBE_NOT_PASS');
         }

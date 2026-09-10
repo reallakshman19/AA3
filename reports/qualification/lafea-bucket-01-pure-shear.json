@@ -1,0 +1,341 @@
+{
+  "schema": "lafea-bucket-01-pure-shear-evidence/v2",
+  "producerRevision": "B01-PURE-SHEAR.2",
+  "benchmarkId": "C2D-PATCH-PURE-SHEAR-01",
+  "oracleId": "B01-PURE-SHEAR-CLOSED-FORM-01",
+  "oracleHash": "sha256:44f193400087441a3856a5fb14efa95c049e46d4058130bd40c486ade524d54b",
+  "elementType": "T3",
+  "replayCount": 3,
+  "formulationEvidence": [
+    {
+      "formulation": "PLANE_STRESS",
+      "loadDrivenReplaySemanticHashes": [
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:59349e4f3a2653a3",
+          "canonicalModelSemanticHash": "fnv1a64:994f4d29b586e37f",
+          "loadCaseInputSemanticHash": "fnv1a64:325d77606a742ef6",
+          "resultPayloadSemanticHash": "fnv1a64:eeea00807256ba27",
+          "executionEvidenceHash": "fnv1a64:ada116f4654d2b10",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:59349e4f3a2653a3",
+          "canonicalModelSemanticHash": "fnv1a64:994f4d29b586e37f",
+          "loadCaseInputSemanticHash": "fnv1a64:325d77606a742ef6",
+          "resultPayloadSemanticHash": "fnv1a64:eeea00807256ba27",
+          "executionEvidenceHash": "fnv1a64:ada116f4654d2b10",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:59349e4f3a2653a3",
+          "canonicalModelSemanticHash": "fnv1a64:994f4d29b586e37f",
+          "loadCaseInputSemanticHash": "fnv1a64:325d77606a742ef6",
+          "resultPayloadSemanticHash": "fnv1a64:eeea00807256ba27",
+          "executionEvidenceHash": "fnv1a64:ada116f4654d2b10",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      ],
+      "prescribedReplaySemanticHashes": [
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:301e3b6d7d22d435",
+          "canonicalModelSemanticHash": "fnv1a64:9ee5e8458a2b898a",
+          "loadCaseInputSemanticHash": "fnv1a64:47deba5e825b9953",
+          "resultPayloadSemanticHash": "fnv1a64:939cb8cbe362111b",
+          "executionEvidenceHash": "fnv1a64:411260b16ae3442e",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:301e3b6d7d22d435",
+          "canonicalModelSemanticHash": "fnv1a64:9ee5e8458a2b898a",
+          "loadCaseInputSemanticHash": "fnv1a64:47deba5e825b9953",
+          "resultPayloadSemanticHash": "fnv1a64:939cb8cbe362111b",
+          "executionEvidenceHash": "fnv1a64:411260b16ae3442e",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:301e3b6d7d22d435",
+          "canonicalModelSemanticHash": "fnv1a64:9ee5e8458a2b898a",
+          "loadCaseInputSemanticHash": "fnv1a64:47deba5e825b9953",
+          "resultPayloadSemanticHash": "fnv1a64:939cb8cbe362111b",
+          "executionEvidenceHash": "fnv1a64:411260b16ae3442e",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      ],
+      "loadCases": {
+        "TRACTION": {
+          "solverMethod": "DETERMINISTIC_CHOLESKY",
+          "loadCaseInputSemanticHash": "fnv1a64:a0e3a8cc2fb15ae4",
+          "normalizedDisplacementError": 1.3877787807814457e-16,
+          "normalizedStrainError": 4.85162192068454e-17,
+          "normalizedStressError": 1.3622060098417107e-16,
+          "relativeEnergyError": 0,
+          "observedStrainEnergy": 1923.076923076923,
+          "normalizedAppliedVectorError": 0,
+          "normalizedReactionVectorError": 1.8917489796876909e-16,
+          "appliedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "reactionResultant": {
+            "x": -7.275957614183426e-12,
+            "y": -7.275957614183426e-12
+          },
+          "combinedResultant": {
+            "x": -1.4551915228366852e-11,
+            "y": -7.275957614183426e-12
+          },
+          "appliedMomentZ": 0,
+          "reactionMomentZ": -3.637978807091713e-10,
+          "combinedMomentZ": 0,
+          "relativeForceEquilibriumError": 2.1150396574737729e-16,
+          "relativeMomentEquilibriumError": 0
+        },
+        "NODAL_EQUIVALENT": {
+          "solverMethod": "DETERMINISTIC_CHOLESKY",
+          "loadCaseInputSemanticHash": "fnv1a64:b254eb57002827a8",
+          "normalizedDisplacementError": 1.3877787807814457e-16,
+          "normalizedStrainError": 4.85162192068454e-17,
+          "normalizedStressError": 1.3622060098417107e-16,
+          "relativeEnergyError": 0,
+          "observedStrainEnergy": 1923.076923076923,
+          "normalizedAppliedVectorError": 0,
+          "normalizedReactionVectorError": 1.8917489796876909e-16,
+          "appliedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "reactionResultant": {
+            "x": -7.275957614183426e-12,
+            "y": -7.275957614183426e-12
+          },
+          "combinedResultant": {
+            "x": -1.4551915228366852e-11,
+            "y": -7.275957614183426e-12
+          },
+          "appliedMomentZ": 0,
+          "reactionMomentZ": -3.637978807091713e-10,
+          "combinedMomentZ": 0,
+          "relativeForceEquilibriumError": 2.1150396574737729e-16,
+          "relativeMomentEquilibriumError": 0
+        },
+        "PRESCRIBED_AFFINE": {
+          "solverMethod": "FULLY_CONSTRAINED_NO_FREE_SOLVE",
+          "loadCaseInputSemanticHash": "fnv1a64:dc35d834f54c20ce",
+          "normalizedDisplacementError": 0,
+          "normalizedStrainError": 0,
+          "normalizedStressError": 0,
+          "relativeEnergyError": 2.364686224609613e-16,
+          "observedStrainEnergy": 1923.0769230769235,
+          "normalizedAppliedVectorError": 0,
+          "normalizedReactionVectorError": 1.8917489796876909e-16,
+          "appliedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "reactionResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "combinedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "appliedMomentZ": 0,
+          "reactionMomentZ": 0,
+          "combinedMomentZ": 0,
+          "relativeForceEquilibriumError": 0,
+          "relativeMomentEquilibriumError": 0
+        }
+      },
+      "parity": {
+        "tractionToNodal": {
+          "normalizedDisplacementDifference": 0,
+          "normalizedStressDifference": 0,
+          "relativeEnergyDifference": 0,
+          "normalizedForceVectorDifference": 0
+        },
+        "tractionToPrescribed": {
+          "normalizedDisplacementDifference": 1.3877787807814457e-16,
+          "normalizedStressDifference": 1.3622060098417107e-16,
+          "relativeEnergyDifference": 2.364686224609613e-16,
+          "normalizedForceVectorDifference": 0
+        }
+      }
+    },
+    {
+      "formulation": "PLANE_STRAIN",
+      "loadDrivenReplaySemanticHashes": [
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:d89114c60671f7af",
+          "canonicalModelSemanticHash": "fnv1a64:63e8e95e5d45f50e",
+          "loadCaseInputSemanticHash": "fnv1a64:325d77606a742ef6",
+          "resultPayloadSemanticHash": "fnv1a64:aa5888d6caa83288",
+          "executionEvidenceHash": "fnv1a64:0f53b18707087525",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:d89114c60671f7af",
+          "canonicalModelSemanticHash": "fnv1a64:63e8e95e5d45f50e",
+          "loadCaseInputSemanticHash": "fnv1a64:325d77606a742ef6",
+          "resultPayloadSemanticHash": "fnv1a64:aa5888d6caa83288",
+          "executionEvidenceHash": "fnv1a64:0f53b18707087525",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:d89114c60671f7af",
+          "canonicalModelSemanticHash": "fnv1a64:63e8e95e5d45f50e",
+          "loadCaseInputSemanticHash": "fnv1a64:325d77606a742ef6",
+          "resultPayloadSemanticHash": "fnv1a64:aa5888d6caa83288",
+          "executionEvidenceHash": "fnv1a64:0f53b18707087525",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      ],
+      "prescribedReplaySemanticHashes": [
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:96065845048c853f",
+          "canonicalModelSemanticHash": "fnv1a64:c70847d83e142491",
+          "loadCaseInputSemanticHash": "fnv1a64:47deba5e825b9953",
+          "resultPayloadSemanticHash": "fnv1a64:f8a6dc509836a77f",
+          "executionEvidenceHash": "fnv1a64:ca2b71625ec16762",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:96065845048c853f",
+          "canonicalModelSemanticHash": "fnv1a64:c70847d83e142491",
+          "loadCaseInputSemanticHash": "fnv1a64:47deba5e825b9953",
+          "resultPayloadSemanticHash": "fnv1a64:f8a6dc509836a77f",
+          "executionEvidenceHash": "fnv1a64:ca2b71625ec16762",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        },
+        {
+          "sourceEvidenceSemanticHash": "fnv1a64:96065845048c853f",
+          "canonicalModelSemanticHash": "fnv1a64:c70847d83e142491",
+          "loadCaseInputSemanticHash": "fnv1a64:47deba5e825b9953",
+          "resultPayloadSemanticHash": "fnv1a64:f8a6dc509836a77f",
+          "executionEvidenceHash": "fnv1a64:ca2b71625ec16762",
+          "qualificationEvidenceHash": "fnv1a64:442d721a45e68229"
+        }
+      ],
+      "loadCases": {
+        "TRACTION": {
+          "solverMethod": "DETERMINISTIC_CHOLESKY",
+          "loadCaseInputSemanticHash": "fnv1a64:a0e3a8cc2fb15ae4",
+          "normalizedDisplacementError": 2.7755575615628914e-16,
+          "normalizedStrainError": 2.1684043449710089e-16,
+          "normalizedStressError": 6.331511178008497e-16,
+          "relativeEnergyError": 0,
+          "observedStrainEnergy": 1923.076923076923,
+          "normalizedAppliedVectorError": 0,
+          "normalizedReactionVectorError": 3.7834979593753817e-16,
+          "appliedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "reactionResultant": {
+            "x": -1.4551915228366852e-11,
+            "y": 1.0913936421275139e-11
+          },
+          "combinedResultant": {
+            "x": -1.4551915228366852e-11,
+            "y": 1.0913936421275139e-11
+          },
+          "appliedMomentZ": 0,
+          "reactionMomentZ": 1.4551915228366852e-9,
+          "combinedMomentZ": 1.3969838619232178e-9,
+          "relativeForceEquilibriumError": 2.364686224609613e-16,
+          "relativeMomentEquilibriumError": 3.6321580410003664e-16
+        },
+        "NODAL_EQUIVALENT": {
+          "solverMethod": "DETERMINISTIC_CHOLESKY",
+          "loadCaseInputSemanticHash": "fnv1a64:b254eb57002827a8",
+          "normalizedDisplacementError": 2.7755575615628914e-16,
+          "normalizedStrainError": 2.1684043449710089e-16,
+          "normalizedStressError": 6.331511178008497e-16,
+          "relativeEnergyError": 0,
+          "observedStrainEnergy": 1923.076923076923,
+          "normalizedAppliedVectorError": 0,
+          "normalizedReactionVectorError": 3.7834979593753817e-16,
+          "appliedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "reactionResultant": {
+            "x": -1.4551915228366852e-11,
+            "y": 1.0913936421275139e-11
+          },
+          "combinedResultant": {
+            "x": -1.4551915228366852e-11,
+            "y": 1.0913936421275139e-11
+          },
+          "appliedMomentZ": 0,
+          "reactionMomentZ": 1.4551915228366852e-9,
+          "combinedMomentZ": 1.3969838619232178e-9,
+          "relativeForceEquilibriumError": 2.364686224609613e-16,
+          "relativeMomentEquilibriumError": 3.6321580410003664e-16
+        },
+        "PRESCRIBED_AFFINE": {
+          "solverMethod": "FULLY_CONSTRAINED_NO_FREE_SOLVE",
+          "loadCaseInputSemanticHash": "fnv1a64:dc35d834f54c20ce",
+          "normalizedDisplacementError": 0,
+          "normalizedStrainError": 0,
+          "normalizedStressError": 0,
+          "relativeEnergyError": 1.1823431123048066e-16,
+          "observedStrainEnergy": 1923.0769230769233,
+          "normalizedAppliedVectorError": 0,
+          "normalizedReactionVectorError": 1.8917489796876909e-16,
+          "appliedResultant": {
+            "x": 0,
+            "y": 0
+          },
+          "reactionResultant": {
+            "x": -7.275957614183426e-12,
+            "y": 0
+          },
+          "combinedResultant": {
+            "x": -7.275957614183426e-12,
+            "y": 0
+          },
+          "appliedMomentZ": 0,
+          "reactionMomentZ": 4.656612873077393e-10,
+          "combinedMomentZ": 4.656612873077393e-10,
+          "relativeForceEquilibriumError": 9.458744898438454e-17,
+          "relativeMomentEquilibriumError": 1.210719347000122e-16
+        }
+      },
+      "parity": {
+        "tractionToNodal": {
+          "normalizedDisplacementDifference": 0,
+          "normalizedStressDifference": 0,
+          "relativeEnergyDifference": 0,
+          "normalizedForceVectorDifference": 0
+        },
+        "tractionToPrescribed": {
+          "normalizedDisplacementDifference": 2.7755575615628914e-16,
+          "normalizedStressDifference": 6.331511178008497e-16,
+          "relativeEnergyDifference": 1.1823431123048066e-16,
+          "normalizedForceVectorDifference": 0
+        }
+      }
+    }
+  ],
+  "authority": {
+    "closedFormExpectedValues": true,
+    "productionOutputGeneratedExpectedValues": false,
+    "integrationPointOrElementStressOnly": true,
+    "nodalProjectionUsed": false,
+    "crossElementAveragingUsed": false,
+    "movingMaximumUsed": false
+  },
+  "qualificationStates": {
+    "implemented": true,
+    "contractVerified": false,
+    "meshVerified": false,
+    "solverVerified": false,
+    "stressVerified": false,
+    "codeVerified": false,
+    "integrationVerified": false,
+    "bucketQualified": false
+  },
+  "disposition": "TECHNICAL_FIX_IMPLEMENTED_PENDING_EXTERNAL_EXECUTION",
+  "evidenceHash": "sha256:61da2a789de34b766155d5e67a45484db2f740f7995cbded911f8cb66d2f7a37"
+}

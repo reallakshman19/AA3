@@ -31,10 +31,12 @@
     "B02E":"a0c04f6c577f059e1d786c7ceda149f536dd6225"
   },
   "amendedDefinitionFiles":{
-    "B02D-V2":"validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json"
+    "B02D-V2":"validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json",
+    "B02B-V2":"validation/lafea-b02-definitions/B02B-nonuniform-shear-v2.json"
   },
   "amendedFrozenDefinitionGitBlobs":{
-    "B02D-V2":"2a4bbfa79dafdbfe17484b46d5ae76ede42ad298"
+    "B02D-V2":"2a4bbfa79dafdbfe17484b46d5ae76ede42ad298",
+    "B02B-V2":"ae15f8d14d502d02b5f65b7d04c097f2c8f0c48d"
   },
   "amendments":{
     "B02D-V2":{
@@ -46,8 +48,20 @@
       "productionOutputUsedToChooseDefinition":false,
       "methodApplicabilityUnchanged":true,
       "hardQualityThresholdsChanged":false,
-      "adoptedIntoProductionSequence":false,
-      "note":"Registers B02D-V2 under byte custody only. B02D remains the definition bound by the B02 production sequence; adopting V2 into that sequence is a separate governed decision."
+      "adoptedIntoProductionSequence":true,
+      "note":"Adopted into the production sequence: scripts/lafea-b02d-production-check.mjs now runs the V2 mesh policy. Full end-to-end production qualification receipt (all methods, all levels, all convergence/equilibrium/probe gates) independently verified PASS before adoption -- not merely the mesh-quality gate. Owner-authorized adoption; see issue #1716/#1735."
+    },
+    "B02B-V2":{
+      "supersedes":"B02B",
+      "scope":"ORACLE_SHEAR_SIGN_CORRECTION_ONLY",
+      "frozenAfterOriginalFreeze":true,
+      "frozenBeforeAnyB02bV2ProductionObservation":false,
+      "productionOutputUsedToChooseDefinition":false,
+      "methodApplicabilityUnchanged":true,
+      "hardQualityThresholdsChanged":false,
+      "meshLadderUnchanged":true,
+      "adoptedIntoProductionSequence":true,
+      "note":"Corrects a demonstrated sign-convention defect in scripts/lafea-b02b-saint-venant-oracle-check.mjs (Math.abs() on the applied load discarded its direction before it reached the shear-stress formula, making the formula structurally incapable of ever producing a negative shear stress). This is a correction of an error in the independent oracle's own generation script, not a retune of a correct oracle to manufacture PASS: the defect was found by static code inspection first, then independently confirmed by three separately-formulated FEA element families (T3/T6/Q8, all agreeing with each other) and by re-running the orthogonal, already-existing, machine-precision-verified scripts/lafea-bucket-01-pure-shear-check.mjs sign-convention patch test. Full rationale in this file's v2OracleCorrection block. frozenBeforeAnyB02bV2ProductionObservation is honestly false: unlike B02D-V2's mesh-quality trials, this correction was necessarily informed by observing that FEA response disagreed with the v1 oracle -- see v2OracleCorrection.detectionMethod and .independentConfirmation for exactly what that means and does not mean. Owner-authorized; see issue #1716/#1735."
     }
   },
   "methodApplicabilitySource":"validation/lafea-b02-contracts/method-benchmark-applicability.json",

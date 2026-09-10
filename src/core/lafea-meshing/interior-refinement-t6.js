@@ -112,7 +112,20 @@ export function triangulateRefinedRegionAsIndexTriples(topology, regionId, optio
   }
 
   let restored = lawsonFlip(points, triangles, constrainedEdgeKeys);
-  if (holePolygons.length) {
+  // Run unconditionally, not just when a genuine hole loop exists: an
+  // OUTER-loop segment can be just as locally over-fine relative to the
+  // global interior spacing as a hole boundary can -- e.g. a concave arc
+  // that is one side of a logically-4-sided outer loop (B02C's quarter-
+  // annulus hole arc), whose curvature-driven minimum segment count makes it
+  // far shorter than the region's target element size even though it is not
+  // a topological hole. `insertHoleBoundaryFront`'s own per-edge activation
+  // ratio (`gradingPolicy.activationRatio`) is already a no-op for every
+  // edge already near target size, so this inserts nothing new -- and
+  // `verifyHoleBoundaryOwnership` is already a no-op with no hole rings --
+  // whenever no boundary ring actually needs grading (e.g. every rectangle,
+  // and every outer loop that was already well-conditioned before this
+  // change).
+  {
     const frontTriangles = restored.map((triangle) => [...triangle]);
     interiorPointCount += insertHoleBoundaryFront(
       points,
@@ -297,11 +310,18 @@ function insertHoleBoundaryFront(
 ) {
   const outerRing = boundaryRings.find((ring) => ring.role === 'OUTER');
   const outerPolygon = outerRing.globalIndices.map((index) => points[index]);
-  const holeRings = boundaryRings.filter((ring) => ring.role === 'HOLE');
+  // Every boundary ring is grading-eligible, not just hole rings: a concave
+  // segment of the OUTER loop (e.g. a hole arc that is one side of a
+  // logically-4-sided outer loop rather than a true topological hole) can be
+  // just as locally over-fine as a genuine hole boundary. The per-edge
+  // `activationRatio` gate below already limits insertion to edges that are
+  // materially shorter than target size, so ordinary outer edges (already
+  // near target size, as in every rectangle) never qualify.
+  const frontEligibleRings = boundaryRings.filter((ring) => ring.role === 'HOLE' || ring.role === 'OUTER');
   let insertedCount = 0;
 
   for (let layer = 0; layer < HOLE_FRONT_LAYER_COUNT; layer += 1) {
-    for (const ring of holeRings) {
+    for (const ring of frontEligibleRings) {
       for (let edgeIndex = 0; edgeIndex < ring.globalIndices.length; edgeIndex += 1) {
         const a = points[ring.globalIndices[edgeIndex]];
         const b = points[ring.globalIndices[(edgeIndex + 1) % ring.globalIndices.length]];

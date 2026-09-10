@@ -25,6 +25,12 @@ import {
 import { issueLafeaSourceAuthority } from '../../src/workspace/lafea-source-authority.js';
 import { requireLafeaStageComposition } from '../../src/workspace/lafea-stage-composition-root.js';
 import { createLafeaWorkbenchStore } from '../../src/workspace/lafea-workbench.js';
+import {
+  b02aProbeStableProfileIdentity,
+  LAFEA_B02A_PROBE_STABLE_PROFILE_SOURCE_REVISION,
+  b02bProbeStableProfileIdentity,
+  LAFEA_B02B_PROBE_STABLE_PROFILE_SOURCE_REVISION,
+} from '../../src/workspace/lafea-mesh-producer-binding.js';
 
 const STAGE_ID = 'LAFEA.3';
 const SHELL_ELEMENT = 'CST_DKT_TRI3_THIN_SHELL_V1';
@@ -214,10 +220,22 @@ function rectangleDomain(definition, sourceHash, geometry) {
 
 function meshProfile(definition, method, level) {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
+  const useB02aProbeStable = definition.caseId === 'B02A';
+  const useB02bProbeStable = definition.caseId === 'B02B';
+  const profileIdentity = useB02aProbeStable
+    ? b02aProbeStableProfileIdentity(method, level.targetElementLength)
+    : useB02bProbeStable
+      ? b02bProbeStableProfileIdentity(method, level.targetElementLength)
+      : `${definition.caseId}_${method}_${level.levelId}_FROZEN_H`;
+  const sourceRevision = useB02aProbeStable
+    ? LAFEA_B02A_PROBE_STABLE_PROFILE_SOURCE_REVISION
+    : useB02bProbeStable
+      ? LAFEA_B02B_PROBE_STABLE_PROFILE_SOURCE_REVISION
+      : 'B02-FROZEN-DEFINITION-V1';
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `${definition.caseId}_${method}_${level.levelId}_FROZEN_H`,
-    sourceRevision: 'B02-FROZEN-DEFINITION-V1',
+    profileIdentity,
+    sourceRevision,
     semanticHash: undefined,
     fields: {
       ...defaults,

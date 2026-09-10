@@ -39,7 +39,7 @@ test('EMP.1 benchmark evidence stays authority-safe while deep CAUx audit detail
   await expect(benchmarkTab).toHaveAttribute('aria-selected', 'true');
   await expect(panel).toBeVisible();
   const visibleEvidence = analytical.locator(
-    '[data-emp1-layout-region="EVIDENCE_WORKSPACE"][data-emp1-evidence-view]:visible',
+    '[data-emp1-layout-region="EVIDENCE_WORKSPACE"][data-emp1-layout-surface][data-emp1-evidence-view]:visible',
   );
   await expect(visibleEvidence).toHaveCount(1);
 
@@ -67,7 +67,7 @@ test('EMP.1 benchmark evidence stays authority-safe while deep CAUx audit detail
   await expect(authority).toContainText('Does not establish code compliance');
 
   const audit = caux.locator('[data-role="emp1-benchmark-caux-audit-details"]');
-  const auditSummary = audit.locator('summary');
+  const auditSummary = audit.locator(':scope > summary');
   const comparisonRows = caux.locator('[data-role="emp1-benchmark-comparison-row"]');
   await expect(audit).toHaveCount(1);
   await expect(audit).not.toHaveAttribute('open', '');

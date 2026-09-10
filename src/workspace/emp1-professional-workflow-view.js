@@ -69,9 +69,19 @@ export function renderEmp1ProfessionalWorkflow(
     if (step.stepId === options.activeTaskStep) button.setAttribute('aria-current', 'step');
     button.addEventListener('click', () => {
       setActiveWorkflowStep(stepButtons, button);
+      // Switch backing stage (if this step requires one) and let it finish
+      // re-rendering the shell before notifyTaskShell selects the task's
+      // evidence/inspector surface: that selection falls back to a default
+      // when its target surface isn't in the *current* shell's surface set,
+      // so selecting it before the backing-stage switch has produced the
+      // shell that actually has that surface (e.g. screeningCustody, only
+      // present once LAFEA.2 is active) would have the selection silently
+      // overwritten back to the default. Scrolling still runs last, since it
+      // targets a surface that notifyTaskShell may only just have revealed.
+      switchBackingStageForStep(step, onSelectRoute);
       notifyTaskShell(root, step.stepId);
       options.onSelectTask?.(step.stepId);
-      navigateProfessionalStep(root, step, onSelectRoute);
+      scrollToStepTarget(root, step);
     });
     stepButtons.push(button);
     item.append(button);
@@ -256,9 +266,12 @@ function technicalBackingDisclosure(root, presentation, onSelectRoute) {
   return details;
 }
 
-function navigateProfessionalStep(root, step, onSelectRoute) {
+function switchBackingStageForStep(step, onSelectRoute) {
+  if (step.preferredBackingStageId) onSelectRoute?.(step.preferredBackingStageId);
+}
+
+function scrollToStepTarget(root, step) {
   if (step.preferredBackingStageId) {
-    onSelectRoute?.(step.preferredBackingStageId);
     scheduleTargetScroll(root, step.targetRole);
     return;
   }

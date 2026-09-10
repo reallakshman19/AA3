@@ -8,6 +8,7 @@ import {
 } from './emp1-workbench-run-state.js';
 import { buildEmp1ProfessionalResultPresentation } from './emp1-professional-result-presentation.js';
 import { card, element } from './lafea-workbench-dom.js';
+import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
 /**
  * Editable source-binding form for the governed EMP.1.C transaction.
@@ -432,4 +433,4 @@ function yesNoUnknown(value) {
   return value === true ? 'YES' : value === false ? 'NO' : 'UNRESOLVED';
 }
 function finiteText(value) { return Number.isFinite(value) ? String(value) : ''; }
-function human(value) { return String(value ?? 'UNRESOLVED').replaceAll('_', ' '); }
+function human(value) { return emp1PlainLanguageLabel(value); }

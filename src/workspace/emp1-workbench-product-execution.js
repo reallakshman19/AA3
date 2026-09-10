@@ -279,8 +279,12 @@ function requireAttachmentGeometryForExecution(value, execution) {
 
 function requireApplicabilityGeometryForExecution(value, aDocument, bDocument) {
   const geometry = normalizeEmp1ApplicabilityGeometry(value);
-  const canonicalLengthUnit = aDocument?.units?.canonical?.length
-    ?? bDocument?.units?.canonical?.length;
+  // Canonical units live on the foundation model's sourceEvidence (see
+  // refreshEmp1BSourceEvidence / UNIT_RESOLVER.foundation), not on a
+  // top-level `.units.canonical` — aDocument.units is the flat declared-unit
+  // object and bDocument carries no top-level `.units` at all.
+  const canonicalLengthUnit = bDocument?.sourceEvidence?.foundationModel?.units?.canonical?.length
+    ?? aDocument?.sourceEvidence?.foundationModel?.units?.canonical?.length;
   if (typeof canonicalLengthUnit !== 'string' || !canonicalLengthUnit) {
     throw workbenchError('EMP1_WORKBENCH_CANONICAL_LENGTH_UNIT_REQUIRED');
   }

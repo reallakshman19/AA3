@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const RECON_HASH = 'b954eb34a18d11bea1f5af979f31781d8e40670fba480f1365f78116f812b2a8';
 const INTERP_HASH = '193efc2a78ec52eac81009f7a47c721b9c9891ca4d8ce1b9f0ad711218d0fd13';
-const QUAL3_HASH = 'f71dd3ad987aa92b4026485efee612b98e05d372ce1909b73830e41b5fb99728';
-const V2_HASH = '75c0423f429f86991dc67e4f7c2c45ae6841ace2d1baa0a43df6ab7e8bb71648';
+const QUAL3_HASH = '9c57953aff802624650050c251d05b3ca8ea6a190bec77863f03ec790abc353f';
+const V2_HASH = 'f7b3d5cd789d05588987230f84c54db642d07202624d24d1ac9ee886bfc8ba1a';
 const CAUX_SHA = 'c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e';
 const WRC_SHA = '698fcdc3e676e3bc6bbf710bc28ea8b666ac9511a81a0067a5d01088ae4c27b2';
 

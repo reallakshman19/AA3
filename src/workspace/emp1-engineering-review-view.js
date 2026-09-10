@@ -1,4 +1,5 @@
 import { element } from './lafea-workbench-dom.js';
+import { emp1PlainLanguageLabel } from './emp1-plain-language-labels.js';
 
 /** DOM-only Review & Evidence form over one controller-owned workspace projection. */
 export function renderEmp1EngineeringReviewPanel(root, workspace, onReview) {
@@ -129,5 +130,5 @@ function appendDefinition(root, list, label, value) {
 }
 
 function human(value) {
-  return String(value ?? 'UNRESOLVED').replaceAll('_', ' ');
+  return emp1PlainLanguageLabel(value);
 }

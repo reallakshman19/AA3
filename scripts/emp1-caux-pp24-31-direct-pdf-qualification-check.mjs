@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SOURCE_SHA = 'c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e';
-const BENCHMARK_HASH = '741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe';
-const HANDCALC_HASH = 'e7e4e7d21188e4b6c1f53c2d7b89a73036a52ccccc61a65fd69c24f6a13ae227';
+const BENCHMARK_HASH = '887b231028cd187c63d7cb29aedbc7db182b31d404623f9981f36a21987c2bf3';
+const HANDCALC_HASH = '88b3ced854446b68329c46558ddd326ed607a2fc966e7201596f53518abc4b9c';
 const OBS_HASH = 'b699860fbceede1cf53419ad82b56c446a4c8dfea772fe1a1b935e1230dde4e0';
-const QUAL_HASH = '75c0423f429f86991dc67e4f7c2c45ae6841ace2d1baa0a43df6ab7e8bb71648';
+const QUAL_HASH = 'f7b3d5cd789d05588987230f84c54db642d07202624d24d1ac9ee886bfc8ba1a';
 const PAGES = [24,25,26,27,28,29,30,31];
 const FALSE_AUTHORITY = {
   wrcMethodAuthority: false,

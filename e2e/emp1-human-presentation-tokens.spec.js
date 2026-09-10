@@ -31,6 +31,12 @@ const SIMPLE_MACHINE_CODES = [
   'ABSENT',
 ];
 
+// Short, deliberately-used compound identifiers for the three EMP.1
+// sub-stages. These read as ordinary domain vocabulary to an engineer (the
+// same as "EMP.1.A" throughout issue prose and this test file) and are not
+// raw route/enum leaks like EMP1.C.WRC537.CYLINDRICAL.ORIGINAL.GAMMA5.ZERO_DP.
+const ALLOWED_DOTTED_TOKENS = ['EMP.1.A', 'EMP.1.B', 'EMP.1.C'];
+
 test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across split-console views', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1058 });
   await page.goto('/');
@@ -51,10 +57,10 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
   const workflowDetails = root.locator('[data-role="emp1-workflow-details"]');
   await expect(workflowDetails).toHaveCount(1);
   await expect(workflowDetails).not.toHaveAttribute('open', '');
-  await workflowDetails.locator('summary').click();
+  await workflowDetails.locator(':scope > summary').click();
   await expect(workflowDetails).toHaveAttribute('open', '');
   scans.push({ view: 'workflow:readiness-review-custody', leaks: await scanVisibleLeaks(page) });
-  await workflowDetails.locator('summary').click();
+  await workflowDetails.locator(':scope > summary').click();
 
   // Inspector availability is task-contextual. Visit every inspector tab that is
   // actually selectable for every professional task rather than clicking hidden
@@ -168,10 +174,11 @@ test('EMP.1 engineer-facing surfaces do not expose machine-state tokens across s
 });
 
 async function scanVisibleLeaks(page) {
-  return page.evaluate(({ roles, rawBoundarySelector, simpleCodes }) => {
+  return page.evaluate(({ roles, rawBoundarySelector, simpleCodes, allowedDottedTokens }) => {
     const machineUnderscore = /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/gu;
     const machineDotted = /\b[A-Z][A-Z0-9]*(?:\.[A-Z0-9]+){2,}\b/gu;
     const simpleMachineCodes = new Set(simpleCodes);
+    const allowedDotted = new Set(allowedDottedTokens);
     const found = [];
 
     const isVisible = (element) => {
@@ -192,7 +199,8 @@ async function scanVisibleLeaks(page) {
           const value = node.textContent?.trim() ?? '';
           if (parent && value && isVisible(parent) && !parent.closest(rawBoundarySelector)) {
             const underscore = [...value.matchAll(machineUnderscore)].map((match) => match[0]);
-            const dotted = [...value.matchAll(machineDotted)].map((match) => match[0]);
+            const dotted = [...value.matchAll(machineDotted)].map((match) => match[0])
+              .filter((token) => !allowedDotted.has(token));
             const simple = value.split(/\s+/u).filter((token) => simpleMachineCodes.has(token));
             if (underscore.length || dotted.length || simple.length) {
               found.push({ role, text: value, underscore, dotted, simple });
@@ -207,5 +215,6 @@ async function scanVisibleLeaks(page) {
     roles: ENGINEER_FACING_ROLES,
     rawBoundarySelector: RAW_BOUNDARY_SELECTOR,
     simpleCodes: SIMPLE_MACHINE_CODES,
+    allowedDottedTokens: ALLOWED_DOTTED_TOKENS,
   });
 }

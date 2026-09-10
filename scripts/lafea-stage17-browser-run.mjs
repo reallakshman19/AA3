@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import {
   inspectProjectLocalChromium,
-  withProjectLocalPlaywrightEnv,
+  resolvePlaywrightRuntimeEnv,
 } from './lib/project-local-playwright-browser.mjs';
 
 const root = process.cwd();
@@ -27,7 +27,7 @@ function runNodeScript(relativePath) {
 function runPlaywright(args) {
   const result = spawnSync(process.execPath, [cli, 'test', '--config=playwright.lafea-visible.config.js', ...args], {
     cwd: root,
-    env: withProjectLocalPlaywrightEnv(),
+    env: resolvePlaywrightRuntimeEnv(browserPreflight),
     stdio: 'inherit',
   });
   if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
@@ -65,7 +65,7 @@ runPlaywright([
 runPlaywright([
   'e2e/lafea-visible-workbench.spec.js',
   '--grep',
-  'production exposes one EMP.1 product with A/B retained engines and C visibly blocked',
+  'production exposes one EMP.1 product with A/B retained engines and C bounded-authorized',
 ]);
 runPlaywright(['e2e/lafea-emp1-a-to-b-refresh.spec.js']);
 runPlaywright(['e2e/lafea-empirical-grouped-edit.spec.js']);

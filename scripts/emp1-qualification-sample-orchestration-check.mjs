@@ -23,7 +23,6 @@ const orderedMarkers = [
   "aExecution?.result?.qualification?.state !== 'ACCEPTED'",
   "this.importDocument(sample.bDocument, 'LAFEA.2')",
   'this.setEmp1RunInput(sample.runInput)',
-  "this.store.selectStage('LAFEA.2')",
   'await this.runEmp1Product()',
 ];
 
@@ -33,6 +32,19 @@ for (const marker of orderedMarkers) {
   assert.ok(index > previous, `EMP1_QUALIFICATION_SAMPLE_SEQUENCE_REQUIRED:${marker}`);
   previous = index;
 }
+
+// importDocument(sample.bDocument, 'LAFEA.2') makes B the active stage as an
+// intrinsic side effect of importing into it - correct for a deliberate
+// single-document import, but "load complete sample" is one bulk convenience
+// action, not the caller choosing to look at B. runEmp1Product() itself
+// reads stages['LAFEA.1']/['LAFEA.2'] directly and does not depend on which
+// stage is active, so the method must restore A as active afterward rather
+// than leaving the caller looking at B (which also drives
+// reconcileSelectionWithBackingStage in emp1-analytical-layout.js to jump
+// the professional-workflow task to SECTION_SCREENING).
+const restoreAIndex = method.indexOf("this.store.selectStage('LAFEA.1')", previous);
+assert.ok(restoreAIndex > previous,
+  "EMP1_QUALIFICATION_SAMPLE_MUST_RESTORE_A_ACTIVE_AFTER_RUN:this.store.selectStage('LAFEA.1')");
 
 assert.match(method, /error\.code = 'EMP1_A_CURRENT_QUALIFIED_RESULT_REQUIRED'/u);
 assert.equal(method.includes('sample.aExecution'), false,

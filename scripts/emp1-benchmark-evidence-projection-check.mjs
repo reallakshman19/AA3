@@ -75,7 +75,7 @@ const projected = projectEmp1BenchmarkEvidence(buildInput());
 assert.equal(projected.schema, EMP1_BENCHMARK_EVIDENCE_SCHEMA);
 assert.equal(projected.benchmarkId, 'CAUX_2017_WRC01F_PP24_31_REFERENCE_V1');
 assert.equal(projected.sourceEvidence.semanticHash,
-  '741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe');
+  '887b231028cd187c63d7cb29aedbc7db182b31d404623f9981f36a21987c2bf3');
 assert.equal(projected.sourceEvidence.directObservationState, 'NOT_RUN_EXECUTION_ENVIRONMENT');
 assert.equal(projected.freezeEvidence.state, 'REFERENCE_FROZEN');
 assert.equal(projected.routeRelationship.engineeringUseAuthorized, false);

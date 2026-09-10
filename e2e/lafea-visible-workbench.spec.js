@@ -94,7 +94,7 @@ test('production application LAFEA.3 stage mounts the engineering workbench', as
   await testInfo.attach('lafea-production-tab', { path: screenshotPath, contentType: 'image/png' });
 });
 
-test('production exposes one EMP.1 product with A/B retained engines and C visibly blocked', async ({ page }, testInfo) => {
+test('production exposes one EMP.1 product with A/B retained engines and C bounded-authorized', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openProductionLafea(page);
 
@@ -116,21 +116,28 @@ test('production exposes one EMP.1 product with A/B retained engines and C visib
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
   await expect(analytical).toHaveAttribute('data-emp1-step', 'A');
 
-  const steps = analytical.locator('[data-role="emp1-step"]');
+  // The plain A/B/C stepper (data-role="emp1-step") was replaced by the
+  // 7-step professional workflow (data-role="emp1-professional-step"), plus
+  // a "technical backing calculators" disclosure retaining the 3 A/B/C
+  // backing-stage buttons (data-role="emp1-backing-step", never disabled -
+  // C's setup/evidence stays navigable even while production is bounded, per
+  // the comment on the click handler below). Both are nested inside the
+  // outer "Readiness, review and technical custody" disclosure; each
+  // disclosure is recreated on every re-render, so open them fresh rather
+  // than assuming an earlier open state stuck.
+  const outerDetails = analytical.locator('[data-role="emp1-workflow-details"]');
+  const openOuterDetails = async () => {
+    if (!(await outerDetails.getAttribute('open'))) await outerDetails.locator(':scope > summary').click();
+  };
+  await openOuterDetails();
+  const steps = analytical.locator('[data-role="emp1-backing-step"]');
   await expect(steps).toHaveCount(3);
-  const stepA = analytical.locator('[data-role="emp1-step"][data-emp1-step="A"]');
-  const stepB = analytical.locator('[data-role="emp1-step"][data-emp1-step="B"]');
-  const stepC = analytical.locator('[data-role="emp1-step"][data-emp1-step="C"]');
+  const stepA = analytical.locator('[data-role="emp1-backing-step"][data-emp1-step="A"]');
+  const stepB = analytical.locator('[data-role="emp1-backing-step"][data-emp1-step="B"]');
+  const stepC = analytical.locator('[data-role="emp1-backing-step"][data-emp1-step="C"]');
   await expect(stepA).toBeEnabled();
   await expect(stepB).toBeEnabled();
-  await expect(stepC).toBeDisabled();
-  await expect(stepC).toContainText('Local correlation · BLOCKED');
-  const cBlocker = analytical.locator('[data-role="emp1-c-blocker"]');
-  await expect(cBlocker).toContainText('no production local-correlation authority');
-  await expect(cBlocker).toContainText('WRC extraction package is not READY_FOR_IMPLEMENTATION');
-  await expect(cBlocker).toContainText('WRC a–j numerical coefficient payload is not qualified');
-  await expect(cBlocker).toContainText('WRC load/sign convention arbitration remains open');
-  await expect(cBlocker).toContainText('CAUx 2017 pp.24–31 benchmark values');
+  await expect(stepC).toBeEnabled();
 
   await expect(workbench.locator('[data-role="lafea-run"]')).toHaveAttribute('data-emp1-step', 'A');
   const mockA = workbench.locator('[data-role="lafea-mock"]');
@@ -139,7 +146,9 @@ test('production exposes one EMP.1 product with A/B retained engines and C visib
   await workbench.locator('[data-role="lafea-run"]').click();
   await expect(analytical.locator('[data-role="lafea-result-highlights"]')).toContainText('Max |transferred force|');
 
-  await stepB.click();
+  // The professional-step click switches backing stage itself (its
+  // preferredBackingStageId), so it replaces the old stepB.click() directly.
+  await analytical.locator('[data-role="emp1-professional-step"][data-emp1-professional-step="SECTION_SCREENING"]').click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
   await expect(analytical).toHaveAttribute('data-emp1-step', 'B');
   await expect(workbench.locator('h1')).toContainText('EMP.1 — Local Attachment Analytical Assessment');
@@ -148,10 +157,19 @@ test('production exposes one EMP.1 product with A/B retained engines and C visib
 
   const mockB = workbench.locator('[data-role="lafea-mock"]');
   if (await mockB.isVisible()) await mockB.click();
+
+  // The B-source-custody card (lafea-screening-load-custody) and C's
+  // production-authority statement both live in the evidence console, each
+  // behind its own view - display:none until the console is expanded *and*
+  // that surface's tab is selected, independent of which professional task
+  // is active.
+  const evidenceToggle = analytical.locator('[data-role="emp1-evidence-console-toggle"]');
+  const evidenceTab = (view) => analytical.locator(`[data-role="emp1-evidence-tab"][data-emp1-evidence-view="${view}"]`);
+  if ((await evidenceToggle.getAttribute('aria-expanded')) !== 'true') await evidenceToggle.click();
+  await evidenceTab('screeningCustody').click();
   const custody = analytical.locator('[data-role="lafea-screening-load-custody"]');
-  await expect(custody).toContainText('retained snapshot of EMP.1.A foundation evidence');
-  await expect(custody).toContainText('If A changes, refresh/re-import B evidence before relying on B');
-  await expect(custody).toContainText('Retained EMP.1.A transformed resultants');
+  await expect(custody).toContainText('EMP.1.B owns its screening cases, factors and evaluation locations');
+  await expect(custody).toContainText('Only its validated A-derived source evidence may be refreshed from the current qualified EMP.1.A result');
   const factor = custody.locator(
     '[data-role="lafea-screening-term-factor"][data-screening-case-id="CASE-B"][data-load-case-id="LC-A"]',
   );
@@ -165,6 +183,18 @@ test('production exposes one EMP.1 product with A/B retained engines and C visib
     .find((row) => row.screeningCaseId === 'CASE-B').mechanicalTerms
     .find((row) => row.loadCaseId === 'LC-A').factor);
   expect(editedFactor).toBe(0.25);
+
+  // C's production-authority statement (emp1-c-run-configuration, in
+  // emp1-workbench-run-view.js) only renders once both A and B documents are
+  // loaded, so this replaces the old pre-load emp1-c-blocker check (which
+  // only ever existed in the now-dead renderEmp1AssessmentWorkflow). With
+  // the CAUx-qualified GAMMA5/ZERO_DP demo data now qualified, the bounded
+  // route is authorized for this exact scope - it is bounded, not blocked.
+  await analytical.locator('[data-role="emp1-professional-step"][data-emp1-professional-step="LOCAL_CORRELATION"]').click();
+  const authority = analytical.locator('[data-role="emp1-c-production-authority"]');
+  await expect(authority).toContainText('Bounded C execution authority');
+  await expect(authority).toContainText('Only the registered bounded runtime domain may execute');
+  await expect(analytical.locator('[data-role="emp1-c-run-configuration"]')).toHaveAttribute('data-production-authority', 'AVAILABLE');
 
   await expect(workbench.locator('[data-role="lafea-run"]')).toBeEnabled();
   await workbench.locator('[data-role="lafea-run"]').click();
@@ -197,13 +227,12 @@ test('Analytical Calc uses one EMP.1 public navigation authority with A/B/C inte
   const productionView = page.locator('[data-application-view="LAFEA"]');
   await expect(productionView).toBeVisible();
   const workbench = productionView.locator('[data-role="lafea-workbench"]');
-  await workbench.locator('[data-lafea-tab="ANALYTICAL_CALC"]').click();
+  await workbench.locator(':scope > [data-lafea-slot="navigation"] [data-product-id="EMP.1"]').click();
 
   const analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
   await expect(analytical).toBeVisible();
   await expect(workbench.locator('h1')).toContainText('EMP.1');
   await expect(analytical).toContainText('Assessment workflow');
-  await expect(analytical).toContainText('EMP.1.A inputs');
   await expect(workbench).toContainText('FE mesh: NOT APPLICABLE');
   await expect(workbench.locator('[data-guided-target="viewport"]')).toHaveCount(0);
   await expect(workbench.locator('[data-guided-target="discretization"]')).toHaveCount(0);
@@ -213,12 +242,19 @@ test('Analytical Calc uses one EMP.1 public navigation authority with A/B/C inte
   await expect(publicNavigation.locator('[data-product-id="EMP.1"]')).toHaveCount(1);
   await expect(publicNavigation.locator('[data-stage-id="LAFEA.1"]')).toHaveCount(0);
   await expect(publicNavigation.locator('[data-stage-id="LAFEA.2"]')).toHaveCount(0);
-  await expect(analytical.locator('[data-role="emp1-step"]')).toHaveCount(3);
-  await expect(analytical.locator('[data-role="emp1-step"][data-emp1-step="C"]')).toBeDisabled();
+  // The plain A/B/C stepper (emp1-step) was replaced by the 7-step
+  // professional workflow, plus a technical-backing disclosure retaining the
+  // 3 A/B/C backing-stage buttons (emp1-backing-step, never disabled - C's
+  // setup/evidence stays navigable while production is bounded).
+  const outerDetails = analytical.locator('[data-role="emp1-workflow-details"]');
+  if (!(await outerDetails.getAttribute('open'))) await outerDetails.locator(':scope > summary').click();
+  await expect(analytical.locator('[data-role="emp1-backing-step"]')).toHaveCount(3);
+  await expect(analytical.locator('[data-role="emp1-backing-step"][data-emp1-step="C"]')).toBeEnabled();
 
   let state = await page.evaluate(() => globalThis.AnalysisWorkspace.getLafeaWorkbenchState());
   expect(state.activeStageId).toBe('LAFEA.1');
-  await analytical.locator('[data-role="emp1-step"][data-emp1-step="B"]').click();
+  // The professional-step click switches backing stage itself.
+  await analytical.locator('[data-role="emp1-professional-step"][data-emp1-professional-step="SECTION_SCREENING"]').click();
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.2');
   await expect(workbench.locator('h1')).toContainText('EMP.1');
   await expect(analytical.locator('[data-role="lafea-analytical-route-heading"]')).toContainText('EMP.1.B');
@@ -246,14 +282,19 @@ test('Empirical analytical surface presents one truthful EMP.1 product and page-
   await expect(analytical).toHaveAttribute('data-backing-stage-id', 'LAFEA.1');
   await expect(workbench.locator(':scope > [data-lafea-slot="navigation"] [data-product-id="EMP.1"]')).toHaveCount(1);
   await expect(workbench.locator(':scope > [data-lafea-slot="navigation"] [data-stage-id]')).toHaveCount(0);
-  await expect(analytical.locator('[data-role="emp1-step"]')).toHaveCount(3);
-  await expect(analytical.locator('[data-role="emp1-step"][data-emp1-step="C"]')).toBeDisabled();
+  // See the equivalent check in lafea-visible-workbench.spec.js's "production
+  // exposes one EMP.1 product..." test above: the A/B/C stepper is now
+  // data-role="emp1-backing-step", behind the technical-backing disclosure,
+  // never disabled.
+  const outerDetails = analytical.locator('[data-role="emp1-workflow-details"]');
+  if (!(await outerDetails.getAttribute('open'))) await outerDetails.locator(':scope > summary').click();
+  await expect(analytical.locator('[data-role="emp1-backing-step"]')).toHaveCount(3);
+  await expect(analytical.locator('[data-role="emp1-backing-step"][data-emp1-step="C"]')).toBeEnabled();
   await expect(workbench.locator('.lafea-workbench__status')).toBeHidden();
 
   const scope = analytical.locator('[data-role="lafea-analytical-scope-boundary"]');
   await expect(scope).toBeVisible();
   await expect(scope).toContainText('does not calculate WRC 107/537 local-attachment stress');
-  await expect(analytical.locator('[data-role="emp1-c-blocker"]')).toContainText('CAUx 2017 pp.24–31');
 
   const mock = workbench.locator('[data-role="lafea-mock"]');
   if (await mock.isVisible()) await mock.click();

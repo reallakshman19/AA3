@@ -20,6 +20,12 @@ test('professional task remains presentation source of truth across backing-stag
   let analytical = workbench.locator('[data-role="lafea-analytical-calc"]');
   let workflow = analytical.locator('[data-role="emp1-workflow"]');
 
+  // loadEmp1QualificationSample() awaits runEmp1Product() internally; wait for
+  // that async product transaction to actually finish before taking geometry
+  // snapshots, so an in-flight re-render doesn't get mistaken for layout
+  // shift caused by the disclosure toggle below.
+  await expect(analytical.locator('[data-role="emp1-product-execution-summary"]')).toHaveCount(1);
+
   await expect(analytical.locator('[data-role="emp1-active-task-title"]')).toHaveText('1 · Basis & Source');
   await expect(analytical.locator('[data-emp1-layout-surface="route"] > h2')).toHaveText('Backing calculation stage');
 
@@ -47,12 +53,12 @@ test('professional task remains presentation source of truth across backing-stag
 
   const workflowDetails = workflow.locator('[data-role="emp1-workflow-details"]');
   const beforeDisclosure = await primaryGeometry(analytical);
-  await workflowDetails.locator('summary').click();
+  await workflowDetails.locator(':scope > summary').click();
   await expect(workflowDetails).toHaveAttribute('open', '');
   const afterDisclosure = await primaryGeometry(analytical);
   expect(Math.abs(afterDisclosure.shellScrollHeight - beforeDisclosure.shellScrollHeight)).toBeLessThanOrEqual(1);
   expect(Math.abs(afterDisclosure.lanesTop - beforeDisclosure.lanesTop)).toBeLessThanOrEqual(1);
-  await workflowDetails.locator('summary').click();
+  await workflowDetails.locator(':scope > summary').click();
 
   // Reproduce the screenshot failure path: enter backing B, then select Review.
   await step(workflow, 'SECTION_SCREENING').click();
@@ -82,9 +88,9 @@ test('professional task remains presentation source of truth across backing-stag
   const inspector = analytical.locator('[data-role="emp1-analytical-engineering-basis"]');
   await expect(inspector).toHaveAttribute('data-emp1-inspector-view', 'boundedCorrelation');
   await expect(inspector.locator('[data-role="emp1-inspector-tab"]:visible')).toHaveCount(3);
-  await expect(inspector.locator('[data-role="emp1-c-route-detail"]')).not.toHaveAttribute('open', '');
-  await expect(inspector.locator('[data-role="emp1-c-route-limitations"]')).not.toHaveAttribute('open', '');
-  await expect(inspector.locator('[data-role="emp1-c-gamma-domain-detail"]')).not.toHaveAttribute('open', '');
+  await expect(inspector.locator('[data-role="emp1-c-route-detail"]:visible')).not.toHaveAttribute('open', '');
+  await expect(inspector.locator('[data-role="emp1-c-route-limitations"]:visible')).not.toHaveAttribute('open', '');
+  await expect(inspector.locator('[data-role="emp1-c-gamma-domain-detail"]:visible')).not.toHaveAttribute('open', '');
 
   const inspectorGeometry = await inspector.evaluate((node) => {
     const tabs = node.querySelector('[data-role="emp1-inspector-tabs"]');

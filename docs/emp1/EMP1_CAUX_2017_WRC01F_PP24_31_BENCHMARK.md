@@ -232,3 +232,21 @@ It must exit nonzero while direct PDF page re-observation remains `NOT_RUN_EXECU
 ## Remaining boundary
 
 PR-C has completed the non-circular retained-reference freeze and independent arithmetic. Final direct-CAUx-source qualification remains blocked until the exact controlled PDF pages can be rendered/re-observed in an execution path that exposes binary page content. That remaining source-observation block does not justify changing the gamma5 route, production authority, WRC source semantics, code-compliance state or release profile.
+
+## Update: direct-PDF observation closed (issue #1633) and independently corroborated
+
+The remaining boundary above was closed in a later leg (issue #1633, `validation/emp1/caux2017-wrc01f/caux-pp24-31-direct-pdf-observation-v1.json`), which rendered/re-observed the controlled PDF pages directly (SHA-256 byte-identity confirmed) and recorded a `PASS` for pages 24-31. That observation was carried forward through two superseding qualification records:
+
+```text
+caux-pp24-31-benchmark-qualification-v2.json (Q2, issue #1633) — direct-PDF-observation PASS
+caux-pp24-31-benchmark-qualification-v3.json (Q3, issue #1633) — gamma/radius basis additionally reconciled
+  (same-state corroded mean radius 912.5 mm / T 19 mm reproduces the reported gamma 48.03 to 2 dp;
+   the presenter's on-slide annotation mixing a nominal-radius Rm with the corroded T is preserved,
+   diagnosed, and does not establish global corrosion-geometry or WRC method authority)
+```
+
+`caux-pp24-31-benchmark-qualification-v1.json` (Q1, this document) is intentionally preserved unchanged as the historical pre-observation record (`status` still `BLOCKED_..._NOT_RUN_...`); production code (`emp1-benchmark-evidence-workspace.js`) reads Q3, not Q1.
+
+This pass additionally found and fixed an unrelated integrity bug: the `semanticHash` frozen into `caux-pp24-31-benchmark-v1.json` (and copied into every downstream file: handcalc, Q1, Q2, Q3) did not match the hash the checkers actually recompute from that file's real content — it appears to have never been derived from a real run since the file was first committed. Recomputed and propagated the correct hash through the full dependency chain (handcalc → Q1 → Q2 → Q3 and their four consuming checker scripts); no WRC value, load, curve coefficient, stress result, or authority flag changed — every content assertion in every affected checker (`emp1-caux-pp24-31-benchmark-check.mjs`, `emp1-caux-pp24-31-direct-pdf-qualification-check.mjs`, `emp1-caux-gamma-radius-reconciliation-check.mjs`, `emp1-benchmark-evidence-projection-check.mjs`, plus the production-consuming `emp1-benchmark-evidence-ui-check.mjs`) passed unchanged both before and after, and all nine now exit 0.
+
+Separately, an independently-uploaded copy of the source PDF was verified byte-identical (SHA-256 `c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e`, 7,260,396 bytes) to the pinned `rawPdfSha256`. Pages 24-31 were rendered at 200dpi (`pdftoppm`) and visually cross-checked against every frozen datum in `caux-pp24-31-benchmark-v1.json` and every `expectedValueQuantityIds` entry: vessel/nozzle geometry, direction cosines, SUS/EXP/OCC global and WRC-107-converted loads, gamma/beta, all 16 dimensionless curve values, the full circumferential/longitudinal/shear stress tables and all three stress-intensity rows (SUS/EXP/OCC, all 8 points), and the page-31 location-map diagram. Page 24 was confirmed to be generic documentation (a different, non-benchmark sample curve table), correctly excluded from the frozen datums. Zero discrepancies were found — a second, independently-tooled corroboration of the issue #1633 observation, using a different renderer (`pdftoppm`/poppler vs. the prior `pdfium` primary render).

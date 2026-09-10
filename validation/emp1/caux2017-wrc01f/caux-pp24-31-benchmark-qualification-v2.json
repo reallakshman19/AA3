@@ -5,11 +5,11 @@
   "supersedesStatusOfQualificationId": "CAUX_2017_WRC01F_PP24_31_PR_C_Q1",
   "benchmark": {
     "path": "validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-v1.json",
-    "semanticHash": "741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe"
+    "semanticHash": "887b231028cd187c63d7cb29aedbc7db182b31d404623f9981f36a21987c2bf3"
   },
   "independentHandCalculation": {
     "path": "validation/emp1/caux2017-wrc01f/caux-pp24-31-independent-handcalc-v1.json",
-    "semanticHash": "e7e4e7d21188e4b6c1f53c2d7b89a73036a52ccccc61a65fd69c24f6a13ae227",
+    "semanticHash": "88b3ced854446b68329c46558ddd326ed607a2fc966e7201596f53518abc4b9c",
     "status": "PASS_INDEPENDENT_ARITHMETIC_REFERENCE_ONLY"
   },
   "directPdfObservation": {
@@ -101,5 +101,5 @@
     "codeComplianceAuthorized": false,
     "releaseAuthorityGranted": false
   },
-  "semanticHash": "75c0423f429f86991dc67e4f7c2c45ae6841ace2d1baa0a43df6ab7e8bb71648"
+  "semanticHash": "f7b3d5cd789d05588987230f84c54db642d07202624d24d1ac9ee886bfc8ba1a"
 }

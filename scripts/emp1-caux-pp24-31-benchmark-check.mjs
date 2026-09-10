@@ -8,9 +8,9 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const requireDirectPdf = process.argv.includes('--require-direct-pdf');
 const PDF_SHA = 'c1e92798a7bc172d649007ad88f6be548651f07a01cb2fbf83343e2283e0e83e';
 const TRANSCRIPTION_BLOB = 'ce0ee91cd996feee162d4dd90ce1af4063e06775';
-const BENCHMARK_HASH = '741bfbc21496c2f126dbbeec18b2f88d4424e90a94b1d2cc7444776a16dfb7fe';
-const HANDCALC_HASH = 'e7e4e7d21188e4b6c1f53c2d7b89a73036a52ccccc61a65fd69c24f6a13ae227';
-const QUALIFICATION_HASH = '27e5f468c409071270ceea3a388ee2f33b77f3ea71b02f4cc5b7646c8eca14ef';
+const BENCHMARK_HASH = '887b231028cd187c63d7cb29aedbc7db182b31d404623f9981f36a21987c2bf3';
+const HANDCALC_HASH = '88b3ced854446b68329c46558ddd326ed607a2fc966e7201596f53518abc4b9c';
+const QUALIFICATION_HASH = 'd621d81342795b082d8e6add7b938de3f897bb6dff9d320e153602a9c4a9f37e';
 
 const benchmark = await readJson('validation/emp1/caux2017-wrc01f/caux-pp24-31-benchmark-v1.json');
 const handcalc = await readJson('validation/emp1/caux2017-wrc01f/caux-pp24-31-independent-handcalc-v1.json');

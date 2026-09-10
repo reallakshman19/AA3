@@ -20,6 +20,15 @@ import {
   generateLafeaB02dProbeStablePolarMeshV2,
 } from '../core/lafea-meshing/b02d-probe-stable-polar-mesh-v2.js';
 import {
+  generateLafeaB02aProbeStableRectangleMesh,
+} from '../core/lafea-meshing/b02a-probe-stable-rectangle-mesh.js';
+import {
+  generateLafeaB02bProbeStableRectangleMesh,
+} from '../core/lafea-meshing/b02b-probe-stable-rectangle-mesh.js';
+import {
+  generateLafeaB02cGradedPolarMesh,
+} from '../core/lafea-meshing/b02c-kirsch-graded-polar-mesh.js';
+import {
   createLafeaMeshProducerCapability,
   createLafeaMeshProducerQualification,
 } from './lafea-mesh-producer-contract.js';
@@ -75,6 +84,12 @@ export const LAFEA_B02D_POLAR_PROFILE_PREFIX = 'B02D_PROBE_STABLE_POLAR_QUALIFIE
 export const LAFEA_B02D_POLAR_PROFILE_SOURCE_REVISION = 'B02D-FROZEN-POLAR-V1';
 export const LAFEA_B02D_POLAR_V2_PROFILE_PREFIX = 'B02D_PROBE_STABLE_POLAR_V2_QUALIFIED';
 export const LAFEA_B02D_POLAR_V2_PROFILE_SOURCE_REVISION = 'B02D-FROZEN-POLAR-V2';
+export const LAFEA_B02A_PROBE_STABLE_PROFILE_PREFIX = 'B02A_PROBE_STABLE_RECTANGLE_QUALIFIED';
+export const LAFEA_B02A_PROBE_STABLE_PROFILE_SOURCE_REVISION = 'B02A-FROZEN-PROBE-STABLE-V1';
+export const LAFEA_B02B_PROBE_STABLE_PROFILE_PREFIX = 'B02B_PROBE_STABLE_RECTANGLE_QUALIFIED';
+export const LAFEA_B02B_PROBE_STABLE_PROFILE_SOURCE_REVISION = 'B02B-FROZEN-PROBE-STABLE-V1';
+export const LAFEA_B02C_GRADED_POLAR_PROFILE_PREFIX = 'B02C_GRADED_POLAR_QUALIFIED';
+export const LAFEA_B02C_GRADED_POLAR_PROFILE_SOURCE_REVISION = 'B02C-FROZEN-GRADED-POLAR-V1';
 
 const MAXIMUM_NODES = LAFEA_MESH_PRODUCER_MAXIMUM_NODES;
 const MAXIMUM_ELEMENTS = LAFEA_MESH_PRODUCER_MAXIMUM_ELEMENTS;
@@ -180,6 +195,24 @@ export function planLafeaAnalysisMesh(stage, configuration) {
   } else if (usesB02dPolarStrategy(configuration, intent)) {
     requireB02dPolarGeometry(geometryEvidence.geometry);
     generated = generateLafeaB02dProbeStablePolarMesh({
+      targetElementLength: intent.targetElementLength,
+      elementFamily: intent.elementFamily,
+    });
+  } else if (usesB02aProbeStableStrategy(configuration, intent)) {
+    requireB02aProbeStableGeometry(geometryEvidence.geometry);
+    generated = generateLafeaB02aProbeStableRectangleMesh({
+      targetElementLength: intent.targetElementLength,
+      elementFamily: intent.elementFamily,
+    });
+  } else if (usesB02bProbeStableStrategy(configuration, intent)) {
+    requireB02bProbeStableGeometry(geometryEvidence.geometry);
+    generated = generateLafeaB02bProbeStableRectangleMesh({
+      targetElementLength: intent.targetElementLength,
+      elementFamily: intent.elementFamily,
+    });
+  } else if (usesB02cGradedPolarStrategy(configuration, intent)) {
+    requireB02cGradedPolarGeometry(geometryEvidence.geometry);
+    generated = generateLafeaB02cGradedPolarMesh({
       targetElementLength: intent.targetElementLength,
       elementFamily: intent.elementFamily,
     });
@@ -310,6 +343,99 @@ function usesB02dPolarStrategyV2(configuration, intent) {
     fail('LAFEA_B02D_POLAR_V2_REFINEMENT_FEATURES_MUST_REMAIN_EMPTY');
   }
   return true;
+}
+
+function usesB02aProbeStableStrategy(configuration, intent) {
+  const profile = configuration.meshProfile;
+  const selected = profile?.profileIdentity === b02aProbeStableProfileIdentity(intent.elementFamily, intent.targetElementLength)
+    && profile?.sourceRevision === LAFEA_B02A_PROBE_STABLE_PROFILE_SOURCE_REVISION;
+  if (!selected) return false;
+  if (intent.refinementFeatureIds.length !== 0) {
+    fail('LAFEA_B02A_PROBE_STABLE_REFINEMENT_FEATURES_MUST_REMAIN_EMPTY');
+  }
+  return true;
+}
+
+export function b02aProbeStableProfileIdentity(elementFamily, h) {
+  const encoded = Number.isInteger(h) ? String(h) : String(h).replace('.', '_');
+  return `${LAFEA_B02A_PROBE_STABLE_PROFILE_PREFIX}_${elementFamily}_H${encoded}`;
+}
+
+function requireB02aProbeStableGeometry(geometry) {
+  const loopsByRole = new Map(geometry.loops.map((loop) => [loop.role, loop]));
+  const outer = loopsByRole.get('OUTER');
+  if (!outer || geometry.loops.length !== 1 || outer.segmentIds.length !== 4) {
+    fail('LAFEA_B02A_PROBE_STABLE_GEOMETRY_NOT_QUALIFIED');
+  }
+  const segments = new Map(geometry.segments.map((row) => [row.segmentId, row]));
+  for (const segmentId of outer.segmentIds) {
+    const segment = segments.get(segmentId);
+    if (!segment || segment.type !== 'LINE') fail('LAFEA_B02A_PROBE_STABLE_GEOMETRY_NOT_QUALIFIED');
+  }
+  const vertices = geometry.vertices.map((row) => `${row.x},${row.y}`).sort().join('|');
+  if (vertices !== '0,-5|0,5|100,-5|100,5') fail('LAFEA_B02A_PROBE_STABLE_GEOMETRY_NOT_QUALIFIED');
+}
+
+function usesB02bProbeStableStrategy(configuration, intent) {
+  const profile = configuration.meshProfile;
+  const selected = profile?.profileIdentity === b02bProbeStableProfileIdentity(intent.elementFamily, intent.targetElementLength)
+    && profile?.sourceRevision === LAFEA_B02B_PROBE_STABLE_PROFILE_SOURCE_REVISION;
+  if (!selected) return false;
+  if (intent.refinementFeatureIds.length !== 0) {
+    fail('LAFEA_B02B_PROBE_STABLE_REFINEMENT_FEATURES_MUST_REMAIN_EMPTY');
+  }
+  return true;
+}
+
+export function b02bProbeStableProfileIdentity(elementFamily, h) {
+  const encoded = Number.isInteger(h) ? String(h) : String(h).replace('.', '_');
+  return `${LAFEA_B02B_PROBE_STABLE_PROFILE_PREFIX}_${elementFamily}_H${encoded}`;
+}
+
+function requireB02bProbeStableGeometry(geometry) {
+  const loopsByRole = new Map(geometry.loops.map((loop) => [loop.role, loop]));
+  const outer = loopsByRole.get('OUTER');
+  if (!outer || geometry.loops.length !== 1 || outer.segmentIds.length !== 4) {
+    fail('LAFEA_B02B_PROBE_STABLE_GEOMETRY_NOT_QUALIFIED');
+  }
+  const segments = new Map(geometry.segments.map((row) => [row.segmentId, row]));
+  for (const segmentId of outer.segmentIds) {
+    const segment = segments.get(segmentId);
+    if (!segment || segment.type !== 'LINE') fail('LAFEA_B02B_PROBE_STABLE_GEOMETRY_NOT_QUALIFIED');
+  }
+  const vertices = geometry.vertices.map((row) => `${row.x},${row.y}`).sort().join('|');
+  if (vertices !== '0,-20|0,20|20,-20|20,20') fail('LAFEA_B02B_PROBE_STABLE_GEOMETRY_NOT_QUALIFIED');
+}
+
+function usesB02cGradedPolarStrategy(configuration, intent) {
+  const profile = configuration.meshProfile;
+  const selected = profile?.profileIdentity === b02cGradedPolarProfileIdentity(intent.elementFamily, intent.targetElementLength)
+    && profile?.sourceRevision === LAFEA_B02C_GRADED_POLAR_PROFILE_SOURCE_REVISION;
+  if (!selected) return false;
+  if (intent.refinementFeatureIds.length !== 0) {
+    fail('LAFEA_B02C_GRADED_POLAR_REFINEMENT_FEATURES_MUST_REMAIN_EMPTY');
+  }
+  return true;
+}
+
+export function b02cGradedPolarProfileIdentity(elementFamily, h) {
+  const encoded = Number.isInteger(h) ? String(h) : String(h).replace('.', '_');
+  return `${LAFEA_B02C_GRADED_POLAR_PROFILE_PREFIX}_${elementFamily}_H${encoded}`;
+}
+
+function requireB02cGradedPolarGeometry(geometry) {
+  const loopsByRole = new Map(geometry.loops.map((loop) => [loop.role, loop]));
+  const outer = loopsByRole.get('OUTER');
+  if (!outer || geometry.loops.length !== 1 || outer.segmentIds.length !== 4) {
+    fail('LAFEA_B02C_GRADED_POLAR_GEOMETRY_NOT_QUALIFIED');
+  }
+  const segments = new Map(geometry.segments.map((row) => [row.segmentId, row]));
+  const arcs = outer.segmentIds.map((id) => segments.get(id)).filter((row) => row?.type === 'CIRCULAR_ARC');
+  if (arcs.length !== 2) fail('LAFEA_B02C_GRADED_POLAR_GEOMETRY_NOT_QUALIFIED');
+  const radii = arcs.map((row) => row.radius).sort((a, b) => a - b);
+  if (Math.abs(radii[0] - 10) > 1e-9 || Math.abs(radii[1] - 100) > 1e-9) {
+    fail('LAFEA_B02C_GRADED_POLAR_GEOMETRY_NOT_QUALIFIED');
+  }
 }
 
 export function b02dProfileIdentity(elementFamily, h) {

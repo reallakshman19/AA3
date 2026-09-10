@@ -22,6 +22,10 @@ import {
 import { issueLafeaSourceAuthority } from '../../src/workspace/lafea-source-authority.js';
 import { requireLafeaStageComposition } from '../../src/workspace/lafea-stage-composition-root.js';
 import { createLafeaWorkbenchStore } from '../../src/workspace/lafea-workbench.js';
+import {
+  b02cGradedPolarProfileIdentity,
+  LAFEA_B02C_GRADED_POLAR_PROFILE_SOURCE_REVISION,
+} from '../../src/workspace/lafea-mesh-producer-binding.js';
 
 const STAGE_ID = 'LAFEA.3';
 const PHYSICAL_PROBE_SCHEMA = 'lafea-continuum-physical-probe/v1';
@@ -178,8 +182,8 @@ function meshProfile(definition, method, level) {
   const defaults = defaultProfileFields(PROFILE_KINDS.MESH);
   return canonicalProfile(PROFILE_KINDS.MESH, {
     schema: 'lafea-mesh-profile/v1',
-    profileIdentity: `${definition.caseId}_${method}_${level.levelId}_FROZEN_H`,
-    sourceRevision: 'B02-FROZEN-DEFINITION-V1',
+    profileIdentity: b02cGradedPolarProfileIdentity(method, level.targetElementLength),
+    sourceRevision: LAFEA_B02C_GRADED_POLAR_PROFILE_SOURCE_REVISION,
     semanticHash: undefined,
     fields: {
       ...defaults,

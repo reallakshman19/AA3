@@ -13,8 +13,17 @@ import {
 import { canonicalLafeaSha256 } from '../src/workspace/lafea-canonical-sha256.js';
 import { executeB02dProductionLevel } from './lib/lafea-b02d-production-route.mjs';
 
+// Promoted to the V2 probe-stable polar mesh policy (issue #1716/#1735): the
+// V1 definition's fixed radial/circumferential division split a coarse polar
+// cell along a diagonal producing a sub-11.5deg triangle, permanently
+// blocking T3/T6 mesh quality at every refinement level regardless of h. V2
+// widens the circumferential divisions (see B02D-lug-pinhole-v2.json's
+// v2DesignBasis) and was independently verified end-to-end (not just the
+// mesh-quality gate) before this promotion -- all methods, all levels, every
+// equilibrium/convergence/probe gate. See frozen-definition-manifest.json's
+// amendments.B02D-V2 for the full governed-adoption record.
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const definition = read('validation/lafea-b02-definitions/B02D-lug-pinhole.json');
+const definition = read('validation/lafea-b02-definitions/B02D-lug-pinhole-v2.json');
 const convergencePolicy = read('validation/lafea-b02-definitions/B02E-convergence.json');
 const matrix = read('validation/lafea-b02-contracts/method-benchmark-applicability.json');
 const methodRow = matrix.matrix.find((row) => row.benchmarkId === 'B02D');
@@ -31,13 +40,13 @@ for (const method of methods.filter((row) => row.releaseCritical)) assert.equal(
 
 const body = {
   schema: 'lafea-b02d-production-qualification-receipt/v1',
-  caseId: 'B02D',
+  caseId: 'B02D-V2',
   status: 'PASS',
   definitionHash: canonicalLafeaSha256(definition),
   convergencePolicyHash: canonicalLafeaSha256(convergencePolicy),
   definitionFrozenBeforeObservation: true,
   productionOutputUsedToChooseDefinition: false,
-  meshPolicyId: 'B02D_PROBE_STABLE_POLAR_POLICY_V1',
+  meshPolicyId: 'B02D_PROBE_STABLE_POLAR_POLICY_V2',
   loadDistribution: 'CONSISTENT_UNIFORM_LINE_RESULTANT_T2_Q3_EDGE_V1',
   methods,
   t3Disposition: 'CONTROL_NOT_RELEASE_CRITICAL',
@@ -62,7 +71,7 @@ console.log(JSON.stringify({
 function runMethod(method) {
   const releaseCritical = methodRow[method] === 'REQUIRED';
   const levels = definition.globalResponseLadder.levels.map((level) => {
-    const run = executeB02dProductionLevel(definition, method, level);
+    const run = executeB02dProductionLevel(definition, method, level, { variant: 'V2' });
     const load = run.load.resultant;
     const target = definition.loadCase.resultant;
     const loadResultantRelativeError = Math.hypot(load.forceX - target.x, load.forceY - target.y)

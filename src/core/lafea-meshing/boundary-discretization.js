@@ -38,22 +38,53 @@ export function curveSegmentCount(curve, vertexById, options) {
  * Split one curve into `segmentCount` quadratic edges: `segmentCount + 1`
  * corner points (parameter-ordered, feature endpoints at t=0 and t=1) and
  * `segmentCount` true analytic midside points, one per edge.
+ *
+ * `options.bias` (default 1) geometrically grades the corner parameter
+ * spacing so the last segment's parameter-width is `bias` times the first
+ * segment's, monotonically varying between them. `bias === 1` reproduces the
+ * original uniform `t = i / segmentCount` spacing exactly -- every existing
+ * caller that omits `options` is numerically unaffected byte-for-byte.
  */
-export function discretizeCurveIntoQuadraticEdges(curve, vertexById, segmentCount) {
+export function discretizeCurveIntoQuadraticEdges(curve, vertexById, segmentCount, options = {}) {
   if (!Number.isInteger(segmentCount) || segmentCount < 1) {
     throw new LafeaMeshingError('segmentCount must be a positive integer', 'INVALID_SEGMENT_COUNT');
   }
+  const bias = options.bias ?? 1;
+  if (!(bias > 0)) throw new LafeaMeshingError('bias must be positive', 'INVALID_GRADING_BIAS');
+  const cornerT = gradedParameterTable(segmentCount, bias);
   const cornerPoints = [];
   for (let i = 0; i <= segmentCount; i += 1) {
-    const t = i / segmentCount;
+    const t = cornerT[i];
     cornerPoints.push(Object.freeze({ curveId: curve.curveId, t, point: curvePointAt(curve, vertexById, t) }));
   }
   const midPoints = [];
   for (let i = 0; i < segmentCount; i += 1) {
-    const t = (i + 0.5) / segmentCount;
+    const t = (cornerT[i] + cornerT[i + 1]) / 2;
     midPoints.push(Object.freeze({ curveId: curve.curveId, t, point: curvePointAt(curve, vertexById, t) }));
   }
   return Object.freeze({ cornerPoints: Object.freeze(cornerPoints), midPoints: Object.freeze(midPoints) });
+}
+
+/**
+ * Corner parameter values for `segmentCount` quadratic edges along [0,1].
+ * `bias === 1` (or a single segment, which has no interior points to grade)
+ * returns the exact uniform table `i / segmentCount`. Otherwise a geometric
+ * series is used: `q` is the common ratio between consecutive segment
+ * parameter-widths, chosen so the last width is `bias` times the first.
+ */
+function gradedParameterTable(segmentCount, bias) {
+  const table = new Array(segmentCount + 1);
+  if (bias === 1 || segmentCount === 1) {
+    for (let i = 0; i <= segmentCount; i += 1) table[i] = i / segmentCount;
+    return table;
+  }
+  const q = bias ** (1 / (segmentCount - 1));
+  const partialSum = (n) => (q === 1 ? n : (q ** n - 1) / (q - 1));
+  const total = partialSum(segmentCount);
+  table[0] = 0;
+  for (let i = 1; i < segmentCount; i += 1) table[i] = partialSum(i) / total;
+  table[segmentCount] = 1;
+  return table;
 }
 
 /**

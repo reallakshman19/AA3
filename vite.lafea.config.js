@@ -5,7 +5,7 @@ const buildTime = new Date().toISOString();
 
 /** Dedicated standalone LAFEA build target with graph-owned chunking. */
 export default defineConfig({
-  base: '/Advanced_Analysis/',
+  base: './',
   plugins: [],
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),

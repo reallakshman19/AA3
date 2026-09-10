@@ -159,7 +159,7 @@ export function manualChunk(id) {
 }
 
 export default defineConfig({
-  base: '/Advanced_Analysis/',
+  base: './',
   plugins: [],
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),

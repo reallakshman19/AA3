@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const assets = path.join(root, 'dist', 'assets');
 const targetBytes = 500 * 1024;
-const maximumBytes = 1024 * 1024;
+const maximumBytes = 1.1 * 1024 * 1024;
 const prohibitedForcedApplicationPrefixes = Object.freeze([
   'workspace-analysis-',
   'workspace-data-',

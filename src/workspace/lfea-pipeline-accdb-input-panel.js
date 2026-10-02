@@ -82,7 +82,6 @@ export class LfeaPipelineAccdbInputPanelController {
     this.fileName = null;
     this.tables = null;
     this.effectiveTables = null;
-    this.effectiveTables = null;
     this.preFlight = null;
     this.preFlightError = '';
     this.sourceBundle = null;
@@ -90,8 +89,6 @@ export class LfeaPipelineAccdbInputPanelController {
     this.healthView = null;
     this.propertyRows = Object.freeze([]);
     this.engineeringSanity = null;
-    this.preFlight = null;
-    this.preFlightError = '';
     this.reviewerIdentity = '';
     this.reviewReason = '';
     this.requestedCaseIds = null;
@@ -662,8 +659,16 @@ function renderPreFlight(doc, root, controller) {
     return;
   }
   if (controller.preFlight.status === 'BLOCK') {
-    status.textContent = 'This model cannot be analysed yet. Fix the items marked "Stops the analysis" below, then load it again.';
+    // The blocking findings live in preparation.findings, not in the
+    // model-health groups above -- rendering the generic instruction with
+    // nothing below it was a dead end. Print the actual blockers, and for
+    // the component-factor authority gates point at the control that
+    // resolves them. Re-importing is never required: a resolved blocker
+    // re-runs preparation through the profile/control change events.
+    status.textContent = 'This model cannot be analysed yet. The item(s) below stop it. '
+      + 'Resolve them and the pre-flight runs again on its own -- there is no need to load the file again.';
     root.append(status);
+    root.append(renderBlockingPreparationFindings(doc, controller));
     return;
   }
   status.textContent = 'This model can be analysed once you accept the notes below. '
@@ -681,6 +686,66 @@ function renderPreFlight(doc, root, controller) {
   accept.addEventListener('click', () => controller.acceptLimitations());
   custody.append(reviewer.label, reason.label, accept);
   root.append(custody);
+}
+
+/**
+ * Blockers preparation retained but the model-health verdict never showed.
+ *
+ * Capability/model-health findings are rendered by renderFindingGroups; a
+ * pre-flight can still BLOCK on preparation-only findings (today: the
+ * B31/B31J bend and welding-tee factor authority gates). An engineer told to
+ * "fix the items marked 'Stops the analysis' below" found nothing below,
+ * because these findings were never rendered anywhere in this panel.
+ */
+const COMPONENT_FACTOR_AUTHORITY_CODES = new Set([
+  'BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED',
+  'BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED',
+]);
+
+function renderBlockingPreparationFindings(doc, controller) {
+  const root = doc.createElement('div');
+  root.dataset.role = 'lfea-pipeline-accdb-blocking-findings';
+  const blocking = (controller.preFlight?.preparation?.findings ?? [])
+    .filter((finding) => finding?.disposition === 'BLOCK' || finding?.severity === 'ERROR');
+  if (blocking.length === 0) {
+    const none = doc.createElement('p');
+    none.textContent = 'No blocking finding was retained with this pre-flight. Report this state -- it should not be reachable.';
+    root.append(none);
+    return root;
+  }
+  const heading = doc.createElement('strong');
+  heading.textContent = `Blocking this analysis — ${blocking.length} item(s)`;
+  root.append(heading);
+  const list = doc.createElement('ul');
+  for (const finding of blocking) {
+    const item = doc.createElement('li');
+    item.dataset.code = finding.code;
+    const message = doc.createElement('p');
+    message.textContent = `${finding.message} (${finding.code})`;
+    item.append(message);
+    if (COMPONENT_FACTOR_AUTHORITY_CODES.has(finding.code)) {
+      const guidance = doc.createElement('p');
+      guidance.dataset.role = 'lfea-pipeline-accdb-blocker-guidance';
+      guidance.append(
+        'Resolve it on this step: choose an edition under "B31 / B31J component basis". ',
+      );
+      const jump = button(doc, 'Go to the component basis control');
+      jump.dataset.action = 'goto-lfea-bend-factor-authority-control';
+      jump.addEventListener('click', () => {
+        doc.querySelector('[data-role="lfea-bend-factor-authority-control"]')
+          ?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+      });
+      guidance.append(jump);
+      item.append(guidance);
+    } else if (finding.remediation) {
+      const remediation = doc.createElement('p');
+      remediation.textContent = `Remediation: ${finding.remediation}`;
+      item.append(remediation);
+    }
+    list.append(item);
+  }
+  root.append(list);
+  return root;
 }
 
 function renderFindingGroups(doc, root, controller) {
@@ -765,7 +830,7 @@ function findingGroupList(doc, groups) {
 /**
  * The property table and its override controls.
  *
- * Every field shows the raw cell in the file's declared unit next to the
+ * Every field shows the raw cell in the file's own declared unit next to the
  * converted value the analysis uses, and its disposition, so an inherited or
  * blank-sentinel value is never mistaken for a value the file declared. The
  * override input writes the raw cell, in the file's unit -- stated on the

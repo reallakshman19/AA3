@@ -155,6 +155,52 @@
 .lfea-common-error-check__disposition[data-disposition="PASS"],
 .lfea-common-error-check__disposition[data-disposition="ADVISORY"] { color: #60a5fa; }
 
+/* Which kind of limitation a CONDITIONAL group is: one changes the numbers,
+   the other only describes what this pass does. */
+.lfea-common-error-check__limitation-kind {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--workspace-panel-strong);
+  color: var(--workspace-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lfea-common-error-check__limitation-kind[data-limitation-kind="RESULT_AFFECTING"] { color: #fbbf24; }
+
+/* A CONDITIONAL group the reviewer has opened (or that is already sealed). */
+.lfea-common-error-check__reviewed {
+  flex: none;
+  padding: 2px 7px;
+  border: 1px solid #22c55e;
+  border-radius: 5px;
+  color: #4ade80;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The single acceptance act for the whole reviewed limitation set. */
+.lfea-common-error-check__acceptance {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--workspace-border);
+  border-radius: 6px;
+  background: var(--workspace-panel-strong);
+  color: var(--workspace-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lfea-common-error-check__acceptance input { margin-top: 2px; accent-color: #60a5fa; }
+
 /* The suggested action is the point of the row, so it reads as body text
    rather than as another muted metadata line. */
 .lfea-common-error-check__action {

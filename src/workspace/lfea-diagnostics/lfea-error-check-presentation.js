@@ -37,6 +37,34 @@ const TRIAGE_BY_DISPOSITION = new Map(
   LFEA_ERROR_CHECK_TRIAGE.flatMap((entry) => entry.dispositions.map((d) => [d, entry])),
 );
 
+export const LFEA_LIMITATION_KIND = Object.freeze({
+  RESULT_AFFECTING: 'RESULT_AFFECTING',
+  PROCESS_NOTE: 'PROCESS_NOTE',
+});
+
+/**
+ * Two kinds of CONDITIONAL limitation, because a reviewer treats them
+ * differently. A result-affecting limitation changes the numbers the run
+ * produces (bend/tee/reducer mechanics, pressure stiffening, friction,
+ * one-way supports). A process note only states what this preparation pass
+ * does or does not do (profiles prepared in later steps, the authorization
+ * capability itself) -- accepting it changes no result.
+ *
+ * The split is a display tier over the sealed CONDITIONAL disposition, never
+ * a reclassification: every group keeps its governed disposition verbatim.
+ * Unknown CONDITIONAL codes default to RESULT_AFFECTING so a newly added
+ * limitation demands scrutiny until someone classifies it, rather than
+ * quietly hiding among the notes.
+ */
+export function lfeaLimitationKind(code, disposition) {
+  if (disposition !== 'CONDITIONAL') return null;
+  const text = String(code ?? '');
+  if (text.endsWith('_PREPARATION_REQUIRED') || text === 'CAPABILITY_REQUIRES_CONDITIONAL_AUTHORIZATION') {
+    return LFEA_LIMITATION_KIND.PROCESS_NOTE;
+  }
+  return LFEA_LIMITATION_KIND.RESULT_AFFECTING;
+}
+
 export const LFEA_ERROR_CHECK_CATEGORIES = Object.freeze([
   Object.freeze({
     categoryId: 'SOURCE_AND_UNITS',
@@ -201,6 +229,7 @@ function groupRows(rows) {
       groupId,
       code: first.code,
       disposition: first.disposition,
+      limitationKind: lfeaLimitationKind(first.code, first.disposition),
       presentationLevel: first.presentationLevel,
       presentationLabel: first.presentationLabel,
       triageId: triage?.triageId ?? 'INFORMATIONAL',
@@ -214,10 +243,13 @@ function groupRows(rows) {
       rows: Object.freeze([...groupRowList]),
     });
   });
-  // Most severe first, then the widest-reaching, then stable by code.
+  // Most severe first; within a severity, limitations that change the numbers
+  // before notes about the pass; then the widest-reaching; then stable by code.
   return Object.freeze(groups.sort((a, b) => {
     const severity = DISPOSITIONS.indexOf(b.disposition) - DISPOSITIONS.indexOf(a.disposition);
     if (severity !== 0) return severity;
+    const kind = limitationKindRank(a.limitationKind) - limitationKindRank(b.limitationKind);
+    if (kind !== 0) return kind;
     if (b.occurrences !== a.occurrences) return b.occurrences - a.occurrences;
     return compareAscii(a.code, b.code);
   }));
@@ -310,6 +342,12 @@ function textOrNull(value) {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
   return text || null;
+}
+
+function limitationKindRank(kind) {
+  if (kind === LFEA_LIMITATION_KIND.RESULT_AFFECTING) return 0;
+  if (kind === LFEA_LIMITATION_KIND.PROCESS_NOTE) return 1;
+  return 2;
 }
 
 function compareAscii(left, right) {

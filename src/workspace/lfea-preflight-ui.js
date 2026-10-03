@@ -562,10 +562,30 @@ export function mountLfeaPreflightUi(applicationRoot, options = {}) {
   const host = applicationRoot.querySelector(selector);
   if (!host) throw new TypeError(`Preflight UI could not find ${selector}.`);
   const getModel = typeof options.getModel === 'function' ? options.getModel : () => null;
+  // The disclosure this surface lives inside reviews the Workspace tab's own
+  // dataset. With no dataset loaded it could only show an empty panel whose
+  // reload button redraws the same emptiness, so the whole disclosure stays
+  // hidden until a dataset exists. Render is already re-invoked on
+  // DATASET_LOADED / DATASET_CLEARED by the caller, so visibility tracks the
+  // dataset lifecycle without any wiring of its own.
+  const disclosure = applicationRoot.querySelector('[data-role="lfea-preflight-disclosure"]');
   let projection = null;
   const handle = {
     render() {
-      const surface = createSurface(host, getModel(), () => handle.render());
+      const model = getModel();
+      const hasModel = Boolean(model && model.sharedModel);
+      if (disclosure) {
+        disclosure.hidden = !hasModel;
+        disclosure.setAttribute('aria-hidden', hasModel ? 'false' : 'true');
+      }
+      if (!hasModel) {
+        phase1ReviewSurfaceHandle?.destroy();
+        phase1ReviewSurfaceHandle = null;
+        host.replaceChildren();
+        projection = null;
+        return handle;
+      }
+      const surface = createSurface(host, model, () => handle.render());
       projection = surface.projection;
       return handle;
     },

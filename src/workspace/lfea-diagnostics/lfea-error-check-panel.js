@@ -1,6 +1,7 @@
 import {
   LFEA_ERROR_CHECK_CATEGORIES,
   LFEA_ERROR_CHECK_PRESENTATION_SCHEMA,
+  LFEA_LIMITATION_KIND,
   buildLfeaErrorCheckPresentation,
   selectLfeaErrorCheckSections,
 } from './lfea-error-check-presentation.js';
@@ -33,6 +34,8 @@ export class LfeaCommonErrorCheckPanelController {
     this.activeCategory = 'ALL';
     this.acknowledgedGroupIds = new Set();
     this.reviewedGroupIds = new Set();
+    this.openGroupIds = new Set();
+    this.limitationsAccepted = false;
     this.preparationIdentity = null;
     this.reviewerIdentity = '';
     this.reviewReason = '';
@@ -58,6 +61,8 @@ export class LfeaCommonErrorCheckPanelController {
     if (nextIdentity !== this.preparationIdentity) {
       this.acknowledgedGroupIds.clear();
       this.reviewedGroupIds.clear();
+      this.openGroupIds.clear();
+      this.limitationsAccepted = false;
       this.reviewerIdentity = '';
       this.reviewReason = '';
       this.authorizationError = '';
@@ -81,14 +86,28 @@ export class LfeaCommonErrorCheckPanelController {
     return this.getSnapshot();
   }
 
-  toggleAcknowledgement(groupId) {
+  /**
+   * A limitation counts as reviewed once the reviewer has actually opened it
+   * and seen what it says -- expanding the group is the review act, so there
+   * is no separate per-group button to click. Review is one-way for the
+   * current preparation: collapsing the group again does not un-review it.
+   */
+  markLimitationReviewed(groupId) {
     const group = findGroup(this.presentation, groupId);
     if (!group || group.disposition !== 'CONDITIONAL' || this.presentation.solveAuthorized) {
-      throw new TypeError(`Conditional Error Check group ${JSON.stringify(groupId)} is not available for acknowledgement.`);
+      throw new TypeError(`Conditional Error Check group ${JSON.stringify(groupId)} is not available for review.`);
     }
-    toggleSetValue(this.acknowledgedGroupIds, group.groupId);
+    if (this.acknowledgedGroupIds.has(group.groupId)) return this.getSnapshot();
+    this.acknowledgedGroupIds.add(group.groupId);
     this.authorizationError = '';
     this.render();
+    return this.getSnapshot();
+  }
+
+  setLimitationsAccepted(accepted) {
+    this.limitationsAccepted = Boolean(accepted);
+    this.authorizationError = '';
+    this.renderAuthorization();
     return this.getSnapshot();
   }
 
@@ -163,7 +182,7 @@ export class LfeaCommonErrorCheckPanelController {
         body.append(renderCategory(this, category));
       }
       const note = paragraph(this.documentRef,
-        'Acknowledgement records review. Finding IDs, governed categories and sealed dispositions remain copied from the current pre-flight and are not reclassified here.');
+        'Acceptance records review for this preparation; it does not change any finding\'s governed disposition. Finding IDs, governed categories and sealed dispositions remain copied from the current pre-flight and are not reclassified here.');
       note.dataset.role = 'lfea-common-error-check-authority-note';
       body.append(note);
     }
@@ -190,6 +209,7 @@ export class LfeaCommonErrorCheckPanelController {
       preparationSemanticHash: this.presentation.preparationSemanticHash,
       conditionalGroupCount: conditionalGroups(this.presentation).length,
       acknowledgedGroupIds: Object.freeze([...this.acknowledgedGroupIds].sort(compareAscii)),
+      limitationsAccepted: this.limitationsAccepted,
       readyToAuthorize: authorizationState(this).ready,
       editable: true,
       authorizes: false,
@@ -301,8 +321,8 @@ function renderCategory(controller, category) {
 
   const heading = doc.createElement('h4');
   const distinct = category.groups.length;
-  heading.textContent = `${category.title} — ${distinct} issue${distinct === 1 ? '' : 's'}`;
-  const counts = paragraph(doc, `${category.findingCount} finding${category.findingCount === 1 ? '' : 's'} in total`);
+  heading.textContent = `${category.title} — ${distinct} distinct issue${distinct === 1 ? '' : 's'}`;
+  const counts = paragraph(doc, `${category.findingCount} occurrence${category.findingCount === 1 ? '' : 's'} across ${distinct === 1 ? 'it' : 'them'}`);
   counts.dataset.role = 'lfea-common-error-check-category-counts';
   section.append(heading, counts);
 
@@ -329,9 +349,23 @@ function renderGroup(controller, group) {
   card.dataset.presentationLevel = group.presentationLevel;
   card.dataset.triageId = group.triageId;
   card.dataset.occurrences = String(group.occurrences);
+  if (group.limitationKind) card.dataset.limitationKind = group.limitationKind;
 
   const details = doc.createElement('details');
   details.className = 'lfea-common-error-check__finding-details';
+  // Expanded state survives re-renders (filter changes, review bookkeeping),
+  // and for a CONDITIONAL group the act of opening it is the review.
+  details.open = controller.openGroupIds.has(group.groupId);
+  details.addEventListener('toggle', () => {
+    if (details.open) {
+      controller.openGroupIds.add(group.groupId);
+      if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized) {
+        controller.markLimitationReviewed(group.groupId);
+      }
+    } else {
+      controller.openGroupIds.delete(group.groupId);
+    }
+  });
 
   const summary = doc.createElement('summary');
   const badge = doc.createElement('span');
@@ -346,6 +380,22 @@ function renderGroup(controller, group) {
   disposition.dataset.disposition = group.disposition;
   disposition.textContent = group.disposition === 'PASS' ? 'PASS · INFO' : group.disposition;
   summary.append(badge, text, disposition);
+  if (group.disposition === 'CONDITIONAL') {
+    const kind = doc.createElement('span');
+    kind.className = 'lfea-common-error-check__limitation-kind';
+    kind.dataset.limitationKind = group.limitationKind;
+    kind.textContent = group.limitationKind === LFEA_LIMITATION_KIND.PROCESS_NOTE
+      ? 'About this pass'
+      : 'Affects the result';
+    summary.append(kind);
+    if (controller.presentation.solveAuthorized || controller.acknowledgedGroupIds.has(group.groupId)) {
+      const reviewed = doc.createElement('span');
+      reviewed.className = 'lfea-common-error-check__reviewed';
+      reviewed.dataset.role = 'lfea-common-error-check-reviewed';
+      reviewed.textContent = controller.presentation.solveAuthorized ? 'Accepted' : 'Reviewed';
+      summary.append(reviewed);
+    }
+  }
   details.append(summary);
 
   if (group.suggestedAction) {
@@ -375,31 +425,21 @@ function renderGroup(controller, group) {
   }
   details.append(labelledParagraph(doc, 'Finding IDs',
     summarizeList(group.findingIds), 'lfea-common-error-check-finding-id'));
-  card.append(details, renderGroupAction(controller, group));
+  card.append(details);
+  const action = renderGroupAction(controller, group);
+  if (action) card.append(action);
   return card;
 }
 
 function renderGroupAction(controller, group) {
   const doc = controller.documentRef;
+  // CONDITIONAL groups carry no per-group button: opening the group is the
+  // review, and acceptance happens once, on the authorization card below.
+  if (group.disposition === 'CONDITIONAL') return null;
+
   const row = doc.createElement('div');
   row.className = 'lfea-common-error-check__group-action';
   row.dataset.role = 'lfea-common-error-check-group-action';
-
-  if (group.disposition === 'CONDITIONAL') {
-    const acknowledged = controller.presentation.solveAuthorized
-      || controller.acknowledgedGroupIds.has(group.groupId);
-    const button = actionButton(doc, acknowledged
-      ? 'Acknowledged for this run'
-      : 'Acknowledge this limitation', 'icon-step-error-check');
-    button.dataset.action = 'lfea-error-check-acknowledge-limitation';
-    button.dataset.groupId = group.groupId;
-    button.dataset.acknowledged = acknowledged ? 'true' : 'false';
-    button.disabled = controller.presentation.solveAuthorized;
-    button.addEventListener('click', () => controller.toggleAcknowledgement(group.groupId));
-    const note = paragraph(doc, 'This acknowledgement does not change the governed disposition.');
-    row.append(button, note);
-    return row;
-  }
 
   if (group.disposition === 'BLOCK') {
     const lock = actionButton(doc, 'Fix in source and reload', 'icon-step-input');
@@ -471,13 +511,27 @@ function renderAuthorizationForm(controller, state) {
   const progress = doc.createElement('div');
   progress.className = 'lfea-common-error-check__progress';
   const label = doc.createElement('label');
-  label.textContent = `${state.acknowledgedCount} of ${state.conditionalCount} limitation groups acknowledged`;
+  label.textContent = `${state.acknowledgedCount} of ${state.conditionalCount} limitations reviewed (open each one above)`;
   label.setAttribute('for', 'lfea-error-check-progress');
   const meter = doc.createElement('progress');
   meter.id = 'lfea-error-check-progress';
   meter.max = Math.max(1, state.conditionalCount);
   meter.value = state.acknowledgedCount;
   progress.append(label, meter);
+
+  // One acceptance for the whole reviewed set. The sealed authorization
+  // covers every conditional finding in this preparation, so one explicit
+  // act says exactly what is being signed -- the N per-group buttons it
+  // replaces recorded clicks, not judgement.
+  const acceptance = doc.createElement('label');
+  acceptance.className = 'lfea-common-error-check__acceptance';
+  const checkbox = doc.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.dataset.role = 'lfea-error-check-accept-limitations';
+  checkbox.checked = controller.limitationsAccepted;
+  const acceptanceText = doc.createElement('span');
+  acceptanceText.textContent = `I have reviewed each of the ${state.conditionalCount} limitation${state.conditionalCount === 1 ? '' : 's'} above and accept ${state.conditionalCount === 1 ? 'it' : 'them'} for this run.`;
+  acceptance.append(checkbox, acceptanceText);
 
   const reviewer = labelledInput(doc, 'Reviewer', 'lfea-error-check-reviewer', controller.reviewerIdentity);
   const reason = labelledTextarea(doc, 'Reason', 'lfea-error-check-reason', controller.reviewReason);
@@ -496,7 +550,10 @@ function renderAuthorizationForm(controller, state) {
   };
   reviewer.input.addEventListener('input', updateDraft);
   reason.input.addEventListener('input', updateDraft);
-  fragment.append(progress, reviewer.label, reason.label, authorize);
+  checkbox.addEventListener('change', () => {
+    controller.setLimitationsAccepted(checkbox.checked);
+  });
+  fragment.append(progress, acceptance, reviewer.label, reason.label, authorize);
   return fragment;
 }
 
@@ -638,19 +695,22 @@ function authorizationState(controller) {
   const reviewerReady = controller.reviewerIdentity.trim() !== '';
   const reasonReady = controller.reviewReason.trim() !== '';
   const callbackReady = typeof controller.options.onAuthorizePreFlight === 'function';
-  const allAcknowledged = acknowledgedCount === groups.length;
-  const ready = allAcknowledged && reviewerReady && reasonReady && callbackReady;
-  const blockedReason = !allAcknowledged
-    ? `Acknowledge all ${groups.length} limitation groups before authorizing.`
-    : !reviewerReady
-      ? 'Enter the reviewer name before authorizing.'
-      : !reasonReady
-        ? 'Enter an acceptance reason before authorizing.'
-        : !callbackReady
-          ? 'The active source does not expose an authorization controller.'
-          : '';
+  const allReviewed = acknowledgedCount === groups.length;
+  const accepted = controller.limitationsAccepted;
+  const ready = allReviewed && accepted && reviewerReady && reasonReady && callbackReady;
+  const blockedReason = !allReviewed
+    ? `Open and review all ${groups.length} limitation${groups.length === 1 ? '' : 's'} above, then accept them below.`
+    : !accepted
+      ? 'Tick the acceptance box to confirm the reviewed limitations are accepted for this run.'
+      : !reviewerReady
+        ? 'Enter the reviewer name before authorizing.'
+        : !reasonReady
+          ? 'Enter an acceptance reason before authorizing.'
+          : !callbackReady
+            ? 'The active source does not expose an authorization controller.'
+            : '';
   return state('CONDITIONAL_PENDING', ready ? 'Ready to authorize' : 'Review required',
-    `${acknowledgedCount} of ${groups.length} limitation groups acknowledged.`, 'icon-step-error-check', ready,
+    `${acknowledgedCount} of ${groups.length} limitations reviewed.`, 'icon-step-error-check', ready,
     groups.length, acknowledgedCount, blockedReason);
 }
 

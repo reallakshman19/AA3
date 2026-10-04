@@ -43,6 +43,19 @@ export const LFEA_LIMITATION_KIND = Object.freeze({
 });
 
 /**
+ * BLOCK findings that the reviewer resolves by choosing an authority in the
+ * UI rather than by editing the source: the B31/B31J bend and welding-tee
+ * factor edition gates. The common Error Check panel points these at the
+ * "B31 / B31J component basis" control (which re-runs preparation on
+ * selection); every other BLOCK keeps the generic "fix in source" guidance.
+ * The set is display routing only -- the governed disposition is untouched.
+ */
+export const LFEA_COMPONENT_FACTOR_AUTHORITY_CODES = Object.freeze(new Set([
+  'BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED',
+  'BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED',
+]));
+
+/**
  * Two kinds of CONDITIONAL limitation, because a reviewer treats them
  * differently. A result-affecting limitation changes the numbers the run
  * produces (bend/tee/reducer mechanics, pressure stiffening, friction,

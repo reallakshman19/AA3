@@ -1,4 +1,5 @@
 import {
+  LFEA_COMPONENT_FACTOR_AUTHORITY_CODES,
   LFEA_ERROR_CHECK_CATEGORIES,
   LFEA_ERROR_CHECK_PRESENTATION_SCHEMA,
   LFEA_LIMITATION_KIND,
@@ -442,6 +443,20 @@ function renderGroupAction(controller, group) {
   row.dataset.role = 'lfea-common-error-check-group-action';
 
   if (group.disposition === 'BLOCK') {
+    // Component-factor authority gates are resolved in this UI, not in the
+    // source file: the "B31 / B31J component basis" control lives on this
+    // same step, and choosing an edition re-runs preparation on its own.
+    // Sending the engineer back to re-import would be wrong -- the button
+    // takes them to the control instead.
+    if (LFEA_COMPONENT_FACTOR_AUTHORITY_CODES.has(group.code)) {
+      const gotoControl = actionButton(doc, 'Choose B31 / B31J basis', 'icon-step-input');
+      gotoControl.classList.add('lfea-common-error-check__primary-action');
+      gotoControl.dataset.action = 'lfea-error-check-goto-component-basis';
+      gotoControl.addEventListener('click', () => revealComponentFactorAuthorityControl(doc));
+      row.append(gotoControl, paragraph(doc,
+        'Pick the code edition and bend rule in the "B31 / B31J component basis" control on this step. The pre-flight re-runs on its own -- nothing needs reloading.'));
+      return row;
+    }
     const lock = actionButton(doc, 'Fix in source and reload', 'icon-step-input');
     lock.disabled = true;
     lock.dataset.action = 'lfea-error-check-fix-in-source';
@@ -457,6 +472,23 @@ function renderGroupAction(controller, group) {
   button.addEventListener('click', () => controller.toggleInformationalReview(group.groupId));
   row.append(button, paragraph(doc, 'Informational only; no authorization is required.'));
   return row;
+}
+
+/**
+ * Scroll the component factor authority control into view and spotlight it
+ * briefly. The control mounts at the top of the source host -- the same host
+ * this panel renders in -- so it is present on both the Input and Error Check
+ * steps. A no-op when it is absent (e.g. a host that never mounts it).
+ */
+function revealComponentFactorAuthorityControl(doc) {
+  const control = doc?.querySelector?.('[data-role="lfea-bend-factor-authority-control"]');
+  if (!control) return;
+  control.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  control.classList?.add('lfea-bend-factor-authority-control--spotlight');
+  const setTimeoutFn = doc.defaultView?.setTimeout ?? globalThis.setTimeout;
+  if (typeof setTimeoutFn === 'function') {
+    setTimeoutFn(() => control.classList?.remove('lfea-bend-factor-authority-control--spotlight'), 2600);
+  }
 }
 
 function renderAuthorizationPanel(controller) {

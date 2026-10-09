@@ -14,7 +14,6 @@ import {
 import { requireLinearPipingInputXmlSource } from '../core/linear-piping-analysis-consumer/inputxml-source-contract.js';
 import { semanticHash } from '../core/shared-piping-model/canonical-json.js';
 import {
-  ensureLfeaBendFactorAuthorityControl,
   lfeaBendFactorAuthorityForIntake,
   lfeaBranchFactorAuthorityForIntake,
 } from './lfea-bend-factor-authority-control.js';
@@ -378,20 +377,4 @@ function failPreFlight(code, message, evidence) {
   error.evidence = evidence ?? null;
   error.analysisStage = 'INPUTXML_NATIVE_PREFLIGHT';
   throw error;
-}
-
-// The mount host (linear-piping-consumer-root) is built by the app's own
-// bootstrap after this module's import graph resolves, so a single attempt
-// here can run before that host exists and never mount at all -- silently,
-// since ensureLfeaBendFactorAuthorityControl() returns null rather than
-// throwing when its host is missing. Retry across macrotask ticks: the
-// function already no-ops once mounted, so repeated calls are safe.
-if (typeof document !== 'undefined' && typeof setTimeout === 'function') {
-  let mountAttemptsRemaining = 50;
-  const attemptMount = () => {
-    mountAttemptsRemaining -= 1;
-    if (ensureLfeaBendFactorAuthorityControl(document) !== null || mountAttemptsRemaining <= 0) return;
-    setTimeout(attemptMount, 0);
-  };
-  setTimeout(attemptMount, 0);
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   ensureLfeaBendFactorAuthorityControl,
   lfeaBendFactorAuthorityForIntake,
@@ -67,6 +68,24 @@ assert.equal(inputRegenerations, 3,
   'Clearing the authority must regenerate InputXML pre-flight and invalidate prior authorization.');
 assert.equal(accdbRegenerations, 3,
   'Clearing the authority must regenerate ACCDB pre-flight and invalidate prior authorization.');
+
+// Mounting belongs to the pipeline attachment lifecycle: a fast bootstrap must
+// work without any setTimeout-based poll in the pre-flight/solver module.
+const shellSource = fs.readFileSync(
+  new URL('../src/workspace/lfea-pipeline-shell-controller.js', import.meta.url), 'utf8',
+);
+const bootstrapSource = fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const nativePreFlightSource = fs.readFileSync(
+  new URL('../src/workspace/linear-piping-inputxml-prefea.js', import.meta.url), 'utf8',
+);
+assert.match(shellSource,
+  /getSourceHost\(\)\.append\(consumerRoot\);\s*return ensureLfeaBendFactorAuthorityControl\(consumerRoot\.ownerDocument\)/u,
+  'The pipeline shell must mount authority immediately after attaching the source consumer.');
+assert.match(bootstrapSource, /lfeaPipelineShell\.attachSourceConsumer\(linearPipingConsumerRoot\)/u,
+  'Application bootstrap must use the deterministic pipeline shell attachment.');
+assert.doesNotMatch(nativePreFlightSource,
+  /mountAttemptsRemaining|setTimeout\(attemptMount|ensureLfeaBendFactorAuthorityControl/u,
+  'Native pre-flight must not mount UI by polling at module import time.');
 
 console.log(JSON.stringify({
   check: 'lfea-s3-bend-factor-authority-control',

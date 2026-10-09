@@ -1,6 +1,7 @@
 import { createLfeaPipelineSession } from './lfea-pipeline-session.js';
 import { LFEA_PIPELINE_STEPS } from './lfea-pipeline-step-registry.js';
 import { LfeaPipelineShellView } from './lfea-pipeline-shell-view.js';
+import { ensureLfeaBendFactorAuthorityControl } from './lfea-bend-factor-authority-control.js';
 import { mountLfeaPipelineContinuityPresentation } from './lfea-pipeline-continuity-presentation.js';
 import {
   buildLfeaSourceAcquisitionModel,
@@ -57,6 +58,16 @@ export class LfeaPipelineShellController {
     this.view.render(this.session.getState());
     this.continuityPresentation?.refresh();
     return this;
+  }
+
+  /**
+   * Attach the production source consumer only after the pipeline source host
+   * exists. Mount the B31/B31J basis control in the same explicit lifecycle
+   * instead of relying on module-import polling or a delayed DOM lookup.
+   */
+  attachSourceConsumer(consumerRoot) {
+    this.view.getSourceHost().append(consumerRoot);
+    return ensureLfeaBendFactorAuthorityControl(consumerRoot.ownerDocument);
   }
 
   setAssemblyHandlers(handlers) { this.assemblyHandlers = handlers; }

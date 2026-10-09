@@ -805,3 +805,18 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--workspace-accent) 35%, transparent);
   }
 }
+
+/* Inline variant: the same control mounted inside an Error Check BLOCK row,
+   so the engineer resolves the authority gate where it is reported instead
+   of being sent elsewhere. Full row width, tighter spacing. */
+.lfea-bend-factor-authority-control--inline {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  background: var(--workspace-panel-strong);
+}
+
+.lfea-bend-factor-authority-control--inline select {
+  max-width: none;
+  min-width: 220px;
+}

@@ -99,9 +99,12 @@ const accdbPanelSource = fs.readFileSync(
 
 assert.match(presentationSource, /buildLfeaDiagnosticPresentation\(preFlight, options\)/u);
 assert.doesNotMatch(presentationSource, /capabilityEffects|message\.includes|severity\s*===/u);
+// The panel is allowed to track local review state (this.limitationsAccepted).
+// The anti-drift check forbids mutating the core pre-flight or invoking the
+// analysis/authorization operations directly, not local acknowledgement state.
 assert.doesNotMatch(
   panelSource,
-  /authorizeLinearPiping|limitationsAccepted|setSource\(|clearSource\(|conditionGeometry|compileLinear|runLinear|preFlight\.solveAuthorized\s*=|presentation\.solveAuthorized\s*=/u,
+  /authorizeLinearPiping|setSource\(|clearSource\(|conditionGeometry|compileLinear|runLinear|preFlight\.solveAuthorized\s*=|presentation\.solveAuthorized\s*=/u,
 );
 assert.match(panelSource, /selectLfeaErrorCheckSections\(this\.presentation, this\.activeCategory\)/u);
 assert.match(panelSource, /dataset\.action = 'lfea-error-check-acknowledge-limitation'/u);

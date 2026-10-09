@@ -1,0 +1,41 @@
+name: EMP.1 current bounded WRC gamma5 post-waiver technical checks
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/emp1-wrc-gamma5-post-authority-independent-refreeze.mjs'
+      - 'scripts/emp1-wrc-gamma5-post-authority-refreeze-falsifiers.mjs'
+      - 'scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs'
+      - 'scripts/emp1-wrc-gamma5-current-bounded-waiver-evidence-check.mjs'
+      - 'src/core/emp1/**'
+      - 'validation/emp1/wrc537-2013/gamma5-*'
+      - '.github/workflows/emp1-current-bounded-post-waiver.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/emp1-wrc-gamma5-post-authority-independent-refreeze.mjs'
+      - 'scripts/emp1-wrc-gamma5-post-authority-refreeze-falsifiers.mjs'
+      - 'scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs'
+      - 'scripts/emp1-wrc-gamma5-current-bounded-waiver-evidence-check.mjs'
+      - 'src/core/emp1/**'
+      - 'validation/emp1/wrc537-2013/gamma5-*'
+      - '.github/workflows/emp1-current-bounded-post-waiver.yml'
+permissions:
+  contents: read
+jobs:
+  current-bounded-physical-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert owner-waived historical evidence remains disclosed
+        run: node scripts/emp1-wrc-gamma5-current-bounded-waiver-evidence-check.mjs
+      - name: Independently recompute frozen physical WRC Table-5 oracle
+        run: node scripts/emp1-wrc-gamma5-post-authority-independent-refreeze.mjs
+      - name: Exercise all eight independent oracle negative controls
+        run: node scripts/emp1-wrc-gamma5-post-authority-refreeze-falsifiers.mjs
+      - name: Exercise source-gated bounded runtime, 32 stresses and negative missing attachment
+        run: node scripts/emp1-wrc-gamma5-axis-authority-suspension-check.mjs

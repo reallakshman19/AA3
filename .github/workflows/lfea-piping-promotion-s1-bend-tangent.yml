@@ -22,6 +22,13 @@ on:
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-constraints.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-profile.js'
       - 'src/core/linear-piping-analysis-consumer/inputxml-linear-structural-retopology.js'
+      # Source-shell/diagnostics changes can break the real model without
+      # modifying the numerical core: run both S1-S3 and BM4_L on those PRs.
+      - 'src/main.js'
+      - 'src/workspace/lfea-pipeline-shell-controller.js'
+      - 'src/workspace/lfea-diagnostics/**'
+      - 'src/workspace/lfea-pipeline-accdb-input-panel.js'
+      - 'e2e/lfea-pipeline-accdb-real-model.spec.js'
       - 'src/workspace/lfea-bend-factor-authority-control.js'
       - 'src/workspace/linear-piping-inputxml-prefea.js'
       - 'src/lfea/native-b31-case-chain.js'

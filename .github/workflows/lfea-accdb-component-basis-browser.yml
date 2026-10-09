@@ -1,0 +1,64 @@
+name: LFEA real BM4_L component-basis browser acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'src/main.js'
+      - 'src/workspace/**'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'e2e/lfea-pipeline-accdb-real-model.spec.js'
+      - 'benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB'
+      - 'scripts/run-playwright.mjs'
+      - 'playwright.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/lfea-accdb-component-basis-browser.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/main.js'
+      - 'src/workspace/**'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'e2e/lfea-pipeline-accdb-real-model.spec.js'
+      - 'benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB'
+      - 'scripts/run-playwright.mjs'
+      - 'playwright.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/lfea-accdb-component-basis-browser.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  real-bm4l-inline-authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install project-local Chromium and Linux dependencies
+        run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium
+
+      - name: Verify inline BLOCK to governed authorization on real BM4_L
+        run: |
+          node scripts/run-playwright.mjs e2e/lfea-pipeline-accdb-real-model.spec.js \
+            --grep 'resolves component-basis BLOCK inline and preserves the governed review flow'
+
+      - name: Retain browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lfea-bm4l-component-basis-browser-failure
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

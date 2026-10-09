@@ -96,6 +96,75 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(pageErrors).toEqual([]);
   });
 
+  test('resolves component-basis BLOCK inline and preserves the governed review flow', async ({ page }) => {
+    const pageErrors = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('element(s)', { timeout: 90000 });
+
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    const errorCheck = page.locator('[data-role="lfea-common-error-check-panel"]');
+    await expect(errorCheck).toBeVisible();
+    const bendBlock = errorCheck.locator(
+      '[data-role="lfea-common-error-check-finding-group"]'
+        + '[data-group-code="BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED"][data-disposition="BLOCK"]',
+    );
+    const branchBlock = errorCheck.locator(
+      '[data-role="lfea-common-error-check-finding-group"]'
+        + '[data-group-code="BRANCH_FACTOR_EDITION_AUTHORITY_UNRESOLVED"][data-disposition="BLOCK"]',
+    );
+    // BM4_L has a bend authority gate; a separate branch/tee gate depends
+    // on whether that source exercises B31J branch components.
+    await expect(bendBlock).toHaveCount(1);
+    const inline = errorCheck.locator('.lfea-bend-factor-authority-control--inline');
+    await expect(inline).toBeVisible();
+    const top = page.locator(
+      '[data-role="linear-piping-consumer-root"] > [data-role="lfea-bend-factor-authority-control"]',
+    );
+    await expect(top).toHaveCount(1);
+
+    // An edition alone clears neither the bend's incomplete authority gate
+    // nor the need for explicit smooth-90 policy. All edits re-run pre-flight.
+    await inline.locator('[data-role="lfea-bend-factor-edition"]')
+      .selectOption('B31_3_2024_B31J_2023');
+    await expect(bendBlock).toHaveCount(1);
+    await expect(inline.locator('[data-role="lfea-bend-smooth90-policy"]')).toHaveValue('');
+
+    await inline.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('NO');
+    await expect(bendBlock).toHaveCount(0);
+    await expect(branchBlock).toHaveCount(0);
+
+    // Inline -> top synchronization, then top -> detached inline -> reattach.
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="INPUT"]').click();
+    await expect(top.locator('[data-role="lfea-bend-factor-edition"]'))
+      .toHaveValue('B31_3_2024_B31J_2023');
+    await expect(top.locator('[data-role="lfea-bend-smooth90-policy"]')).toHaveValue('NO');
+    await top.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('');
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    await expect(bendBlock).toHaveCount(1);
+    await expect(inline).toBeVisible();
+    await expect(inline.locator('[data-role="lfea-bend-smooth90-policy"]')).toHaveValue('');
+
+    await inline.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('NO');
+    await expect(bendBlock).toHaveCount(0);
+    await expect(branchBlock).toHaveCount(0);
+    const conditionalGroups = errorCheck.locator(
+      '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"]',
+    );
+    if (fixturePath === committedFixturePath) {
+      await expect(conditionalGroups).toHaveCount(11);
+    }
+    await acknowledgeAndAuthorize(errorCheck);
+    await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]'))
+      .toBeEnabled();
+    expect(pageErrors).toEqual([]);
+  });
+
   test('runs the imported ACCDB model through Load case, Run and Output', async ({ page }) => {
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -155,7 +224,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     // Applying a case selection regenerates the pre-flight and may invalidate
     // the earlier acceptance. Re-authorize if that control is shown again.
     await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
-    if (await errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]').count() > 0) {
+    if (await errorCheck.locator('[data-role="lfea-error-check-authorization-state"][data-state="CONDITIONAL_PENDING"]').count() > 0) {
       await expect(errorCheck.locator('[data-role="lfea-error-check-authorization-state"]'))
         .toHaveAttribute('data-state', 'CONDITIONAL_PENDING');
       await acknowledgeAndAuthorize(errorCheck);
@@ -198,12 +267,18 @@ test.describe('LFEA ACCDB real-model import', () => {
 });
 
 async function acknowledgeAndAuthorize(errorCheck) {
-  const acknowledgements = errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]');
-  const count = await acknowledgements.count();
+  // Conditional groups are reviewed by expanding their details. The older
+  // per-group acknowledgement buttons were intentionally removed in PR #4.
+  const conditionalSummaries = errorCheck.locator(
+    '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"] summary',
+  );
+  const count = await conditionalSummaries.count();
   expect(count).toBeGreaterThan(0);
   for (let index = 0; index < count; index += 1) {
-    await acknowledgements.nth(index).click();
+    await conditionalSummaries.nth(index).click();
+    await expect(errorCheck.locator('#lfea-error-check-progress')).toHaveJSProperty('value', index + 1);
   }
+  await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
   await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('A. Engineer');
   await errorCheck.locator('[data-role="lfea-error-check-reason"]').fill('Reviewed and accepted.');
   const authorize = errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]');

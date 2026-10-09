@@ -223,7 +223,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     // Applying a case selection regenerates the pre-flight and may invalidate
     // the earlier acceptance. Re-authorize if that control is shown again.
     await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
-    if (await errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]').count() > 0) {
+    if (await errorCheck.locator('[data-role="lfea-error-check-authorization-state"][data-state="CONDITIONAL_PENDING"]').count() > 0) {
       await expect(errorCheck.locator('[data-role="lfea-error-check-authorization-state"]'))
         .toHaveAttribute('data-state', 'CONDITIONAL_PENDING');
       await acknowledgeAndAuthorize(errorCheck);
@@ -275,6 +275,7 @@ async function acknowledgeAndAuthorize(errorCheck) {
   expect(count).toBeGreaterThan(0);
   for (let index = 0; index < count; index += 1) {
     await conditionalSummaries.nth(index).click();
+    await expect(errorCheck.locator('#lfea-error-check-progress')).toHaveJSProperty('value', index + 1);
   }
   await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
   await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('A. Engineer');

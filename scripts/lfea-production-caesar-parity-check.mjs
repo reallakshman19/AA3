@@ -47,6 +47,7 @@ import {
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 import { buildE75ReducerMatrixDiagnostic } from './lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs';
 import { diagnoseE75SourceSectionAndLoads } from './lib/lfea-bm4l-e75-source-section-load.mjs';
+import { buildBm4lE75WeightBendingForensic } from './lib/lfea-bm4l-e75-weight-bending-forensic.mjs';
 import { computeInputXmlModelHealthSourceSemanticHash } from '../src/core/geometry/model-health/index.js';
 import {
   INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
@@ -172,6 +173,35 @@ if (process.env.LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR) {
       sourceMechanics.candidatePressureInitialStrainRequiresSeparateQualification,
     activeProductionChanged:false,
     parityQualified:false,
+  }));
+}
+
+// Read-only weight-case diagnostic. Preserve the sealed model's original W
+// gravity primitive and the inactive reducer's ten-cylinder section series.
+// Unit-end moment tests are isolated fixed-I cantilever sensitivities, NOT
+// native whole-system CAESAR results and NOT a permitted solver change.
+if (process.env.LFEA_BM4L_E75_WEIGHT_BENDING_EVIDENCE_DIR) {
+  const weightEvidenceDir = path.resolve(ROOT, process.env.LFEA_BM4L_E75_WEIGHT_BENDING_EVIDENCE_DIR);
+  fs.mkdirSync(weightEvidenceDir, {recursive:true});
+  const weightEvidence = buildBm4lE75WeightBendingForensic(prepared.preparation);
+  fs.writeFileSync(path.join(weightEvidenceDir,'bm4l-e75-weight-bending-compliance.json'),
+    JSON.stringify(weightEvidence,null,2)+'\n','utf8');
+  console.log('BM4L_E75_WEIGHT_BENDING '+JSON.stringify({
+    status:weightEvidence.status,
+    nativeGravityN:weightEvidence.nativeWeightMagnitudeN,
+    inactiveTenCylinderGravityN:weightEvidence.candidateWeightMagnitudeN,
+    candidateToNativeWeightRatio:weightEvidence.candidateToNativeWeightRatio,
+    sourceFromI_m4:weightEvidence.sourceSectionFrom.I_m4,
+    sourceToI_m4:weightEvidence.sourceSectionTo.I_m4,
+    nativeFixedIRotationComplianceRadPerNm:
+      weightEvidence.nativeEndMomentZRotationalComplianceRadPerNm,
+    tenCylinderFixedIRotationComplianceRadPerNm:
+      weightEvidence.tenCylinderEndMomentZRotationalComplianceRadPerNm,
+    candidateToNativeMomentComplianceRatio:
+      weightEvidence.candidateToNativeBendingMomentComplianceRatio,
+    downstreamConstraintBindingCount:weightEvidence.downstreamStructuralConstraintBindings.length,
+    sourceCaesarParityClaimed:false,
+    productionMechanicsChanged:false,
   }));
 }
 

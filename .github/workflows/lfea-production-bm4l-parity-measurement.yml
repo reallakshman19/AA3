@@ -10,6 +10,8 @@ on:
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
       - 'scripts/lfea-bm4l-e75-load-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
+      - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
       - 'scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs'
@@ -39,6 +41,8 @@ on:
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
       - 'scripts/lfea-bm4l-e75-load-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
+      - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
       - 'scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs'
@@ -91,6 +95,7 @@ jobs:
           LFEA_BM4L_PARITY_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR: test-results/lfea
+          LFEA_BM4L_E75_WEIGHT_BENDING_EVIDENCE_DIR: test-results/lfea
         run: |
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
@@ -103,6 +108,10 @@ jobs:
         run: |
           node scripts/lfea-bm4l-e75-section-load-evidence-check.mjs \
             test-results/lfea/bm4l-e75-source-section-and-loads.json
+      - name: Validate source E75 W gravity and independent bending compliance
+        run: |
+          node scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs \
+            test-results/lfea/bm4l-e75-weight-bending-compliance.json
       - name: Measure nonproduction cylinder pressure hypothesis against authentic E75 input
         run: |
           node scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs \

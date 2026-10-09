@@ -166,9 +166,20 @@ const recomposedPayload = {
     stressIntensity: independent.stresses.stressIntensity,
   },
 };
-const semanticHash = sha256(canonical(recomposedPayload));
-assert.equal(semanticHash, frozen.semanticHash, 'POST_AUTHORITY_ORACLE_SEMANTIC_HASH_DRIFT');
+// Preserve the independent frozen semantic-hash gate. If it fails, report
+// the exact changed leaves so a reviewer can distinguish numerical rounding
+// from changed source interpretation; never update the frozen oracle here.
 assertNumericTreeClose(recomposedPayload, F, 'POST_AUTHORITY_ORACLE_PAYLOAD');
+const semanticHash = sha256(canonical(recomposedPayload));
+if (semanticHash !== frozen.semanticHash) {
+  console.error(JSON.stringify({
+    code: 'POST_AUTHORITY_ORACLE_SEMANTIC_HASH_DRIFT',
+    expectedHash: frozen.semanticHash,
+    recomputedHash: semanticHash,
+    exactPayloadChanges: firstExactChanges(recomposedPayload, F, 'semanticPayload'),
+  }, null, 2));
+}
+assert.equal(semanticHash, frozen.semanticHash, 'POST_AUTHORITY_ORACLE_SEMANTIC_HASH_DRIFT');
 
 console.log(JSON.stringify({
   schema: 'emp1-wrc537-gamma5-post-authority-independent-refreeze/v1',
@@ -194,6 +205,31 @@ console.log(JSON.stringify({
   historicalVectorRejectedForCurrentAuthorization: true,
   unchangedCDStressIntensities: 4,
 }, null, 2));
+
+function firstExactChanges(actual, expected, path, output = []) {
+  if (output.length >= 20) return output;
+  if (Array.isArray(expected) && Array.isArray(actual)) {
+    if (expected.length !== actual.length) {
+      output.push({ path, expectedLength: expected.length, actualLength: actual.length });
+    }
+    for (let i = 0; i < Math.min(expected.length, actual.length); i += 1) {
+      firstExactChanges(actual[i], expected[i], `${path}[${i}]`, output);
+      if (output.length >= 20) break;
+    }
+  } else if (expected && actual && typeof expected === 'object' && typeof actual === 'object') {
+    for (const key of new Set([...Object.keys(expected), ...Object.keys(actual)])) {
+      firstExactChanges(actual[key], expected[key], `${path}.${key}`, output);
+      if (output.length >= 20) break;
+    }
+  } else if (!Object.is(actual, expected)) {
+    output.push({
+      path, expected, actual,
+      ...(typeof actual === 'number' && typeof expected === 'number'
+        ? { absoluteDifference: actual - expected } : {}),
+    });
+  }
+  return output;
+}
 
 function assertNumericTreeClose(actual, expected, label) {
   if (typeof expected === 'number') {

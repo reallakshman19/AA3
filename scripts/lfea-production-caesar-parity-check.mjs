@@ -45,6 +45,7 @@ import {
   PRODUCTION_TO_CAESAR_CASE,
 } from './lib/lfea-production-benchmark-actual.mjs';
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
+import { buildE75ReducerMatrixDiagnostic } from './lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs';
 import { computeInputXmlModelHealthSourceSemanticHash } from '../src/core/geometry/model-health/index.js';
 import {
   INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
@@ -120,6 +121,29 @@ const blockCodes = prepared.preparation.findings
   .map((row) => row.code);
 assert.deepEqual(blockCodes, [], `Production preparation must reach the solver: ${JSON.stringify(blockCodes)}`);
 assertThermalIntervalConsumption(prepared.preparation, thermalIntervalAuthority);
+
+// An opt-in forensic only: compile the current prismatic E75 and separately
+// compile the inactive ten-cylinder candidate using the SAME governed source
+// and axis custody. It does not change the authorized solve's profile.
+if (process.env.LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR) {
+  const evidenceDir = path.resolve(ROOT, process.env.LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR);
+  fs.mkdirSync(evidenceDir, { recursive: true });
+  const matrixEvidence = buildE75ReducerMatrixDiagnostic(prepared.preparation);
+  fs.writeFileSync(path.join(evidenceDir, 'bm4l-e75-native-versus-candidate-matrices.json'),
+    JSON.stringify(matrixEvidence, null, 2) + '\n', 'utf8');
+  console.log('BM4L_E75_ASSEMBLY_FORENSIC ' + JSON.stringify({
+    status: matrixEvidence.status,
+    nativeElementId: matrixEvidence.elementId,
+    localAxisX: matrixEvidence.axisX,
+    localXAxisAlignmentWithGlobalX: matrixEvidence.frameLocalXAxisAlignmentWithGlobalX,
+    handedness: matrixEvidence.coordinateRightHandedness,
+    nativeGlobalConsistency: matrixEvidence.nativeGlobalConsistencyRelative,
+    candidateGlobalConsistency: matrixEvidence.candidateGlobalConsistencyRelative,
+    candidateLoadConsistency: matrixEvidence.candidateLoadConsistencyRelative,
+    globalMatrixRelativeChange: matrixEvidence.globalMatrixMaxRelativeDifference,
+    candidateUsedByProduction: false,
+  }));
+}
 
 const authorized = authorizeLinearPipingInputXmlPreFlight(prepared, {
   approverIdentity: 'lfea-production-caesar-parity-check',

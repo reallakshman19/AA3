@@ -6,6 +6,7 @@ on:
       - 'scripts/lfea-production-caesar-parity-check.mjs'
       - 'scripts/lfea-production-caesar-parity-evidence-check*.mjs'
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
+      - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'src/core/linear-fea-**'
@@ -21,6 +22,7 @@ on:
       - 'scripts/lfea-production-caesar-parity-check.mjs'
       - 'scripts/lfea-production-caesar-parity-evidence-check*.mjs'
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
+      - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'src/core/linear-fea-**'
@@ -68,6 +70,12 @@ jobs:
           node scripts/lfea-bm4l-rx-source-topology-check.mjs \
             --accdb benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB \
             --out test-results/lfea/bm4l-rx-source-topology.json
+      - name: Quantify global RX increment mismatch across reducer and rigid chain
+        run: |
+          node scripts/lfea-bm4l-rx-increment-budget.mjs \
+            --full-report test-results/lfea/bm4l-caesar-full-comparison.json \
+            --topology test-results/lfea/bm4l-rx-source-topology.json \
+            --out test-results/lfea/bm4l-221xx-rx-increment-budget.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

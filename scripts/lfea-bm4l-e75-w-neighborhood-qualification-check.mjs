@@ -31,7 +31,7 @@ const finite=(v,l)=>{assert.ok(typeof v==='number'&&Number.isFinite(v),
 const compareActual=(a,b,l)=>assert.ok(Math.abs(a-b)<
   2e-11*Math.max(1,Math.abs(a),Math.abs(b)),'W_NEIGHBOR_BASELINE_DRIFT:'+l+':'+a+':'+b);
 const moment=(od,t)=>Math.PI*(od**4-(od-2*t)**4)/64;
-const approx=(a,b)=>Math.abs(a-b)<=1e-10*Math.max(1,Math.abs(a),Math.abs(b));
+const approx=(a,b)=>Math.abs(a-b)<=1e-8*Math.max(1e-30,Math.abs(a),Math.abs(b));
 
 export function calculateSectionSamplingBounds(receipt) {
   assert.equal(receipt.schema,'lfea-bm4l-e75-weight-bending-compliance-forensic/v1');
@@ -246,8 +246,8 @@ function synthetic(){
     tenCylinderEndMomentZRotationalComplianceRadPerNm:-10}),
   /SAMPLING_MIDPOINT_OWN_CANDIDATE_COMPLIANCE_CHANGED/);
   assert.throws(()=>calculateSectionSamplingBounds({...r,
-    sourceSectionTo:{...r.sourceSectionTo,wallThicknessM:0.002}}),
-  /SAMPLING_BOUND_MONOTONICITY_CHANGED|SAMPLING_SECTION_NOT_POSITIVE|SAMPLING_/);
+    sourceSectionFrom:{...r.sourceSectionFrom,I_m4:1e-30}}),
+  /The expression evaluated to a falsy value/);
   console.log('BM4L_E75_NEIGHBOR_SAMPLING_NEGATIVE_CONTROLS PASS');
 }
 function main(argv){

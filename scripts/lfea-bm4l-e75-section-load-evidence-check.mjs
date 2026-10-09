@@ -26,11 +26,28 @@ for(const k of ['axial','torsion','shearY','shearZ','bendY','bendZ']){
 for(const id of ['IXP-W','IXP-WP','IXP-WT','IXP-WPT']){
   assert.ok(r.caseEvidence[id],'E75_CASE_CUSTODY_MISSING:'+id);
   assert.ok(r.caseEvidence[id].sourcePhysicalLoadCaseSemanticHash);
-  for(const mode of ['active','inactiveCandidate']){
-    assert.equal(r.caseEvidence[id][mode].equivalentLocal.length,12);
-    assert.equal(r.caseEvidence[id][mode].initialStrainLocal.length,12);
+  const record=r.caseEvidence[id];
+  assert.equal(record.active.equivalentLocal.length,12);
+  assert.equal(record.active.initialStrainLocal.length,12);
+  if(id==='IXP-WP'||id==='IXP-WPT'){
+    assert.equal(record.inactiveCandidate,null,
+      'Candidate under physical pressure MUST be withheld, not silently drop axial load');
+    assert.equal(record.inactiveCandidateBlocker?.code,
+      'REDUCER_TAPERED_AXIAL_PRESSURE_BASIS_UNQUALIFIED');
+  } else {
+    assert.equal(record.inactiveCandidateBlocker,null);
+    assert.equal(record.inactiveCandidate.equivalentLocal.length,12);
+    assert.equal(record.inactiveCandidate.initialStrainLocal.length,12);
   }
 }
+assert.equal(r.candidatePressureRejectedByFailClosedGate,true);
+assert.equal(r.pressureLoadCarried.inNative,true);
+assert.equal(r.pressureLoadCarried.inInactiveCandidate,null);
+assert.equal(r.pressureMagnitudes.candidatePressureInitialStrainWPairedN,null);
+assert.equal(r.pressureMagnitudes.candidatePressureInitialStrainThermalPairedN,null);
+assert.ok(r.pressureMagnitudes.nativePressureInitialStrainWPairedN>0);
+assert.ok(r.pressureMagnitudes.nativePressureInitialStrainThermalPairedN>0);
+assert.equal(r.candidatePressureInitialStrainRequiresSeparateQualification,true);
 console.log('BM4L_E75_SECTION_LOAD_RECEIPT '+JSON.stringify({
   status:r.status,
   sectionFrom:{odM:r.from.outerDiameterM,wallM:r.from.wallThicknessM,
@@ -43,6 +60,8 @@ console.log('BM4L_E75_SECTION_LOAD_RECEIPT '+JSON.stringify({
   recordedPressureStrainForceNorms:r.pressureMagnitudes,
   inactiveCandidatePressureInputUnresolved:
     r.candidatePressureInitialStrainRequiresSeparateQualification,
+  inactiveCandidatePressureRejectedByFailClosedGate:
+    r.candidatePressureRejectedByFailClosedGate,
   productionReducerPromoted:false,
   caesarParityCertified:false,
 }));

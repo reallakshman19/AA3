@@ -10,6 +10,7 @@ on:
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
+      - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -32,6 +33,7 @@ on:
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
+      - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -65,6 +67,8 @@ jobs:
         run: node scripts/lfea-production-caesar-parity-evidence-check.test.mjs
       - name: Verify reducer beam-theory equivalence before matrix experiment
         run: node scripts/lfea-reducer-beam-theory-consistency-check.mjs
+      - name: Prove ten-cylinder pressure axial source-basis guard fails closed
+        run: node scripts/lfea-reducer-pressure-custody-guard-check.mjs
       - name: Run actual LFEA production execution and CAESAR II comparison
         shell: bash
         env:

@@ -7,6 +7,8 @@ import { PRODUCTION_CAPABILITY_PROFILE }
   from '../../src/core/linear-piping-analysis-consumer/production-capability-profile.js';
 import { compileSolverExecution, requireElementContribution }
   from '../../src/core/linear-fea-solver/index.js';
+import { computeWNeighborhoodEndActions }
+  from './lfea-bm4l-e75-w-action-recovery.mjs';
 
 const SOURCE_NODES=['22100','22110','22115','22120','22125','22130','22140'];
 const SUPPORT_NODES=['22120','22140'];
@@ -67,7 +69,9 @@ function compareAuthorized(execution,official){
     }
   }
 }
-export function measureBm4lE75WSystemPerturbation(preparation,authorizedWExecution){
+export function measureBm4lE75WSystemPerturbation(
+  preparation,authorizedWExecution,sourceBasicRows
+){
   assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics,false,
     'E75 production must remain uniform prismatic');
   const structural=preparation.structuralPreparation;
@@ -178,6 +182,14 @@ export function measureBm4lE75WSystemPerturbation(preparation,authorizedWExecuti
       sourceLocalIncrementRotationRad:localIncrement,
       sourceNeighborhoodNodes:nodes,
       downstreamSourceSupportReactions:reactions,
+      sourceOriginalElementEndActions:computeWNeighborhoodEndActions({
+        model,sourceBasicRows,
+        segmentBindings:structural.segmentBindings,
+        nativeElements:production.elementContributions,
+        nativeFrames:production.frameElements,
+        execution,e75Contribution:contribution,
+        scenarioId:scenario.id,
+      }),
       fullAssemblyElementContributionCount:contributions.length,
       nonE75ModelElementContributionHashChanged:false,
       authorizedProductionSolve:false,

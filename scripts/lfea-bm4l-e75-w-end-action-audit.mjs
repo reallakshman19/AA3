@@ -112,20 +112,44 @@ export function auditWSourceEndActions(experiment,report,topology){
     const original=caesar.comparison.rows.filter(r=>
       r.entityKind==='NODE'&&String(r.entityId)===nodeId
       &&['FORCE','MOMENT'].includes(r.quantity));
-    assert.equal(original.length,0,
-      'UPDATED_SOURCE_REPORT_HAS_REACTION_ROWS_UPDATE_SCOPE_INSTEAD_OF_SUPPRESSING');
-    const alternatives=experiment.scenarios.map(s=>({
-      scenarioId:s.scenarioId,
-      originalModelSupportReactions:s.downstreamSourceSupportReactions[nodeId],
-      caesarReferenceAvailable:false,
+    assert.equal(original.length,6,
+      'ORIGINAL_L2_SOURCE_REACTION_SIX_COMPONENT_COVERAGE_REQUIRED:'+nodeId);
+    const reactions=Object.fromEntries(['FORCE','MOMENT'].map(quantity=>{
+      const dos=quantity==='FORCE'?['UX','UY','UZ']:['RX','RY','RZ'];
+      const rows=dos.map(component=>{
+        const lookup=original.filter(x=>x.quantity===quantity&&x.component===component);
+        assert.equal(lookup.length,1,
+          'ORIGINAL_REACTION_DOF_LABEL_MISSING_OR_DUPLICATE:'+nodeId+':'+component);
+        const row=lookup[0];
+        const actual=num(row.actualValue,'SOURCE_REACTION_ACTUAL');
+        const ref=num(row.referenceValue,'SOURCE_REACTION_REFERENCE');
+        const alternative=experiment.scenarios.map(s=>{
+          const originalEntries=s.downstreamSourceSupportReactions[nodeId];
+          assert.ok(Array.isArray(originalEntries),'RESEARCH_SUPPORT_REACTIONS_REQUIRED');
+          const prediction=originalEntries.filter(x=>x.dof===component)
+            .reduce((sum,x)=>sum+num(x.value,'SUPPORT_REACTION'),0);
+          if(s.scenarioId==='BASELINE_AUTHORIZED_EQUIVALENT')
+            compare(prediction,actual,'SUPPORT:'+nodeId+':'+quantity+':'+component);
+          return {scenarioId:s.scenarioId,value:prediction,
+            signedDifferenceFromOriginalCaesar:prediction-ref,
+            originalSourceReferenceNotCounterfactual:true};
+        });
+        return {component,originalSourceReference:ref,
+          originalProductionActual:actual,
+          originalComparatorStatus:row.status,
+          originalSourceComponentIsDofName:true,
+          experiments:alternative};
+      });
+      return [quantity,rows];
     }));
     return {
       sourceNodeId:nodeId,
       originalAccdbRestraintRowCount:source.sourceRestraintRows.length,
       originalAccdbRestraintRows:source.sourceRestraintRows,
-      originalCaesarL2ForceMomentReferenceRowCount:0,
-      sourceInputRestraintDoesNotGuaranteeOutputReactionCoverage:true,
-      alternatives,
+      originalCaesarL2ForceMomentReferenceRowCount:original.length,
+      originalCaesarReferenceReactionsPresent:true,
+      originalCaesarReferenceValuesMappedByDofNames:true,
+      originalSourceReactionComponents:reactions,
     };
   });
   assert.ok(reactions.every(x=>x.originalAccdbRestraintRowCount>0),
@@ -142,8 +166,9 @@ export function auditWSourceEndActions(experiment,report,topology){
     originalFullBaselineElementActionsRecoveredFromKTimesUminusF:true,
     originalBaselineIndependentlyVerifiedAgainstNativeFrameRecovery:true,
     originalCaesarReferenceNotRecomputedForAlternatives:true,
-    missingOriginalCaesar22120And22140SupportReactions:reactions,
-    originalSourceRestraintsPresentButOriginalCaesarOutputReactionRowsAbsent:true,
+    recoveredOriginalCaesar22120And22140SupportReactions:reactions,
+    originalSourceRestraintsAndCaesarOutputReactionRowsPresent:true,
+    originalL2ComparatorReactionsLabelForcesWithUXAndMomentsWithRX:true,
     originalNumericalAcceptanceNeverChanged:true,
     sourceCylinderSamplingAndPressureBasisStillUnqualified:true,
     noProductionReducerPromotion:true,
@@ -175,6 +200,14 @@ function selfTest(){
       status:'PASS',
     });
   }
+  for(const nodeId of ['22120','22140']){
+    for(const quantity of ['FORCE','MOMENT']){
+      for(const component of quantity==='FORCE'?['UX','UY','UZ']:['RX','RY','RZ']){
+        rows.push({entityKind:'NODE',entityId:nodeId,quantity,component,
+          referenceValue:0,actualValue:0,status:'PASS'});
+      }
+    }
+  }
   const report={schema:'lfea-caesar-accdb-benchmark-report/v1',source:{sha256:SHA},
     qualification:{cases:[{caseId:'L2',comparison:{rows}}]}};
   const topology={schema:'lfea-bm4l-rx-source-topology-forensic/v1',
@@ -183,7 +216,9 @@ function selfTest(){
   const out=auditWSourceEndActions(original,report,topology);
   assert.equal(out.sourceComparisonGroups.length,4);
   assert.ok(out.sourceComparisonGroups.every(x=>x.records.length===21));
-  assert.equal(out.missingOriginalCaesar22120And22140SupportReactions.length,2);
+  assert.equal(out.recoveredOriginalCaesar22120And22140SupportReactions.length,2);
+  assert.ok(out.recoveredOriginalCaesar22120And22140SupportReactions
+    .every(r=>r.originalCaesarL2ForceMomentReferenceRowCount===6));
   assert.throws(()=>auditWSourceEndActions(original,{
     ...report,source:{sha256:'BAD'},
   },topology),/ORIGINAL_CAESAR_W_END_ACTION_SOURCE_SHA_MISMATCH/);
@@ -219,9 +254,10 @@ function main(args){
         worsened:x.componentsWorsenedOverOriginalNative,
       })),
     })),
-    sourceRestraintsWithoutOriginalOutput:result.missingOriginalCaesar22120And22140SupportReactions
+    sourcedDownstreamReactions:result.recoveredOriginalCaesar22120And22140SupportReactions
       .map(x=>({nodeId:x.sourceNodeId,sourceRestraintRows:x.originalAccdbRestraintRowCount,
-        sourceReactionRows:x.originalCaesarL2ForceMomentReferenceRowCount})),
+        sourceReactionRows:x.originalCaesarL2ForceMomentReferenceRowCount,
+        originalCaseOriginalReferenceAndExperiments:x.originalSourceReactionComponents})),
     noOriginalCaseAcceptanceAltered:true,
     hypotheticalCaesarParityQualified:false,
   }));

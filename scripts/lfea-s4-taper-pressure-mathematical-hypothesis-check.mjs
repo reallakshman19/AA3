@@ -6,7 +6,10 @@ import {
   REDUCER_SEGMENT_COUNT,
   sealReducerCondensationRequest,
 } from '../src/core/linear-fea-reducer-condensation/index.js';
-import { compileTenCylinderAxialPressureHypothesis } from '../src/core/linear-fea-reducer-condensation/reducer-condensation.js';
+import {
+  compileTenCylinderAxialPressureHypothesis,
+  idealizedAxisymmetricSidewallPressureResultant,
+} from '../src/core/linear-fea-reducer-condensation/reducer-condensation.js';
 import { closedEndPressureAxialStrain } from '../src/core/linear-fea-frame-element/frame-element.js';
 
 const E=2.0e11,G=7.7e10,L=1.5, nu=0.3,P=6.0e6;
@@ -85,6 +88,34 @@ assert.throws(()=>compileTenCylinderAxialPressureHypothesis(request(),{pressureP
   /REDUCER_PRESSURE_RESEARCH_EXACT_STATE_REQUIRED/);
 assert.throws(()=>compileTenCylinderAxialPressureHypothesis(request(),{pressurePa:P,poissonRatio:nu,authorised:true}),
   /REDUCER_PRESSURE_RESEARCH_EXACT_STATE_REQUIRED/);
+// Exact projected-area control on an *idealized* cone; this does not
+// allocate forces to the real reducer joints or authorize CAESAR equivalence.
+const sidewallUniform=idealizedAxisymmetricSidewallPressureResultant({
+  pressurePa:P,
+  fromInnerDiameterM:from.outerDiameter-2*from.wallThickness,
+  toInnerDiameterM:from.outerDiameter-2*from.wallThickness,
+});
+assert.equal(sidewallUniform.axialResultantMagnitudeN,0);
+const sidewallTapered=idealizedAxisymmetricSidewallPressureResultant({
+  pressurePa:P,
+  fromInnerDiameterM:from.outerDiameter-2*from.wallThickness,
+  toInnerDiameterM:to.outerDiameter-2*to.wallThickness,
+});
+const fromFluidArea=Math.PI*(from.outerDiameter-2*from.wallThickness)**2/4;
+const toFluidArea=Math.PI*(to.outerDiameter-2*to.wallThickness)**2/4;
+almost(sidewallTapered.axialResultantMagnitudeN,P*Math.abs(toFluidArea-fromFluidArea),
+  'idealized sidewall projected-area identity');
+assert.equal(sidewallTapered.physicalSlopedSidewallPressureImplementationQualified,false);
+assert.equal(sidewallTapered.caesarIIReducerPressureRuleClaimed,false);
+const negativeSidewall=idealizedAxisymmetricSidewallPressureResultant({
+  pressurePa:-P,fromInnerDiameterM:from.outerDiameter-2*from.wallThickness,
+  toInnerDiameterM:to.outerDiameter-2*to.wallThickness,
+});
+almost(negativeSidewall.axialResultantMagnitudeN,sidewallTapered.axialResultantMagnitudeN,
+  'idealized sidewall pressure sign reversal');
+assert.throws(()=>idealizedAxisymmetricSidewallPressureResultant({
+  pressurePa:P,fromInnerDiameterM:-1,toInnerDiameterM:0.2,
+}),/REDUCER_SIDEWALL_GEOMETRY_RESEARCH_INVALID/);
 console.log(JSON.stringify({
   check:'lfea-s4-taper-pressure-mathematical-hypothesis',
   status:'MATHEMATICALLY_SELF_CONSISTENT_NOT_CAESAR_QUALIFIED',
@@ -94,6 +125,7 @@ console.log(JSON.stringify({
   taperedFreeExtensionM:tapered.equivalentFreeAxialExtensionM,
   candidateRule:tapered.ruleId,
   sourcePressureOnConicalWallAuthority:false,
+  idealizedSidewallResultantMagnitudeN:sidewallTapered.axialResultantMagnitudeN,
   numericalToleranceModified:false,
   productionPromotion:false,
 },null,2));

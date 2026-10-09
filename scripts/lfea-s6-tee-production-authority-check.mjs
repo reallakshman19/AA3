@@ -194,8 +194,23 @@ assert.equal(runtimeElements.effectiveStiffnessStateHash, stiffness.effectiveSti
   'Runtime reconstruction must retain the exact tee stiffness identity qualified by pre-flight.');
 assert.equal(runtimeElements.elementLedger.filter((row) => row.branchModifierApplied).length, 3);
 
-assert.equal(PRODUCTION_CAPABILITY_PROFILE.pressureBourdon, false,
-  'S6 must not widen the independent S5 pressure/Bourdon capability.');
+// The original S6 check predated the independent pressure-effects promotion
+// carried into the production profile by #1516. That qualification measured
+// pressure stiffening, closed-end axial thrust and Bourdon contribution against
+// CAESAR II; tee S6 must preserve those production settings, not force them
+// back to the pre-promotion false state. The independent pressure capability
+// guard separately verifies this same contract.
+assert.deepEqual({
+  pressureStiffening: PRODUCTION_CAPABILITY_PROFILE.pressureStiffening,
+  pressureAxialThrust: PRODUCTION_CAPABILITY_PROFILE.pressureAxialThrust,
+  pressureBourdon: PRODUCTION_CAPABILITY_PROFILE.pressureBourdon,
+  pressureCodeStress: PRODUCTION_CAPABILITY_PROFILE.pressureCodeStress,
+}, {
+  pressureStiffening: true,
+  pressureAxialThrust: true,
+  pressureBourdon: true,
+  pressureCodeStress: true,
+}, 'S6 must carry forward, not silently widen or revoke, the independently qualified pressure capability.');
 assert.equal(PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics, false,
   'S6 must not widen the blocked S4 reducer capability.');
 

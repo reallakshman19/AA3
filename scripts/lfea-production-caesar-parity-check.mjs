@@ -229,7 +229,7 @@ if (process.env.LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR) {
   const evidence=measureBm4lE75WSystemPerturbation(
     prepared.preparation,officialW.execution);
   fs.writeFileSync(path.join(dir,'bm4l-e75-w-system-perturbation.json'),
-    JSON.stringify(evidence,null,2)+'\\n','utf8');
+    JSON.stringify(evidence,null,2)+'\n','utf8');
   console.log('BM4L_E75_W_SYSTEM_RESEARCH '+JSON.stringify({
     status:evidence.status,
     scenarios:evidence.scenarios.map(row=>({

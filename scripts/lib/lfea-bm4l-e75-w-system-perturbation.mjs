@@ -133,8 +133,7 @@ export function measureBm4lE75WSystemPerturbation(preparation,authorizedWExecuti
       entry.elementId===E75?contribution:entry);
     assert.equal(contributions.length,model.elements.length);
     assert.equal(contributions.filter((entry,index)=>
-      entry!==production.elementContributions[index]).length,
-      scenario.id==='BASELINE_AUTHORIZED_EQUIVALENT'?1:1,
+      entry!==production.elementContributions[index]).length,1,
       'Exactly E75 one contribution replaced in experimental assembly');
     // WARNING: alternative E75 matrices are NOT authorized by the source
     // preflight hash in model compilation. Never call production gateway here.
@@ -202,7 +201,7 @@ export function measureBm4lE75WSystemPerturbation(preparation,authorizedWExecuti
     originalPhysicalCaseAndAllSupportConstraintsPreserved:true,
     originalProductionExecutionNumericallyReproduced:true,
     onlyE75ContributionVaried:true,
-    producerRemainsPrismatic:false===PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics,
+    productionReducerRemainsPrismatic:PRODUCTION_CAPABILITY_PROFILE.reducerExactMechanics===false,
     pressureBearingCandidateNotEvaluated:true,
     baselineProfileHash:frameProfile.semanticHash,
     solverProfileHash:solverProfile.semanticHash,

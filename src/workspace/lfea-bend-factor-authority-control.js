@@ -272,7 +272,7 @@ function normalizeSelection(value) {
 function requireIntakeSemanticHash(intake) {
   const value = intake?.semanticHash;
   if (typeof value !== 'string' || value.length === 0) {
-    throw new TypeError('Component factor authority  requires a sealed source intake semantic hash.');
+    throw new TypeError('Component factor authority requires a sealed source intake semantic hash.');
   }
   return value;
 }

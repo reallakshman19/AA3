@@ -8,6 +8,7 @@ on:
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
+      - 'scripts/lfea-bm4l-e75-load-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
@@ -36,6 +37,7 @@ on:
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
+      - 'scripts/lfea-bm4l-e75-load-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
@@ -138,6 +140,13 @@ jobs:
             --full-report test-results/lfea/bm4l-caesar-full-comparison.json \
             --matrix-evidence test-results/lfea/bm4l-e75-native-versus-candidate-matrices.json \
             --out test-results/lfea/bm4l-e75-local-rotation-budget.json
+      - name: Verify pressure/temperature signed case-difference attribution controls
+        run: node scripts/lfea-bm4l-e75-load-increment-budget.mjs --self-test
+      - name: Attribute E75 local-rotation mismatch to W, incremental P1 and incremental T1
+        run: |
+          node scripts/lfea-bm4l-e75-load-increment-budget.mjs \
+            --rotation-budget test-results/lfea/bm4l-e75-local-rotation-budget.json \
+            --out test-results/lfea/bm4l-e75-rotation-case-difference-attribution.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

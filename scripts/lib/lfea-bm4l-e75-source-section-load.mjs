@@ -102,17 +102,37 @@ export function diagnoseE75SourceSectionAndLoads(preparation) {
     assert.ok(physical,`E75_PHYSICAL_CASE_MISSING:${caseId}`);
     const active=getElement(compileInputXmlExecutionElementAuthorities(
       structural,frameProfile,physical.loadCase,opts),nativeElementId);
-    const candidate=getElement(compileInputXmlExecutionElementAuthorities(
-      structural,frameProfile,physical.loadCase,{
-        ...opts,
-        capabilityProfile:{...PRODUCTION_CAPABILITY_PROFILE,reducerExactMechanics:true},
-      }),nativeElementId);
+    const activeHasPressureAxialStrain =
+      active.pressure?.axialThrustApplied === true && active.pressure.axialStrain !== 0;
+    let candidate=null;
+    let inactiveCandidateBlocker=null;
+    try {
+      candidate=getElement(compileInputXmlExecutionElementAuthorities(
+        structural,frameProfile,physical.loadCase,{
+          ...opts,
+          capabilityProfile:{...PRODUCTION_CAPABILITY_PROFILE,reducerExactMechanics:true},
+        }),nativeElementId);
+    } catch(error) {
+      if(!activeHasPressureAxialStrain
+        || error?.code!=='REDUCER_TAPERED_AXIAL_PRESSURE_BASIS_UNQUALIFIED')throw error;
+      inactiveCandidateBlocker={
+        code:error.code,
+        message:error.message,
+        // Source model may contain other reducers evaluated before E75.
+        // This is a whole-case block, not a claim about which compiled first.
+        physicalCaseBlockedBeforeCandidateSolve:true,
+      };
+    }
+    assert.equal(candidate===null,activeHasPressureAxialStrain,
+      'Inactive S4 reducer candidate must reject nonzero pressure axial strain in source physical cases');
     assert.equal(active.material.elasticModulus,E);
-    assert.equal(candidate.material.elasticModulus,E);
     // Same stiffness in each physical case: loads may vary, but physical
     // case selection must not silently change the source section.
     assert.ok(maxRel(active.localStiffness,baseline.localStiffness)<1e-12);
-    assert.deepEqual(active.localAxes,candidate.localAxes);
+    if(candidate!==null){
+      assert.equal(candidate.material.elasticModulus,E);
+      assert.deepEqual(active.localAxes,candidate.localAxes);
+    }
     caseEvidence[caseId]={
       sourceCaseId:caseId,
       primitiveKinds:Object.fromEntries(
@@ -125,31 +145,35 @@ export function diagnoseE75SourceSectionAndLoads(preparation) {
         equivalentLocal:active.equivalentLoadVector.local,
         initialStrainLocal:active.initialStrainLoadVector.local,
       },
-      inactiveCandidate:{
+      inactiveCandidate:candidate===null?null:{
         pressure:candidate.pressure,
         thermal:candidate.thermal,
         equivalentLocal:candidate.equivalentLoadVector.local,
         initialStrainLocal:candidate.initialStrainLoadVector.local,
       },
+      inactiveCandidateBlocker,
     };
   }
   const w=caseEvidence['IXP-W'],wp=caseEvidence['IXP-WP'];
   const wt=caseEvidence['IXP-WT'],wpt=caseEvidence['IXP-WPT'];
   const pressure=(which,left,right)=>delta(left[which].initialStrainLocal,right[which].initialStrainLocal);
   const activePressureByWeight=pressure('active',wp,w);
-  const candidatePressureByWeight=pressure('inactiveCandidate',wp,w);
   const activePressureByThermal=pressure('active',wpt,wt);
-  const candidatePressureByThermal=pressure('inactiveCandidate',wpt,wt);
+  assert.ok(wp.inactiveCandidateBlocker&&wpt.inactiveCandidateBlocker,
+    'Physical pressure cases MUST fail closed when S4 taper pressure initial-strain qualification is missing');
+  assert.ok(w.inactiveCandidate!==null&&wt.inactiveCandidate!==null,
+    'Unpressurized and thermal-only S4 research candidates must remain measurable');
   const magnitudes={
     nativePressureInitialStrainWPairedN:l2(activePressureByWeight),
-    candidatePressureInitialStrainWPairedN:l2(candidatePressureByWeight),
+    candidatePressureInitialStrainWPairedN:null,
     nativePressureInitialStrainThermalPairedN:l2(activePressureByThermal),
-    candidatePressureInitialStrainThermalPairedN:l2(candidatePressureByThermal),
+    candidatePressureInitialStrainThermalPairedN:null,
   };
   const pressureLoadCarried={
     inNative: magnitudes.nativePressureInitialStrainWPairedN>1e-8,
-    inInactiveCandidate:magnitudes.candidatePressureInitialStrainWPairedN>1e-8,
+    inInactiveCandidate:null,
   };
+  const candidatePressureRejectedByFailClosedGate=true;
   const sourceRoot=(kind)=>sourceSegment.meta?.analysis?.[kind]??null;
   return {
     schema:'lfea-bm4l-e75-source-section-load-custody/v1',
@@ -172,8 +196,9 @@ export function diagnoseE75SourceSectionAndLoads(preparation) {
     actualPrismaticTerms:observed,
     caseEvidence,pressureMagnitudes:magnitudes,
     pressureLoadCarried,
+    candidatePressureRejectedByFailClosedGate,
     candidatePressureInitialStrainRequiresSeparateQualification:
-      pressureLoadCarried.inNative&&!pressureLoadCarried.inInactiveCandidate,
+      pressureLoadCarried.inNative&&candidatePressureRejectedByFailClosedGate,
     analyticalSourceSectionParityVerified:true,
     caesarWholeModelParityQualified:false,
   };

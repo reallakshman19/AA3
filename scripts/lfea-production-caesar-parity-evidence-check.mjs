@@ -123,10 +123,26 @@ function main(argv) {
   writeFileSync(resolve(args.get('--out')), `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
   console.log(JSON.stringify({
     status: data.status, cases: data.scopedCaesarCases,
+    sourceElementChains: data.sourceElementChains,
+    elementActionsMeasured: data.elementActionsMeasured,
     comparedComponents: data.comparedComponents, failedComponents: data.failedComponents,
     qualificationStatusReportedByComparator: data.qualificationStatusReportedByComparator,
     engineeringQualificationClaimed: false,
   }, null, 2));
+  // Produce a compact per-case CI ledger without reformatting or smoothing the
+  // CAESAR comparator's real failures. Full rows remain in the artifact.
+  for (const row of data.perCase) {
+    console.log('BM4L_PARITY_CASE ' + JSON.stringify({
+      caseId: row.caseId, compared: row.comparedComponents, failing: row.failing,
+      passRatePercent: row.passRatePercent,
+      byQuantity: Object.fromEntries(Object.entries(row.byQuantity)
+        .filter(([, result]) => result.compared > 0)
+        .map(([quantity, result]) => [quantity, {
+          compared: result.compared, failing: result.failing,
+        }])),
+      worstRows: row.worstRows,
+    }));
+  }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
   main(process.argv.slice(2));

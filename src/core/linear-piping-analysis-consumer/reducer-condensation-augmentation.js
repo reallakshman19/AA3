@@ -6,7 +6,14 @@ import {
   sealReducerCondensationRequest,
 } from '../linear-fea-reducer-condensation/index.js';
 import { computeFrameElementSemanticHash, requireFrameElement } from '../linear-fea-frame-element/index.js';
-import { cleanVector } from '../linear-fea-frame-element/frame-element-stiffness.js';
+import {
+  applyOffsetToLoad,
+  applyOffsetToStiffness,
+  cleanVector,
+  frameOffsetMatrix,
+  transformLoadToGlobal,
+  transformStiffnessToGlobal,
+} from '../linear-fea-frame-element/frame-element-stiffness.js';
 import { failLinearPipingAnalysis } from './validation.js';
 import { INPUTXML_GRAVITY_ACCELERATION } from './inputxml-linear-preparation-profile.js';
 
@@ -60,16 +67,39 @@ export function augmentFrameElementReducer(input) {
   // The condensed stiffness and load vectors replace the prismatic ones rather
   // than adding to them: the uniform-section element was standing in for this
   // reducer, and both cannot be present at once.
+  const localStiffness = cleanVector([...authority.condensed.localStiffness]);
+  const equivalentLocal = cleanVector([...authority.condensed.gravityLocalVector]);
+  const initialStrainLocal = cleanVector([...authority.condensed.thermalInitialStrainLocalVector]);
+  // The solver assembles GLOBAL contributions, not localStiffness. A previous
+  // revision replaced only the three LOCAL arrays and re-sealed their hash,
+  // leaving the *prismatic* global stiffness/load arrays in the solver. That
+  // made the apparent ten-cylinder candidate mechanically inert or inconsistent.
+  // Reuse the exact sealed element-axis and offset maps from the frame kernel;
+  // never infer a new orientation or apply an end offset twice.
+  const transformation = accepted.transformation.matrix;
+  const offsets = accepted.rigidOffsets;
+  const offsetMatrix = offsets.I === null && offsets.J === null
+    ? null
+    : frameOffsetMatrix(offsets);
+  let globalStiffness = transformStiffnessToGlobal(localStiffness, transformation);
+  let equivalentGlobal = transformLoadToGlobal(equivalentLocal, transformation);
+  let initialStrainGlobal = transformLoadToGlobal(initialStrainLocal, transformation);
+  if (offsetMatrix !== null) {
+    globalStiffness = applyOffsetToStiffness(globalStiffness, offsetMatrix);
+    equivalentGlobal = applyOffsetToLoad(equivalentGlobal, offsetMatrix);
+    initialStrainGlobal = applyOffsetToLoad(initialStrainGlobal, offsetMatrix);
+  }
   const draft = {
     ...accepted,
-    localStiffness: authority.condensed.localStiffness,
+    localStiffness,
+    globalStiffness,
     equivalentLoadVector: {
-      ...accepted.equivalentLoadVector,
-      local: cleanVector([...authority.condensed.gravityLocalVector]),
+      local: equivalentLocal,
+      global: equivalentGlobal,
     },
     initialStrainLoadVector: {
-      ...accepted.initialStrainLoadVector,
-      local: cleanVector([...authority.condensed.thermalInitialStrainLocalVector]),
+      local: initialStrainLocal,
+      global: initialStrainGlobal,
     },
     semanticHash: '',
   };

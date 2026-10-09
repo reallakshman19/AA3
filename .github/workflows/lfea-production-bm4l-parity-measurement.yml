@@ -13,6 +13,9 @@ on:
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
       - 'scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs'
       - 'scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs'
+      - 'scripts/lib/lfea-reducer-pressure-control-volume.mjs'
+      - 'scripts/lfea-reducer-pressure-control-volume-check.mjs'
+      - 'scripts/lfea-bm4l-e75-pressure-boundary-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -38,6 +41,9 @@ on:
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
       - 'scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs'
       - 'scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs'
+      - 'scripts/lib/lfea-reducer-pressure-control-volume.mjs'
+      - 'scripts/lfea-reducer-pressure-control-volume-check.mjs'
+      - 'scripts/lfea-bm4l-e75-pressure-boundary-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -75,6 +81,8 @@ jobs:
         run: node scripts/lfea-reducer-pressure-custody-guard-check.mjs
       - name: Prove hypothetical cylinder pressure free-expansion and uniform limits
         run: node scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs
+      - name: Verify signed fluid pressure control-volume force balance
+        run: node scripts/lfea-reducer-pressure-control-volume-check.mjs
       - name: Run actual LFEA production execution and CAESAR II comparison
         shell: bash
         env:
@@ -98,6 +106,13 @@ jobs:
           node scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs \
             --source-section test-results/lfea/bm4l-e75-source-section-and-loads.json \
             --out test-results/lfea/bm4l-e75-pressure-research-hypothesis.json
+      - name: Cross-check E75 original reducer declarations and full pressure boundary signs
+        run: |
+          node scripts/lfea-bm4l-e75-pressure-boundary-check.mjs \
+            --accdb benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB \
+            --pressure-research test-results/lfea/bm4l-e75-pressure-research-hypothesis.json \
+            --source-section test-results/lfea/bm4l-e75-source-section-and-loads.json \
+            --out test-results/lfea/bm4l-e75-pressure-boundary-control-volume.json
       - name: Validate real-model measurement coverage and retain comparison receipt
         run: |
           node scripts/lfea-production-caesar-parity-evidence-check.mjs \

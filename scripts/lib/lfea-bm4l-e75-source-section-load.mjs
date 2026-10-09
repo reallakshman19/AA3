@@ -192,7 +192,15 @@ export function diagnoseE75SourceSectionAndLoads(preparation) {
     inactiveCandidateOnly:true,
     sourceModelElement:{nodeI:mechanical.nodeI,nodeJ:mechanical.nodeJ,
       sectionStateId:mechanical.sectionStateId,materialStateId:mechanical.materialStateId},
-    sourceReducer:{toOuterDiameterM:reducer.toOuterDiameter,toWallThicknessM:reducer.toWallThickness},
+    // Retain raw length-unit R1/R2 and dimensionless ALPHA without claiming
+    // what CAESAR means by either radius or an eccentric wall construction.
+    sourceReducer:{
+      toOuterDiameterM:reducer.toOuterDiameter,toWallThicknessM:reducer.toWallThickness,
+      alpha:reducer.alpha??null,
+      r1SourceUnits:reducer.r1SourceUnits??null,
+      r2SourceUnits:reducer.r2SourceUnits??null,
+      sourceR1R2PressureGeometryQualified:false,
+    },
     sourceAnalysis:{...Object.fromEntries(['fluidDensity','insulationThickness','insulationDensity']
       .map((key)=>[key,sourceRoot(key)]))},
     from,to,sourceSectionAreaRatioToFrom:to.areaM2/from.areaM2,

@@ -123,8 +123,9 @@ function referenceRow(report,sourceGroup,node,component){
   const rows=caseRecord.comparison?.rows?.filter(row=>
     row.entityKind==='NODE' && String(row.entityId)===node
       && row.quantity===sourceGroup.quantity && row.component===component)??[];
-  assert.equal(rows.length,1,'BM4L_REFERENCE_ROW_DUPLICATED_OR_MISSING:'+
+  assert.ok(rows.length<=1,'BM4L_REFERENCE_ROW_DUPLICATED:'+
     sourceGroup.quantity+':'+node+':'+component);
+  if(rows.length===0) return null; // absence is NOT a zero-force reference
   const row=rows[0];
   assert.ok(['PASS','FAIL'].includes(row.status),'BM4L_REFERENCE_ROW_UNSCORABLE');
   return row;
@@ -147,41 +148,52 @@ export function auditE75WNeighborhood(experiment,report,receipt){
     for(const nodeId of group.nodes){
       for(const component of group.components){
         const row=referenceRow(report,group,nodeId,component);
-        const referenceValue=finite(row.referenceValue,'SOURCE_REF');
-        const actualValue=finite(row.actualValue,'SOURCE_ORIGINAL_ACTUAL');
-        const all=experiment.scenarios.map(s=>{
-          const value=extractModelValue(s,group,nodeId,component);
-          return {scenarioId:s.scenarioId,value,
-            deltaFromNative:value-actualValue,
-            signedDifferenceToOriginalCaesar:value-referenceValue,
-            originalCaesarReferenceNotCounterfactual:true};
-        });
-        compareActual(all[0].value,actualValue,
+        const sourceAvailable=row!==null;
+        const referenceValue=sourceAvailable?finite(row.referenceValue,'SOURCE_REF'):null;
+        const actualValue=sourceAvailable?finite(row.actualValue,'SOURCE_ORIGINAL_ACTUAL'):null;
+        const values=experiment.scenarios.map(s=>
+          extractModelValue(s,group,nodeId,component));
+        if(sourceAvailable) compareActual(values[0],actualValue,
           'L2:'+group.quantity+':'+nodeId+':'+component);
+        const all=experiment.scenarios.map((s,index)=>{
+          const value=values[index];
+          return {scenarioId:s.scenarioId,value,
+            deltaFromNative:value-values[0],
+            signedDifferenceToOriginalCaesar:sourceAvailable?value-referenceValue:null,
+            originalCaesarReferenceNotCounterfactual:sourceAvailable,
+          };
+        });
         records.push({
           sourceNodeId:nodeId,quantity:group.quantity,component,unit:group.unit,
           originalCaesarValue:referenceValue,
           originalProductionValue:actualValue,
-          originalComparatorStatus:row.status,
+          originalComparatorStatus:row?.status??null,
+          sourceComparatorAvailable:sourceAvailable,
+          missingSourceRowIsNotZeroReference:!sourceAvailable,
           scenarioResults:all,
         });
       }
     }
-    const baselineErrors=records.map(row=>
+    const comparable=records.filter(row=>row.sourceComparatorAvailable);
+    const unavailable=records.filter(row=>!row.sourceComparatorAvailable);
+    const baselineErrors=comparable.map(row=>
       Math.abs(row.originalProductionValue-row.originalCaesarValue));
     const summary=EXPERIMENT_IDS.map((scenarioId,index)=>{
-      const errors=records.map(row=>Math.abs(
+      const errors=comparable.map(row=>Math.abs(
         row.scenarioResults[index].signedDifferenceToOriginalCaesar));
       const changes=errors.map((e,i)=>e-baselineErrors[i]);
       const deltas=records.map(row=>row.scenarioResults[index].deltaFromNative);
       return {
         scenarioId,
-        sourceRowCount:records.length,
+        requestedModelComponentCount:records.length,
+        sourceRowCount:comparable.length,
+        missingCaesarSourceComponentCount:unavailable.length,
+        missingCaesarSourceComponents:unavailable.map(r=>r.sourceNodeId+':'+r.component),
         baselineOriginalComparatorFailCount:
-          records.filter(row=>row.originalComparatorStatus==='FAIL').length,
+          comparable.filter(row=>row.originalComparatorStatus==='FAIL').length,
         totalAbsoluteDifferenceToOriginalCaesar:
           errors.reduce((sum,v)=>sum+v,0),
-        worstAbsoluteDifferenceToOriginalCaesar:Math.max(...errors),
+        worstAbsoluteDifferenceToOriginalCaesar:errors.length?Math.max(...errors):null,
         changeInTotalAbsoluteDifferenceFromNative:
           changes.reduce((sum,v)=>sum+v,0),
         improvedComponentCount:changes.filter(v=>v<0).length,
@@ -192,6 +204,10 @@ export function auditE75WNeighborhood(experiment,report,receipt){
       };
     });
     assert.equal(records.length,group.nodes.length*group.components.length);
+    if(['NEIGHBOR_TRANSLATION','NEIGHBOR_ROTATION'].includes(group.id)){
+      assert.equal(unavailable.length,0,
+        'Original CAESAR L2 source nodal motion coverage MUST be complete');
+    }
     return {
       comparisonGroupId:group.id,physicalQuantity:group.quantity,unit:group.unit,
       sourceNodeIds:group.nodes,sourceComponents:group.components,
@@ -265,7 +281,8 @@ function main(argv){
       quantity:g.physicalQuantity,
       unit:g.unit,
       originalBaselineFailed:g.summary[0].baselineOriginalComparatorFailCount,
-      sourceRows:g.records.length,
+      sourceRows:g.summary[0].sourceRowCount,
+      missingSourceRows:g.summary[0].missingCaesarSourceComponents,
       totalAbsoluteSourceErrorByScenario:g.summary.map(x=>({
         scenario:x.scenarioId,total:x.totalAbsoluteDifferenceToOriginalCaesar,
         improved:x.improvedComponentCount,worsened:x.worsenedComponentCount,

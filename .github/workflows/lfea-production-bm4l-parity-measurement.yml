@@ -8,6 +8,7 @@ on:
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
+      - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
@@ -26,6 +27,7 @@ on:
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
+      - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
@@ -66,6 +68,10 @@ jobs:
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
           tail -n 90 test-results/lfea/bm4l-production-stdout.log
+      - name: Assert inactive E75 reducer matrices and print source-axis evidence
+        run: |
+          node scripts/lfea-bm4l-e75-matrix-evidence-check.mjs \
+            test-results/lfea/bm4l-e75-native-versus-candidate-matrices.json
       - name: Validate real-model measurement coverage and retain comparison receipt
         run: |
           node scripts/lfea-production-caesar-parity-evidence-check.mjs \

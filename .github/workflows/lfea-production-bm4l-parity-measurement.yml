@@ -7,6 +7,9 @@ on:
       - 'scripts/lfea-production-caesar-parity-evidence-check*.mjs'
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
+      - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
+      - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'src/core/linear-fea-**'
@@ -23,6 +26,9 @@ on:
       - 'scripts/lfea-production-caesar-parity-evidence-check*.mjs'
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
+      - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
+      - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'src/core/linear-fea-**'
@@ -51,14 +57,21 @@ jobs:
         run: npm ci
       - name: Verify measurement validator negative controls
         run: node scripts/lfea-production-caesar-parity-evidence-check.test.mjs
+      - name: Verify reducer beam-theory equivalence before matrix experiment
+        run: node scripts/lfea-reducer-beam-theory-consistency-check.mjs
       - name: Run actual LFEA production execution and CAESAR II comparison
         shell: bash
         env:
           LFEA_BM4L_PARITY_EVIDENCE_DIR: test-results/lfea
+          LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR: test-results/lfea
         run: |
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
           tail -n 90 test-results/lfea/bm4l-production-stdout.log
+      - name: Assert inactive E75 reducer matrices and print source-axis evidence
+        run: |
+          node scripts/lfea-bm4l-e75-matrix-evidence-check.mjs \
+            test-results/lfea/bm4l-e75-native-versus-candidate-matrices.json
       - name: Validate real-model measurement coverage and retain comparison receipt
         run: |
           node scripts/lfea-production-caesar-parity-evidence-check.mjs \

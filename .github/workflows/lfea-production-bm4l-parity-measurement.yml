@@ -11,6 +11,8 @@ on:
       - 'scripts/lfea-bm4l-e75-load-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
+      - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
       - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
@@ -42,6 +44,8 @@ on:
       - 'scripts/lfea-bm4l-e75-load-increment-budget.mjs'
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
+      - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
       - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
@@ -96,6 +100,7 @@ jobs:
           LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_WEIGHT_BENDING_EVIDENCE_DIR: test-results/lfea
+          LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR: test-results/lfea
         run: |
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
@@ -156,6 +161,14 @@ jobs:
           node scripts/lfea-bm4l-e75-load-increment-budget.mjs \
             --rotation-budget test-results/lfea/bm4l-e75-local-rotation-budget.json \
             --out test-results/lfea/bm4l-e75-rotation-case-difference-attribution.json
+      - name: Verify E75 full-system W-only perturbation source-anchor negative controls
+        run: node scripts/lfea-bm4l-e75-w-system-reference-check.mjs --self-test
+      - name: Compare four E75 W-only full-system scenarios to retained CAESAR L2
+        run: |
+          node scripts/lfea-bm4l-e75-w-system-reference-check.mjs \
+            --experiment test-results/lfea/bm4l-e75-w-system-perturbation.json \
+            --rotation-budget test-results/lfea/bm4l-e75-local-rotation-budget.json \
+            --out test-results/lfea/bm4l-e75-w-system-counterfactual-versus-caesar-l2.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

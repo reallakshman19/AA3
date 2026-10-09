@@ -48,6 +48,7 @@ import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js'
 import { buildE75ReducerMatrixDiagnostic } from './lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs';
 import { diagnoseE75SourceSectionAndLoads } from './lib/lfea-bm4l-e75-source-section-load.mjs';
 import { buildBm4lE75WeightBendingForensic } from './lib/lfea-bm4l-e75-weight-bending-forensic.mjs';
+import { measureBm4lE75WSystemPerturbation } from './lib/lfea-bm4l-e75-w-system-perturbation.mjs';
 import { computeInputXmlModelHealthSourceSemanticHash } from '../src/core/geometry/model-health/index.js';
 import {
   INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
@@ -214,6 +215,39 @@ assert.equal(authorized.solveAuthorized, true, 'Pre-flight authorization must su
 const executed = createLfeaNativeExecutionAuthority().run(authorized, {
   requestedCaseIds: PRODUCTION_CASE_IDS,
 });
+
+// Forensic counterfactuals only. Compare actual W execution to the *same*
+// solver run on the same original model, separately replacing only E75's
+// stiffness and/or its own gravity load. All other production frames, exact
+// bend/tee factors and native supports remain unchanged. NONE of these
+// E75-alternative matrices are routed through the authorized gateway.
+if (process.env.LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR) {
+  const dir = path.resolve(ROOT, process.env.LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR);
+  fs.mkdirSync(dir,{recursive:true});
+  const officialW=executed.execution.caseExecutions.find(row=>row.caseId==='IXP-W');
+  assert.ok(officialW,'Actual production W execution must be retained');
+  const evidence=measureBm4lE75WSystemPerturbation(
+    prepared.preparation,officialW.execution);
+  fs.writeFileSync(path.join(dir,'bm4l-e75-w-system-perturbation.json'),
+    JSON.stringify(evidence,null,2)+'\n','utf8');
+  console.log('BM4L_E75_W_SYSTEM_RESEARCH '+JSON.stringify({
+    status:evidence.status,
+    scenarios:evidence.scenarios.map(row=>({
+      id:row.scenarioId,
+      solverStatus:row.solverStatus,
+      sourceLocalIncrementMicrorad:row.sourceLocalIncrementRotationRad.map(x=>x*1e6),
+      at22120SupportReactions:row.downstreamSourceSupportReactions['22120'],
+      at22140SupportReactions:row.downstreamSourceSupportReactions['22140'],
+    })),
+    changesMicrorad:Object.fromEntries(
+      Object.entries(evidence.signedSourceLocalRotationChangesRelativeNativeRad)
+        .map(([key,v])=>[key,v.map(x=>x*1e6)])),
+    allNonE75FramesUnchanged:true,
+    officialWReproduced:true,
+    sourceCaesarNumericalCertification:false,
+    productionMechanicsChanged:false,
+  }));
+}
 
 // CAESAR reports a reaction at every restrained node with the unrestrained
 // components zero-filled; production emits only the components it actually

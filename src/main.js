@@ -69,7 +69,7 @@ const lfeaPipelineShellRoot = applicationRoot.ownerDocument.createElement('div')
 lfeaPipelineShellRoot.dataset.role = 'lfea-pipeline-shell-root';
 lfeaApplicationView.insertBefore(lfeaPipelineShellRoot, linearPipingConsumerRoot);
 const lfeaPipelineShell = new LfeaPipelineShellController(lfeaPipelineShellRoot).init();
-lfeaPipelineShell.getSourceHost().append(linearPipingConsumerRoot);
+lfeaPipelineShell.attachSourceConsumer(linearPipingConsumerRoot);
 const lfeaEngineeringSession = createLfeaEngineeringSession();
 let lfeaAnalysisSurface = null;
 let lfeaStepGuidanceReady = false;

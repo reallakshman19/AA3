@@ -12,7 +12,10 @@ import {
   REDUCER_SEGMENT_COUNT,
   sealReducerCondensationRequest,
 } from '../src/core/linear-fea-reducer-condensation/index.js';
-import { compileTenCylinderAxialPressureHypothesis } from '../src/core/linear-fea-reducer-condensation/reducer-condensation.js';
+import {
+  compileTenCylinderAxialPressureHypothesis,
+  idealizedAxisymmetricSidewallPressureResultant,
+} from '../src/core/linear-fea-reducer-condensation/reducer-condensation.js';
 import { closedEndPressureAxialStrain } from '../src/core/linear-fea-frame-element/frame-element.js';
 
 const SOURCE_SHA='64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8';
@@ -94,6 +97,17 @@ function measure(source){
   assert.equal(research.sourceTaperPressureAuthorityEstablished,false);
   assert.ok(research.condensedPressureInitialStrainLocalVector.some((v)=>v!==0),
     'Research pressure vector must not silently zero the measured pressure input');
+  // A distinct conservation-of-projected-area control for a geometrically
+  // idealized uniform-pressure, axisymmetric inner wall. Do not inject this
+  // resultant into either solver or infer the real reducer's cap treatment.
+  const idealizedSidewall=idealizedAxisymmetricSidewallPressureResultant({
+    pressurePa:pressure,
+    fromInnerDiameterM:source.from.innerDiameterM,
+    toInnerDiameterM:source.to.innerDiameterM,
+  });
+  assert.ok(idealizedSidewall.axialResultantMagnitudeN>0,
+    'E75 severe taper must have a nonzero idealized axial-wall pressure component');
+  assert.equal(idealizedSidewall.physicalSlopedSidewallPressureImplementationQualified,false);
   return {
     schema:'lfea-bm4l-e75-axial-pressure-hypothesis-receipt/v1',
     status:'RESEARCH_PRESSURE_VECTOR_MEASURED_NOT_CAESAR_OR_PRODUCTION_AUTHORIZED',
@@ -105,6 +119,7 @@ function measure(source){
     candidateProductionPressureBlocked:true,
     candidateSourceCodedPressureEnabled:false,
     researchOnlyHypothesis:research,
+    idealizedInnerWallPressureAreaControl:idealizedSidewall,
     sourceOuterDiameterFromM:fromSection.outerDiameter,
     sourceOuterDiameterToM:toSection.outerDiameter,
     missingQualification:[
@@ -133,6 +148,8 @@ function main(argv){
       receipt.researchOnlyHypothesis.freeExpansionConsistencyRelativeResidual,
     differenceInPressureEndForceN:
       receipt.researchOnlyHypothesis.algebraicAxialLoadN-receipt.nativePrismaticPressureEndForceN,
+    idealizedInnerWallAxialResultantMagnitudeN:
+      receipt.idealizedInnerWallPressureAreaControl.axialResultantMagnitudeN,
     conicalInnerWallPressureModelled:false,
     productionPressureGuardRemainsBlocked:true,
     caesarParityClaimed:false,

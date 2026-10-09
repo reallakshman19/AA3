@@ -446,3 +446,34 @@ export function compileTenCylinderAxialPressureHypothesis(request, pressureState
     ]),
   });
 }
+
+/**
+ * Geometric control volume only (not a CAESAR II reducer rule):
+ * for a hypothetical axisymmetric linearly tapered fluid passage with
+ * UNIFORM inner pressure P, the magnitude of the axial resultant of
+ * pressure on its sloped sidewall is |P * (Ai_to - Ai_from)|, where
+ * Ai=pi*di^2/4. This result has no end-cap force allocation, beam load
+ * projection, or eccentricity/pressure-loss qualification.
+ */
+export function idealizedAxisymmetricSidewallPressureResultant(input) {
+  const { pressurePa, fromInnerDiameterM, toInnerDiameterM } = input ?? {};
+  if (![pressurePa, fromInnerDiameterM, toInnerDiameterM].every(
+    (v) => typeof v === 'number' && Number.isFinite(v))
+    || fromInnerDiameterM <= 0 || toInnerDiameterM <= 0) {
+    throw new TypeError('REDUCER_SIDEWALL_GEOMETRY_RESEARCH_INVALID');
+  }
+  const areaFrom = Math.PI * fromInnerDiameterM ** 2 / 4;
+  const areaTo = Math.PI * toInnerDiameterM ** 2 / 4;
+  const signedPressureAreaProduct = pressurePa * (areaTo - areaFrom);
+  return Object.freeze({
+    schema: 'fea-reducer-idealized-sidewall-pressure-area-control/v1',
+    rule: 'IDEALIZED_AXISYMMETRIC_UNIFORM_PRESSURE_GEOMETRIC_IDENTITY_ONLY',
+    fromFluidAreaM2: areaFrom,
+    toFluidAreaM2: areaTo,
+    signedPressureAreaProductN: signedPressureAreaProduct,
+    axialResultantMagnitudeN: Math.abs(signedPressureAreaProduct),
+    physicalSlopedSidewallPressureImplementationQualified: false,
+    endCapAndSectionBoundaryAllocationQualified: false,
+    caesarIIReducerPressureRuleClaimed: false,
+  });
+}

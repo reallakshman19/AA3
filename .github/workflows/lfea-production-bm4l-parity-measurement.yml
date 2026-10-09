@@ -8,6 +8,8 @@ on:
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
+      - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -28,6 +30,8 @@ on:
       - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lfea-bm4l-rx-increment-budget.mjs'
       - 'scripts/lfea-bm4l-e75-local-rotation-budget.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
+      - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -66,6 +70,7 @@ jobs:
         env:
           LFEA_BM4L_PARITY_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR: test-results/lfea
+          LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR: test-results/lfea
         run: |
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
@@ -74,6 +79,10 @@ jobs:
         run: |
           node scripts/lfea-bm4l-e75-matrix-evidence-check.mjs \
             test-results/lfea/bm4l-e75-native-versus-candidate-matrices.json
+      - name: Verify native E75 from/to source section and physical-case load custody
+        run: |
+          node scripts/lfea-bm4l-e75-section-load-evidence-check.mjs \
+            test-results/lfea/bm4l-e75-source-section-and-loads.json
       - name: Validate real-model measurement coverage and retain comparison receipt
         run: |
           node scripts/lfea-production-caesar-parity-evidence-check.mjs \

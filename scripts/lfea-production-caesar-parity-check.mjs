@@ -46,6 +46,7 @@ import {
 } from './lib/lfea-production-benchmark-actual.mjs';
 import { semanticHash } from '../src/core/shared-piping-model/canonical-json.js';
 import { buildE75ReducerMatrixDiagnostic } from './lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs';
+import { diagnoseE75SourceSectionAndLoads } from './lib/lfea-bm4l-e75-source-section-load.mjs';
 import { computeInputXmlModelHealthSourceSemanticHash } from '../src/core/geometry/model-health/index.js';
 import {
   INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
@@ -142,6 +143,35 @@ if (process.env.LFEA_BM4L_E75_MATRIX_EVIDENCE_DIR) {
     candidateLoadConsistency: matrixEvidence.candidateLoadConsistencyRelative,
     globalMatrixRelativeChange: matrixEvidence.globalMatrixMaxRelativeDifference,
     candidateUsedByProduction: false,
+  }));
+}
+
+// Independently source-check E75 prismatic Timoshenko section and the
+// weight/pressure/thermal load vectors across all four original physical cases.
+// The ten-cylinder compiler is only compiled in a *separate inactive branch*;
+// its case-specific loads are never submitted to the authorized solve.
+if (process.env.LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR) {
+  const evidenceDir = path.resolve(ROOT, process.env.LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR);
+  fs.mkdirSync(evidenceDir, {recursive:true});
+  const sourceMechanics = diagnoseE75SourceSectionAndLoads(prepared.preparation);
+  fs.writeFileSync(path.join(evidenceDir,'bm4l-e75-source-section-and-loads.json'),
+    JSON.stringify(sourceMechanics,null,2)+'\n','utf8');
+  console.log('BM4L_E75_SOURCE_SECTION '+JSON.stringify({
+    status:sourceMechanics.status,
+    fromSection:sourceMechanics.from,
+    toSection:sourceMechanics.to,
+    ratioOfToFromArea:sourceMechanics.sourceSectionAreaRatioToFrom,
+    ratioOfToFromSecondMoment:sourceMechanics.sourceSectionSecondMomentRatioToFrom,
+    lengthM:sourceMechanics.lengthM,
+    phiXY:sourceMechanics.phiXY,
+    phiXZ:sourceMechanics.phiXZ,
+    nativeAndAnalyticalTermsAgree:sourceMechanics.analyticalSourceSectionParityVerified,
+    pressureLoadCarried:sourceMechanics.pressureLoadCarried,
+    pressureMagnitudes:sourceMechanics.pressureMagnitudes,
+    candidatePressureInitialStrainRequiresSeparateQualification:
+      sourceMechanics.candidatePressureInitialStrainRequiresSeparateQualification,
+    activeProductionChanged:false,
+    parityQualified:false,
   }));
 }
 

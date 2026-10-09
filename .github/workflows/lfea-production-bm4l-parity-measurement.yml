@@ -13,6 +13,7 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
       - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
+      - 'scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs'
       - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
@@ -46,6 +47,7 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
       - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
+      - 'scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs'
       - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
@@ -169,6 +171,15 @@ jobs:
             --experiment test-results/lfea/bm4l-e75-w-system-perturbation.json \
             --rotation-budget test-results/lfea/bm4l-e75-local-rotation-budget.json \
             --out test-results/lfea/bm4l-e75-w-system-counterfactual-versus-caesar-l2.json
+      - name: Verify E75 section station sampling bounds and tamper negative controls
+        run: node scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs --self-test
+      - name: Audit original CAESAR L2 nodal/support responses across all W E75 perturbations
+        run: |
+          node scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs \
+            --experiment test-results/lfea/bm4l-e75-w-system-perturbation.json \
+            --full-report test-results/lfea/bm4l-caesar-full-comparison.json \
+            --weight-bending test-results/lfea/bm4l-e75-weight-bending-compliance.json \
+            --out test-results/lfea/bm4l-e75-w-neighborhood-support-sampling-audit.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

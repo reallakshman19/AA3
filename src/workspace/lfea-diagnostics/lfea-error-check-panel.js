@@ -7,6 +7,7 @@ import {
   selectLfeaErrorCheckSections,
 } from './lfea-error-check-presentation.js';
 import { lfeaPipelineIcon } from '../lfea-pipeline-icon-manifest.js';
+import { mountLfeaInlineBendFactorAuthorityControl } from '../lfea-bend-factor-authority-control.js';
 
 export const LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA = 'lfea-common-error-check-panel/v1';
 
@@ -42,6 +43,8 @@ export class LfeaCommonErrorCheckPanelController {
     this.reviewReason = '';
     this.authorizationError = '';
     this.authorizing = false;
+    this.inlineComponentBasisControl = null;
+    this.inlineComponentBasisControlRendered = false;
     this.elements = null;
     this.onRefreshRequested = () => this.refresh();
   }
@@ -168,6 +171,7 @@ export class LfeaCommonErrorCheckPanelController {
     status.dataset.status = errorCheckStatusToken(this.presentation);
 
     renderFilters(this, filters);
+    this.inlineComponentBasisControlRendered = false;
     body.replaceChildren();
     if (!this.presentation.empty) {
       body.append(renderTriageBanner(this.documentRef, this.presentation));
@@ -444,17 +448,20 @@ function renderGroupAction(controller, group) {
 
   if (group.disposition === 'BLOCK') {
     // Component-factor authority gates are resolved in this UI, not in the
-    // source file: the "B31 / B31J component basis" control lives on this
-    // same step, and choosing an edition re-runs preparation on its own.
-    // Sending the engineer back to re-import would be wrong -- the button
-    // takes them to the control instead.
+    // source file -- so the resolution control is mounted right here in the
+    // finding row, not behind a jump-to-somewhere-else button. Choosing an
+    // edition re-runs preparation on its own and this BLOCK clears; nothing
+    // needs reloading. The inline instance shares the governed selection
+    // with the top-of-step control, so both stay in sync.
     if (LFEA_COMPONENT_FACTOR_AUTHORITY_CODES.has(group.code)) {
-      const gotoControl = actionButton(doc, 'Choose B31 / B31J basis', 'icon-step-input');
-      gotoControl.classList.add('lfea-common-error-check__primary-action');
-      gotoControl.dataset.action = 'lfea-error-check-goto-component-basis';
-      gotoControl.addEventListener('click', () => revealComponentFactorAuthorityControl(doc));
-      row.append(gotoControl, paragraph(doc,
-        'Pick the code edition and bend rule in the "B31 / B31J component basis" control on this step. The pre-flight re-runs on its own -- nothing needs reloading.'));
+      if (!controller.inlineComponentBasisControlRendered) {
+        controller.inlineComponentBasisControlRendered = true;
+        row.append(inlineComponentBasisControl(controller), paragraph(doc,
+          'Choose the code edition and bend rule here. The pre-flight re-runs on its own and this block clears -- nothing needs reloading.'));
+      } else {
+        row.append(paragraph(doc,
+          'Resolve it in the "B31 / B31J component basis" selector above. The pre-flight re-runs on its own -- nothing needs reloading.'));
+      }
       return row;
     }
     const lock = actionButton(doc, 'Fix in source and reload', 'icon-step-input');
@@ -475,20 +482,16 @@ function renderGroupAction(controller, group) {
 }
 
 /**
- * Scroll the component factor authority control into view and spotlight it
- * briefly. The control mounts at the top of the source host -- the same host
- * this panel renders in -- so it is present on both the Input and Error Check
- * steps. A no-op when it is absent (e.g. a host that never mounts it).
+ * The one inline component-basis control for this panel, created lazily and
+ * kept for the controller's lifetime. It is re-appended (moved, not
+ * recreated) on each render that shows an authority-gate BLOCK, so its
+ * change listeners and current values survive the panel's re-render cycle.
  */
-function revealComponentFactorAuthorityControl(doc) {
-  const control = doc?.querySelector?.('[data-role="lfea-bend-factor-authority-control"]');
-  if (!control) return;
-  control.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-  control.classList?.add('lfea-bend-factor-authority-control--spotlight');
-  const setTimeoutFn = doc.defaultView?.setTimeout ?? globalThis.setTimeout;
-  if (typeof setTimeoutFn === 'function') {
-    setTimeoutFn(() => control.classList?.remove('lfea-bend-factor-authority-control--spotlight'), 2600);
+function inlineComponentBasisControl(controller) {
+  if (!controller.inlineComponentBasisControl) {
+    controller.inlineComponentBasisControl = mountLfeaInlineBendFactorAuthorityControl(controller.documentRef);
   }
+  return controller.inlineComponentBasisControl.root;
 }
 
 function renderAuthorizationPanel(controller) {

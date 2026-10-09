@@ -191,14 +191,15 @@ export function auditE75WNeighborhood(experiment,report,receipt){
         missingCaesarSourceComponents:unavailable.map(r=>r.sourceNodeId+':'+r.component),
         baselineOriginalComparatorFailCount:
           comparable.filter(row=>row.originalComparatorStatus==='FAIL').length,
+        // No comparator row means UNKNOWN, never score it as zero error.
         totalAbsoluteDifferenceToOriginalCaesar:
-          errors.reduce((sum,v)=>sum+v,0),
+          errors.length?errors.reduce((sum,v)=>sum+v,0):null,
         worstAbsoluteDifferenceToOriginalCaesar:errors.length?Math.max(...errors):null,
         changeInTotalAbsoluteDifferenceFromNative:
-          changes.reduce((sum,v)=>sum+v,0),
-        improvedComponentCount:changes.filter(v=>v<0).length,
-        worsenedComponentCount:changes.filter(v=>v>0).length,
-        exactlyUnchangedComponentCount:changes.filter(v=>v===0).length,
+          changes.length?changes.reduce((sum,v)=>sum+v,0):null,
+        improvedComponentCount:changes.length?changes.filter(v=>v<0).length:null,
+        worsenedComponentCount:changes.length?changes.filter(v=>v>0).length:null,
+        exactlyUnchangedComponentCount:changes.length?changes.filter(v=>v===0).length:null,
         largestAbsoluteChangeFromNative:Math.max(...deltas.map(Math.abs)),
         sourceCaesarParityCertificationGranted:false,
       };
@@ -212,6 +213,9 @@ export function auditE75WNeighborhood(experiment,report,receipt){
       comparisonGroupId:group.id,physicalQuantity:group.quantity,unit:group.unit,
       sourceNodeIds:group.nodes,sourceComponents:group.components,
       comparatorToleranceRetained:true,
+      sourceComparatorCoverage:comparable.length===0
+        ?'NO_ORIGINAL_SOURCE_ROWS_NOT_A_ZERO_ERROR'
+        :unavailable.length===0?'COMPLETE':'PARTIAL',
       records,summary,
     };
   });

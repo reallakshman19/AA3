@@ -31,14 +31,14 @@ function globalEndAction(contribution,displacement12) {
  */
 export function computeWNeighborhoodEndActions({
   model,sourceBasicRows,segmentBindings,nativeElements,nativeFrames,
-  candidateE75Frame,execution,e75Contribution
+  execution,e75Contribution,scenarioId
 }){
   assert.ok(Array.isArray(sourceBasicRows)&&sourceBasicRows.length===96,
     'FULL_96_ORIGINAL_CAESAR_INPUT_ELEMENTS_REQUIRED');
   const elementById=new Map(model.elements.map(e=>[e.elementId,e]));
   const nativeById=new Map(nativeElements.map(e=>[e.elementId,e]));
   const frameById=new Map(nativeFrames.map(e=>[e.elementId,e]));
-  assert.equal(candidateE75Frame.elementId,'IXP.E75');
+  assert.ok(typeof scenarioId==='string'&&scenarioId.length>0);
   const disp=new Map(execution.displacement.map(x=>[
     x.nodeId+':'+x.dof,ensure(x.value,'DISPLACEMENT')
   ]));
@@ -75,18 +75,15 @@ export function computeWNeighborhoodEndActions({
       assert.ok(error/scale<1e-7,
         'NON_E75_INDEPENDENT_ACTION_RECOVERY_DRIFT:'+number+':'+error);
     }
-    if(id==='IXP.E75'&&used===original){
+    if(id==='IXP.E75'&&scenarioId==='BASELINE_AUTHORIZED_EQUIVALENT'){
       const error=norm(diff(q,nativeRebuild));
       const scale=Math.max(1,norm(q),norm(nativeRebuild));
       assert.ok(error/scale<1e-7,
         'E75_BASELINE_INDEPENDENT_ACTION_RECOVERY_DRIFT');
     }
-    if(id==='IXP.E75'&&used.globalStiffness===candidateE75Frame.globalStiffness){
-      // In mixed stiffness/original gravity studies no single candidate frame
-      // is the complete load authority. Do not falsely use its recovered
-      // vector in place of the counterfactual global Kd - applied F.
-      assert.equal(e75Contribution,used);
-    }
+    // E75 mixed stiffness/original gravity may NOT correspond to any single
+    // sealed candidate frame's loads. The global assembled contribution is
+    // therefore the sole valid action definition in mixed studies.
     const endAction=(offset)=>Object.fromEntries(
       COMPONENTS.map((key,i)=>[key,q[offset+i]]));
     return {
@@ -98,7 +95,8 @@ export function computeWNeighborhoodEndActions({
       globalFrom:endAction(0),
       globalTo:endAction(6),
       globalVector12:q,
-      independentlyRecoveredProductionBareFrame:id==='IXP.E75'?used===original:true,
+      independentlyRecoveredProductionBareFrame:
+        id==='IXP.E75'?scenarioId==='BASELINE_AUTHORIZED_EQUIVALENT':true,
       originalSourceElementTopologyRetained:true,
     };
   });

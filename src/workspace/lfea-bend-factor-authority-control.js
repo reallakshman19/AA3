@@ -24,9 +24,36 @@ const EMPTY_SELECTION = Object.freeze({
 });
 
 let currentSelection = EMPTY_SELECTION;
-let mountedControl = null;
+// Every mounted instance of the control shares the one governed selection.
+// A Set rather than a single reference: the control is mounted both at the
+// top of the source step and inline inside the Error Check BLOCK row, and
+// both must stay in sync. Instances stay registered while disconnected --
+// a panel that re-renders re-appends the same node, and it must already
+// hold the shared selection when it reconnects.
+const mountedControls = new Set();
 
 export function lfeaBendFactorAuthoritySelection() {
+  return currentSelection;
+}
+
+/**
+ * The single mutation path for the component factor selection. Updates the
+ * shared selection, mirrors it into every mounted control instance (so the
+ * top-of-step control and an inline copy never disagree), and re-runs the
+ * native pre-flights -- the same regeneration a profile change triggers.
+ */
+export function setLfeaBendFactorAuthoritySelection(selection, doc) {
+  currentSelection = normalizeSelection(selection);
+  for (const control of mountedControls) {
+    // Sync detached instances too: setting select values works fine on a
+    // disconnected node, and an instance that a panel re-appends later must
+    // never show a selection the governed state no longer holds.
+    control.syncFromSelection(currentSelection);
+  }
+  const docRef = doc
+    ?? [...mountedControls].find((control) => control.root.isConnected)?.root?.ownerDocument
+    ?? (typeof document !== 'undefined' ? document : null);
+  if (docRef) regenerateNativePreFlights(docRef);
   return currentSelection;
 }
 
@@ -59,22 +86,70 @@ export function lfeaBranchFactorAuthorityForIntake(intake) {
 
 export function ensureLfeaBendFactorAuthorityControl(doc) {
   if (!doc || typeof doc.querySelector !== 'function') return null;
-  if (mountedControl?.root?.isConnected) return mountedControl;
   const host = doc.querySelector('[data-role="linear-piping-consumer-root"]');
   if (!host || typeof host.append !== 'function') return null;
-  const existing = host.querySelector?.('[data-role="lfea-bend-factor-authority-control"]');
-  if (existing) return mountedControl;
-
-  mountedControl = createLfeaBendFactorAuthorityControl(doc, {
+  // Reuse the instance already mounted in this host. Presence is asked of the
+  // host itself, because the module's mount contract is a role query -- DOM
+  // conveniences such as Element.contains are not part of it and headless
+  // check harnesses (the s3 guard's stub document) do not implement them.
+  // An inline instance mounted inside an Error Check BLOCK row is never
+  // returned here: a caller asking for the top-of-source control must not be
+  // handed a row's control.
+  const mountedRoot = typeof host.querySelector === 'function'
+    ? host.querySelector('[data-role="lfea-bend-factor-authority-control"]')
+    : null;
+  if (mountedRoot) {
+    for (const control of mountedControls) {
+      if (control.root === mountedRoot && !control.inline) return control;
+    }
+  }
+  const control = createLfeaBendFactorAuthorityControl(doc, {
     initialSelection: currentSelection,
-    onChanged(selection) {
-      currentSelection = selection;
-      regenerateNativePreFlights(doc);
-    },
+    onChanged(selection) { setLfeaBendFactorAuthoritySelection(selection, doc); },
   });
-  if (typeof host.prepend === 'function') host.prepend(mountedControl.root);
-  else host.append(mountedControl.root);
-  return mountedControl;
+  mountedControls.add(control);
+  if (typeof host.prepend === 'function') host.prepend(control.root);
+  else host.append(control.root);
+  return control;
+}
+
+/**
+ * A second, caller-placed instance of the control for surfaces that report
+ * the authority gate and must offer the fix right there (the Error Check
+ * BLOCK row). It shares the governed selection with the top-of-step control
+ * through setLfeaBendFactorAuthoritySelection, so a choice made in either
+ * place re-runs the pre-flight exactly once and both stay in sync.
+ * The caller keeps the returned control and re-appends its root across
+ * re-renders; the node is moved, never recreated, so listeners survive.
+ */
+export function mountLfeaInlineBendFactorAuthorityControl(doc) {
+  const control = createLfeaBendFactorAuthorityControl(doc, {
+    initialSelection: currentSelection,
+    inline: true,
+    onChanged(selection) { setLfeaBendFactorAuthoritySelection(selection, doc); },
+  });
+  control.root.classList.add('lfea-bend-factor-authority-control--inline');
+  mountedControls.add(control);
+  return control;
+}
+
+/**
+ * Bring the top-of-step control on screen and spotlight it. Re-mounts it
+ * first if its fragile startup mount never landed, so callers can rely on
+ * this rather than silently no-op-ing against a missing node. Returns
+ * whether a control was there to reveal.
+ */
+export function revealLfeaBendFactorAuthorityControl(doc) {
+  const root = ensureLfeaBendFactorAuthorityControl(doc)?.root
+    ?? doc?.querySelector?.('[data-role="lfea-bend-factor-authority-control"]');
+  if (!root) return false;
+  root.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  root.classList?.add('lfea-bend-factor-authority-control--spotlight');
+  const setTimeoutFn = doc?.defaultView?.setTimeout ?? globalThis.setTimeout;
+  if (typeof setTimeoutFn === 'function') {
+    setTimeoutFn(() => root.classList?.remove('lfea-bend-factor-authority-control--spotlight'), 2600);
+  }
+  return true;
 }
 
 export function createLfeaBendFactorAuthorityControl(doc, options) {
@@ -167,7 +242,19 @@ export function createLfeaBendFactorAuthorityControl(doc, options) {
     return state;
   }
 
-  return Object.freeze({ root, editionSelect, smoothSelect, snapshot, authority, branchAuthority, clear });
+  /** Mirror a selection changed elsewhere without emitting another change. */
+  function syncFromSelection(selection) {
+    const normalized = normalizeSelection(selection);
+    editionSelect.value = normalized.editionProfileId ?? '';
+    smoothSelect.value = normalized.smooth90FlexibilityCorrection === null
+      ? ''
+      : normalized.smooth90FlexibilityCorrection ? 'YES' : 'NO';
+  }
+
+  return Object.freeze({
+    root, editionSelect, smoothSelect, snapshot, authority, branchAuthority, clear, syncFromSelection,
+    inline: resolvedOptions.inline === true,
+  });
 }
 
 function regenerateNativePreFlights(doc) {

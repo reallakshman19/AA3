@@ -212,6 +212,17 @@ const report = await runCaesarAccdbBenchmark({
 // Did the adapter actually emit element rows? Read it from what was supplied,
 // not from what the comparison contains -- the comparison also carries
 // reference rows that have no counterpart.
+// Optional CI evidence output: retain every failed source-bound comparator
+// row plus the unmodified production actual for independent node/element RCA.
+if (process.env.LFEA_BM4L_PARITY_EVIDENCE_DIR) {
+  const fullEvidenceDir = path.resolve(ROOT, process.env.LFEA_BM4L_PARITY_EVIDENCE_DIR);
+  fs.mkdirSync(fullEvidenceDir, { recursive: true });
+  fs.writeFileSync(path.join(fullEvidenceDir, 'bm4l-caesar-full-comparison.json'),
+    JSON.stringify(report, null, 2) + '\n', 'utf8');
+  fs.writeFileSync(path.join(fullEvidenceDir, 'bm4l-production-full-actual.json'),
+    JSON.stringify(actual, null, 2) + '\n', 'utf8');
+}
+
 const elementActionsSupplied = Object.values(actual.cases)
   .some((entry) => entry.rows.some((row) => row.entityKind === 'ELEMENT'));
 

@@ -11,6 +11,8 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
+      - 'scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs'
+      - 'scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -34,6 +36,8 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lfea-bm4l-e75-section-load-evidence-check.mjs'
       - 'scripts/lfea-reducer-pressure-custody-guard-check.mjs'
+      - 'scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs'
+      - 'scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs'
       - 'scripts/lib/lfea-bm4l-e75-reducer-matrix-diagnostic.mjs'
       - 'scripts/lfea-bm4l-e75-matrix-evidence-check.mjs'
       - 'src/core/linear-piping-analysis-consumer/reducer-condensation-augmentation.js'
@@ -69,6 +73,8 @@ jobs:
         run: node scripts/lfea-reducer-beam-theory-consistency-check.mjs
       - name: Prove ten-cylinder pressure axial source-basis guard fails closed
         run: node scripts/lfea-reducer-pressure-custody-guard-check.mjs
+      - name: Prove hypothetical cylinder pressure free-expansion and uniform limits
+        run: node scripts/lfea-s4-taper-pressure-mathematical-hypothesis-check.mjs
       - name: Run actual LFEA production execution and CAESAR II comparison
         shell: bash
         env:
@@ -87,6 +93,11 @@ jobs:
         run: |
           node scripts/lfea-bm4l-e75-section-load-evidence-check.mjs \
             test-results/lfea/bm4l-e75-source-section-and-loads.json
+      - name: Measure nonproduction cylinder pressure hypothesis against authentic E75 input
+        run: |
+          node scripts/lfea-bm4l-e75-pressure-research-evidence-check.mjs \
+            --source-section test-results/lfea/bm4l-e75-source-section-and-loads.json \
+            --out test-results/lfea/bm4l-e75-pressure-research-hypothesis.json
       - name: Validate real-model measurement coverage and retain comparison receipt
         run: |
           node scripts/lfea-production-caesar-parity-evidence-check.mjs \

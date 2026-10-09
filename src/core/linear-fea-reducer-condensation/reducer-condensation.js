@@ -1,4 +1,5 @@
 import { cleanNumber } from '../shared-analysis-contract/numeric.js';
+import { closedEndPressureAxialStrain } from '../linear-fea-frame-element/frame-element.js';
 import {
   distributedLoadLocalVector,
   frameLocalStiffness,
@@ -317,5 +318,162 @@ export function compileTenCylinderReducerAuthority(request) {
       'Eccentricity is represented by the caller-declared element axis; this authority varies section properties along that axis.',
     ],
     semanticHash: '',
+  });
+}
+
+/**
+ * UNQUALIFIED RESEARCH ONLY: evaluate the algebraic axial-pressure initial
+ * strain of ten midpoint-sampled straight cylinders using the existing
+ * closed-end prismatic pipe convention. This is NOT a claim that a tapered
+ * reducer's sloping interior pressure surface or cap forces are represented
+ * correctly by ten independent closed-end cylinders.
+ *
+ * IMPORTANT: this deliberately has no link to
+ * augmentFrameElementReducer(), production profiles, or solver preflight.
+ * That path must keep rejecting pressurized candidates until separate source
+ * and CAESAR II qualification. The research can demonstrate mathematical
+ * self-consistency, NOT engineering authority.
+ */
+export function compileTenCylinderAxialPressureHypothesis(request, pressureState) {
+  const accepted = requireReducerCondensationRequest(request);
+  if (!pressureState || typeof pressureState !== 'object'
+    || Array.isArray(pressureState)
+    || Object.keys(pressureState).sort().join(',') !== 'poissonRatio,pressurePa') {
+    throw new TypeError('REDUCER_PRESSURE_RESEARCH_EXACT_STATE_REQUIRED');
+  }
+  const { pressurePa, poissonRatio } = pressureState;
+  if (typeof pressurePa !== 'number' || !Number.isFinite(pressurePa)
+    || typeof poissonRatio !== 'number' || !Number.isFinite(poissonRatio)
+    || !(poissonRatio > -1 && poissonRatio < 0.5)) {
+    throw new TypeError('REDUCER_PRESSURE_RESEARCH_PHYSICAL_STATE_INVALID');
+  }
+
+  // Reuse the same midpoint cylinders and frozen section evidence as the
+  // candidate reducer. Reassemble only inside this research function: no
+  // candidate pressure vector is stored on a production frame element.
+  const candidate = compileTenCylinderReducerAuthority(accepted);
+  const size = (REDUCER_SEGMENT_COUNT + 1) * 6;
+  const stiffness = matrix(size, 0);
+  const fullPressureLoad = vector(size);
+  let freeAxialExtension = 0;
+  const cylinders = [];
+  for (const segment of candidate.segments) {
+    const { section, index, length } = segment;
+    const stiffnessSegment = frameLocalStiffness({
+      elasticModulus: accepted.material.elasticModulus,
+      shearModulus: accepted.material.shearModulus,
+      area: section.area,
+      secondMomentY: section.secondMomentY,
+      secondMomentZ: section.secondMomentZ,
+      polarMoment: section.polarMoment,
+      length,
+      shearDeformation: true,
+      shearCorrectionFactorY: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+      shearCorrectionFactorZ: CAESAR_PIPE_SHEAR_CORRECTION_FACTOR,
+    });
+    addElementMatrix(stiffness, stiffnessSegment.matrix, index, index + 1);
+    const strain = closedEndPressureAxialStrain({
+      pressure: pressurePa,
+      outerDiameter: section.outerDiameter,
+      innerDiameter: section.innerDiameter,
+      poissonRatio,
+      elasticModulus: accepted.material.elasticModulus,
+      elementId: accepted.reducerId,
+    });
+    const segmentLoad = thermalInitialStrainVector({
+      elasticModulus: accepted.material.elasticModulus,
+      area: section.area,
+      axialStrain: strain,
+    });
+    addElementVector(fullPressureLoad, segmentLoad, index, index + 1);
+    freeAxialExtension += length * strain;
+    cylinders.push({
+      cylinderIndex: index,
+      localMidpointFraction: segment.midpointFraction,
+      areaM2: section.area,
+      innerDiameterM: section.innerDiameter,
+      pressureAxialStrain: cleanNumber(strain),
+      initialStrainEquivalentAxialForceN: cleanNumber(segmentLoad[6]),
+      impliedFreeAxialExtensionM: cleanNumber(length * strain),
+    });
+  }
+  const condensed = condense(stiffness, { pressure: fullPressureLoad });
+  const pressureVector = condensed.loads.pressure;
+  const axialStiffness = condensed.stiffness[0];
+  const expectedPressureForce = axialStiffness * freeAxialExtension;
+  const mismatch = Math.max(
+    Math.abs(pressureVector[0] + expectedPressureForce),
+    Math.abs(pressureVector[6] - expectedPressureForce),
+    ...pressureVector.filter((_, i) => i !== 0 && i !== 6).map(Math.abs),
+  );
+  const normalization = Math.max(1, Math.abs(expectedPressureForce));
+  if (mismatch / normalization > 2e-8) {
+    throw new Error('REDUCER_PRESSURE_RESEARCH_FREE_EXTENSION_INCONSISTENT');
+  }
+  const stiffnessMismatch = Math.max(...condensed.stiffness.map((value, index) =>
+    Math.abs(value - candidate.condensed.localStiffness[index])
+    / Math.max(1, Math.abs(value), Math.abs(candidate.condensed.localStiffness[index]))));
+  if (stiffnessMismatch > 2e-8) {
+    throw new Error('REDUCER_PRESSURE_RESEARCH_SOURCE_STIFFNESS_CHANGED');
+  }
+  return Object.freeze({
+    schema: 'fea-linear-reducer-axial-pressure-research/v1',
+    status: 'MATHEMATICALLY_CONSISTENT_NOT_TAPER_PRESSURE_AUTHORIZED',
+    ruleId: 'UNQUALIFIED_CYLINDERWISE_CLOSED_END_AXIAL_STRAIN_V1',
+    reducerId: accepted.reducerId,
+    reducerRequestSemanticHash: accepted.semanticHash,
+    underlyingCandidateAuthoritySemanticHash: candidate.semanticHash,
+    pressurePa,
+    poissonRatio,
+    samplingRule: accepted.samplingRule,
+    midpointCylinderCount: cylinders.length,
+    cylinders: Object.freeze(cylinders),
+    condensedPressureInitialStrainLocalVector: Object.freeze(pressureVector),
+    equivalentFreeAxialExtensionM: cleanNumber(freeAxialExtension),
+    equivalentCondensedAxialStiffnessNPerM: cleanNumber(axialStiffness),
+    algebraicAxialLoadN: cleanNumber(expectedPressureForce),
+    freeExpansionConsistencyRelativeResidual: cleanNumber(mismatch / normalization),
+    stiffnessReassemblyRelativeResidual: cleanNumber(stiffnessMismatch),
+    slopedInnerWallPressureForceModelled: false,
+    sourceTaperPressureAuthorityEstablished: false,
+    productionUseAuthorized: false,
+    globalCaesarIIParityQualified: false,
+    limitations: Object.freeze([
+      'Straight-cylinder closed-end axial pressure strain is applied independently to each taper sampling station. The actual conical inner-wall axial pressure traction is not resolved.',
+      'No external CAESAR II pressure-on-taper rule or boundary end-cap treatment establishes engineering authority for this candidate.',
+      'Midpoint section sampling, reducer gravity ownership, source pressure boundary conditions, and whole-model parity remain open.',
+      'The production ten-cylinder path retains a fail-closed guard for nonzero axial-pressure strain.',
+    ]),
+  });
+}
+
+/**
+ * Geometric control volume only (not a CAESAR II reducer rule):
+ * for a hypothetical axisymmetric linearly tapered fluid passage with
+ * UNIFORM inner pressure P, the magnitude of the axial resultant of
+ * pressure on its sloped sidewall is |P * (Ai_to - Ai_from)|, where
+ * Ai=pi*di^2/4. This result has no end-cap force allocation, beam load
+ * projection, or eccentricity/pressure-loss qualification.
+ */
+export function idealizedAxisymmetricSidewallPressureResultant(input) {
+  const { pressurePa, fromInnerDiameterM, toInnerDiameterM } = input ?? {};
+  if (![pressurePa, fromInnerDiameterM, toInnerDiameterM].every(
+    (v) => typeof v === 'number' && Number.isFinite(v))
+    || fromInnerDiameterM <= 0 || toInnerDiameterM <= 0) {
+    throw new TypeError('REDUCER_SIDEWALL_GEOMETRY_RESEARCH_INVALID');
+  }
+  const areaFrom = Math.PI * fromInnerDiameterM ** 2 / 4;
+  const areaTo = Math.PI * toInnerDiameterM ** 2 / 4;
+  const signedPressureAreaProduct = pressurePa * (areaTo - areaFrom);
+  return Object.freeze({
+    schema: 'fea-reducer-idealized-sidewall-pressure-area-control/v1',
+    rule: 'IDEALIZED_AXISYMMETRIC_UNIFORM_PRESSURE_GEOMETRIC_IDENTITY_ONLY',
+    fromFluidAreaM2: areaFrom,
+    toFluidAreaM2: areaTo,
+    signedPressureAreaProductN: signedPressureAreaProduct,
+    axialResultantMagnitudeN: Math.abs(signedPressureAreaProduct),
+    physicalSlopedSidewallPressureImplementationQualified: false,
+    endCapAndSectionBoundaryAllocationQualified: false,
+    caesarIIReducerPressureRuleClaimed: false,
   });
 }

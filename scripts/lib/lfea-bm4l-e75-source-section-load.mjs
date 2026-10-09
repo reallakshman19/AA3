@@ -46,6 +46,15 @@ export function diagnoseE75SourceSectionAndLoads(preparation) {
   const sectionResolution=structural.sectionResolutions.find((r)=>
     r.sectionState.sectionStateId===mechanical.sectionStateId);
   assert.ok(sectionResolution,'E75_SECTION_RESOLUTION_REQUIRED');
+  const materialResolution=structural.materialResolutions.find((r)=>
+    r.materialState.materialStateId===mechanical.materialStateId);
+  assert.ok(materialResolution,'E75_MATERIAL_RESOLUTION_REQUIRED');
+  const sourceMaterial=materialResolution.materialState;
+  assert.ok(Number.isFinite(sourceMaterial.poissonRatio)
+    && sourceMaterial.poissonRatio>-1 && sourceMaterial.poissonRatio<0.5,
+    'E75_SOURCE_POISSON_RATIO_REQUIRED');
+  assert.ok(Number.isFinite(sourceMaterial.massDensity)&&sourceMaterial.massDensity>0,
+    'E75_SOURCE_MASS_DENSITY_REQUIRED');
   const from=section(sectionResolution.dimensions.outerDiameter,sectionResolution.dimensions.wallThickness);
   const to=section(reducer.toOuterDiameter,reducer.toWallThickness);
   const sectionState=sectionResolution.sectionState;
@@ -189,6 +198,8 @@ export function diagnoseE75SourceSectionAndLoads(preparation) {
     from,to,sourceSectionAreaRatioToFrom:to.areaM2/from.areaM2,
     sourceSectionSecondMomentRatioToFrom:to.secondMomentM4/from.secondMomentM4,
     lengthM:L,elasticModulusPa:E,shearModulusPa:G,
+    sourcePoissonRatio:sourceMaterial.poissonRatio,
+    sourceMassDensityKgM3:sourceMaterial.massDensity,
     sourceShearCorrectionFactor:0.5,
     sourcePrismaticKinematicModel:'TIMOSHENKO_UNIFORM_FROM_END_SECTION',
     phiXY:phiY,phiXZ:phiZ,

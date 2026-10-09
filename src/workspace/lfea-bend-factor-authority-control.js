@@ -88,8 +88,20 @@ export function ensureLfeaBendFactorAuthorityControl(doc) {
   if (!doc || typeof doc.querySelector !== 'function') return null;
   const host = doc.querySelector('[data-role="linear-piping-consumer-root"]');
   if (!host || typeof host.append !== 'function') return null;
-  for (const control of mountedControls) {
-    if (control.root.isConnected && host.contains(control.root)) return control;
+  // Reuse the instance already mounted in this host. Presence is asked of the
+  // host itself, because the module's mount contract is a role query -- DOM
+  // conveniences such as Element.contains are not part of it and headless
+  // check harnesses (the s3 guard's stub document) do not implement them.
+  // An inline instance mounted inside an Error Check BLOCK row is never
+  // returned here: a caller asking for the top-of-source control must not be
+  // handed a row's control.
+  const mountedRoot = typeof host.querySelector === 'function'
+    ? host.querySelector('[data-role="lfea-bend-factor-authority-control"]')
+    : null;
+  if (mountedRoot) {
+    for (const control of mountedControls) {
+      if (control.root === mountedRoot && !control.inline) return control;
+    }
   }
   const control = createLfeaBendFactorAuthorityControl(doc, {
     initialSelection: currentSelection,
@@ -113,6 +125,7 @@ export function ensureLfeaBendFactorAuthorityControl(doc) {
 export function mountLfeaInlineBendFactorAuthorityControl(doc) {
   const control = createLfeaBendFactorAuthorityControl(doc, {
     initialSelection: currentSelection,
+    inline: true,
     onChanged(selection) { setLfeaBendFactorAuthoritySelection(selection, doc); },
   });
   control.root.classList.add('lfea-bend-factor-authority-control--inline');
@@ -238,7 +251,10 @@ export function createLfeaBendFactorAuthorityControl(doc, options) {
       : normalized.smooth90FlexibilityCorrection ? 'YES' : 'NO';
   }
 
-  return Object.freeze({ root, editionSelect, smoothSelect, snapshot, authority, branchAuthority, clear, syncFromSelection });
+  return Object.freeze({
+    root, editionSelect, smoothSelect, snapshot, authority, branchAuthority, clear, syncFromSelection,
+    inline: resolvedOptions.inline === true,
+  });
 }
 
 function regenerateNativePreFlights(doc) {

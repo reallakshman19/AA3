@@ -86,7 +86,19 @@ const corrupted = evaluateIndependentWrc537Table5({ geometry, stressConcentratio
 assert.notEqual(corrupted.stresses.circumferential[0], current.stresses.circumferential[0]);
 detections.push('table5-sign-corruption-detected');
 
-assert.equal(detections.length, 7);
+// The physical source-arm reversal was added as an eighth independent
+// falsifier. Pin every detection by identity, not a stale count that can
+// undercount a new negative test without verifying what it actually tested.
+assert.deepEqual(detections, [
+  'coincident-source-target',
+  'nonradial-source-target',
+  'raw-radial-line-polarity-cannot-reverse-P',
+  'source-arm-sign-corruption-detected',
+  'global-force-mutation-detected',
+  'global-moment-mutation-detected',
+  'historical-off-axis-1B1-2B1-vector-rejected',
+  'table5-sign-corruption-detected',
+]);
 console.log(JSON.stringify({
   schema:'emp1-wrc537-gamma5-post-authority-refreeze-falsifiers/v1',
   status:'PASS_POST_AUTHORITY_PHYSICAL_ORACLE_FALSIFIERS',

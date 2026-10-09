@@ -227,7 +227,7 @@ if (process.env.LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR) {
   const officialW=executed.execution.caseExecutions.find(row=>row.caseId==='IXP-W');
   assert.ok(officialW,'Actual production W execution must be retained');
   const evidence=measureBm4lE75WSystemPerturbation(
-    prepared.preparation,officialW.execution);
+    prepared.preparation,officialW.execution,tables.INPUT_BASIC_ELEMENT_DATA.rows);
   fs.writeFileSync(path.join(dir,'bm4l-e75-w-system-perturbation.json'),
     JSON.stringify(evidence,null,2)+'\n','utf8');
   console.log('BM4L_E75_W_SYSTEM_RESEARCH '+JSON.stringify({

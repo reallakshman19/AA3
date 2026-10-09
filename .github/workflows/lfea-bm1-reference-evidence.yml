@@ -1,0 +1,59 @@
+name: LFEA BM1 CAESAR II reference evidence qualification
+
+on:
+  pull_request:
+    paths:
+      - 'benchmarks/LFEA/BM1/**'
+      - 'benchmarks/LFEA/B31J/**'
+      - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
+      - 'src/core/linear-fea-b31-factor-calculator/**'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'scripts/lfea-b3.15-bm1-*'
+      - 'scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs'
+      - 'scripts/lfea-bm1-cii-output-comparison*'
+      - '.github/workflows/lfea-bm1-reference-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'benchmarks/LFEA/BM1/**'
+      - 'benchmarks/LFEA/B31J/**'
+      - 'src/core/geometry/adapters/inputXmlToCanonicalGeometry.js'
+      - 'src/core/linear-fea-b31-factor-calculator/**'
+      - 'src/core/linear-piping-analysis-consumer/**'
+      - 'scripts/lfea-b3.15-bm1-*'
+      - 'scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs'
+      - 'scripts/lfea-bm1-cii-output-comparison*'
+      - '.github/workflows/lfea-bm1-reference-evidence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  authentic-bm1-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify historical BM1 fixture blobs are unchanged
+        shell: bash
+        run: |
+          test "$(git hash-object benchmarks/LFEA/BM1/BM1_InputXML.xml)" = "ee88921c4ad80f0265fbed61336b1c896c15f9fa"
+          test "$(git hash-object benchmarks/LFEA/BM1/BM1_CIIOutput.xml)" = "caa9645ba59e5106ee4243f41a2edf2d81b6e17e"
+
+      - name: Verify BM1 native InputXML case
+        run: node scripts/lfea-b3.15-bm1-inputxml-check.mjs
+
+      - name: Verify B31J component factor benchmarks and source-bound smooth-90 rule
+        run: node scripts/lfea-b3.21-b31j-phase2-factor-benchmark-check.mjs
+
+      - name: Verify BM1 CAESAR II output comparison
+        run: node scripts/lfea-bm1-cii-output-comparison-check.mjs

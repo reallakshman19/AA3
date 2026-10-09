@@ -1,6 +1,7 @@
 import { readAccdbNamedTables } from '../core/fea-benchmarks/caesar-accdb-reader-core.js';
 import { applyAccdbFieldOverrides } from '../core/linear-piping-analysis-consumer/accdb-field-overrides.js';
 import { authorizeLinearPipingInputXmlPreFlight } from './linear-piping-inputxml-prefea.js';
+import { revealLfeaBendFactorAuthorityControl } from './lfea-bend-factor-authority-control.js';
 import { lfeaProximityOptions } from './lfea-geometry-allowance.js';
 import {
   plainLanguageForCapability,
@@ -732,8 +733,9 @@ function renderBlockingPreparationFindings(doc, controller) {
       const jump = button(doc, 'Go to the component basis control');
       jump.dataset.action = 'goto-lfea-bend-factor-authority-control';
       jump.addEventListener('click', () => {
-        doc.querySelector('[data-role="lfea-bend-factor-authority-control"]')
-          ?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        // Re-mounts the control first if its fragile startup mount never
+        // landed, so this never silently no-ops against a missing node.
+        revealLfeaBendFactorAuthorityControl(doc);
       });
       guidance.append(jump);
       item.append(guidance);

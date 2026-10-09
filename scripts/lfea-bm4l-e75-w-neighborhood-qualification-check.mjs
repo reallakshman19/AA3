@@ -118,11 +118,16 @@ function extractModelValue(scenario,group,node,component){
   return values.reduce((s,x)=>s+finite(x.value,node+':'+component),0);
 }
 function referenceRow(report,sourceGroup,node,component){
+  // The original production benchmark maps support reactions onto DOF labels:
+  // FORCE: UX/UY/UZ, MOMENT: RX/RY/RZ. FX/MX are element-end actions only.
+  const reactionComponent={
+    FX:'UX',FY:'UY',FZ:'UZ',MX:'RX',MY:'RY',MZ:'RZ',
+  }[component]??component;
   const caseRecord=report.qualification?.cases?.find(x=>x.caseId==='L2');
   assert.ok(caseRecord,'BM4L_REFERENCE_L2_REQUIRED');
   const rows=caseRecord.comparison?.rows?.filter(row=>
     row.entityKind==='NODE' && String(row.entityId)===node
-      && row.quantity===sourceGroup.quantity && row.component===component)??[];
+      && row.quantity===sourceGroup.quantity && row.component===reactionComponent)??[];
   assert.ok(rows.length<=1,'BM4L_REFERENCE_ROW_DUPLICATED:'+
     sourceGroup.quantity+':'+node+':'+component);
   if(rows.length===0) return null; // absence is NOT a zero-force reference
@@ -165,6 +170,9 @@ export function auditE75WNeighborhood(experiment,report,receipt){
         });
         records.push({
           sourceNodeId:nodeId,quantity:group.quantity,component,unit:group.unit,
+          originalComparatorComponent:{
+            FX:'UX',FY:'UY',FZ:'UZ',MX:'RX',MY:'RY',MZ:'RZ',
+          }[component]??component,
           originalCaesarValue:referenceValue,
           originalProductionValue:actualValue,
           originalComparatorStatus:row?.status??null,
@@ -205,10 +213,11 @@ export function auditE75WNeighborhood(experiment,report,receipt){
       };
     });
     assert.equal(records.length,group.nodes.length*group.components.length);
-    if(['NEIGHBOR_TRANSLATION','NEIGHBOR_ROTATION'].includes(group.id)){
-      assert.equal(unavailable.length,0,
-        'Original CAESAR L2 source nodal motion coverage MUST be complete');
-    }
+    // This source fixture's original L2 output includes both force and
+    // moment support reaction rows. Unknowns remain null in generic logic,
+    // but this pinned BM4_L qualification requires complete original custody.
+    assert.equal(unavailable.length,0,
+      'Original CAESAR L2 node/reaction coverage missing after DOF-label mapping');
     return {
       comparisonGroupId:group.id,physicalQuantity:group.quantity,unit:group.unit,
       sourceNodeIds:group.nodes,sourceComponents:group.components,

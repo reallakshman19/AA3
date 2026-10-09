@@ -12,6 +12,8 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-w-action-recovery.mjs'
+      - 'scripts/lfea-bm4l-e75-w-end-action-audit.mjs'
       - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
       - 'scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs'
       - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
@@ -46,6 +48,8 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-source-section-load.mjs'
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-w-action-recovery.mjs'
+      - 'scripts/lfea-bm4l-e75-w-end-action-audit.mjs'
       - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
       - 'scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs'
       - 'scripts/lfea-bm4l-e75-weight-bending-evidence-check.mjs'
@@ -180,6 +184,15 @@ jobs:
             --full-report test-results/lfea/bm4l-caesar-full-comparison.json \
             --weight-bending test-results/lfea/bm4l-e75-weight-bending-compliance.json \
             --out test-results/lfea/bm4l-e75-w-neighborhood-support-sampling-audit.json
+      - name: Validate E74 through E80 original W end-action source controls
+        run: node scripts/lfea-bm4l-e75-w-end-action-audit.mjs --self-test
+      - name: Compare authentic E74 through E80 CAESAR L2 end actions and downstream support coverage
+        run: |
+          node scripts/lfea-bm4l-e75-w-end-action-audit.mjs \
+            --experiment test-results/lfea/bm4l-e75-w-system-perturbation.json \
+            --full-report test-results/lfea/bm4l-caesar-full-comparison.json \
+            --source-topology test-results/lfea/bm4l-rx-source-topology.json \
+            --out test-results/lfea/bm4l-e75-w-element-end-action-reference-audit.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

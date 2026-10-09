@@ -1,0 +1,31 @@
+name: LFEA M047 tee source geometry forensic boundary
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/lfea-m047-tee-source-geometry-boundary-check.mjs'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json'
+      - 'src/core/linear-fea-b31-factor-calculator/**'
+      - '.github/workflows/lfea-m047-tee-geometry-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/lfea-m047-tee-source-geometry-boundary-check.mjs'
+      - 'benchmarks/LFEA/CAESAR_ACCDB/m047-bm4l-tee-rigid-thermal-authority.json'
+      - 'src/core/linear-fea-b31-factor-calculator/**'
+      - '.github/workflows/lfea-m047-tee-geometry-boundary.yml'
+permissions:
+  contents: read
+jobs:
+  diagnose-dimension-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JS syntax
+        run: node --check scripts/lfea-m047-tee-source-geometry-boundary-check.mjs
+      - name: Prove M047 source diameter cap explains mismatch without authorizing q > 1
+        run: node scripts/lfea-m047-tee-source-geometry-boundary-check.mjs

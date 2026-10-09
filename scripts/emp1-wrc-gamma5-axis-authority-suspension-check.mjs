@@ -35,6 +35,11 @@ import {
 import {
   EMP1_WRC537_TABLE5_EIGHT_POINT_LONGITUDINAL_AUTHORITY_ID,
 } from '../src/core/emp1/emp1-wrc537-longitudinal-moment-curve-selection.js';
+import {
+  createEmp1Wrc537AttachmentSourceAuthority,
+  EMP1_WRC537_ATTACHMENT_DIAMETER_BASIS,
+  EMP1_WRC537_ATTACHMENT_PHYSICAL_LOCATION,
+} from '../src/core/emp1/emp1-wrc537-attachment-source-authority.js';
 
 const postAuthorityOracle = JSON.parse(await readFile(
   'validation/emp1/wrc537-2013/gamma5-post-authority-physical-oracle-v1.json', 'utf8'));
@@ -42,8 +47,11 @@ const oracle = postAuthorityOracle.semanticPayload;
 assert.equal(postAuthorityOracle.productionAuthority, false);
 assert.equal(postAuthorityOracle.productionObservationUsed, false);
 
-const reasons = [EMP1_C_WRC537_ROUTE_REQUALIFICATION_SUSPENSION_REASON];
-assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, false);
+// The historical suspension was closed by source-bound production
+// requalification in PR #1408. This test must cover the authorized bounded
+// route without accidentally authorizing the global EMP.1 C route.
+const reasons = [];
+assert.equal(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_AUTHORIZED, true);
 assert.deepEqual(EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENSION_REASONS, reasons);
 for (const resolved of [
   EMP1_C_WRC537_GAMMA5_SUSPENSION_REASON,
@@ -93,9 +101,11 @@ assert.equal(
 
 const registry = emp1CBoundedRoute(EMP1_C_WRC537_GAMMA5_ZERO_DP_ROUTE_ID);
 assert.deepEqual(registry.suspensionReasons, reasons);
-assert.equal(registry.registered, false);
-assert.equal(registry.engineeringUseAuthorized, false);
-assert.equal(registry.method.routeRequalificationRequired, true);
+assert.equal(registry.registered, true);
+assert.equal(registry.engineeringUseAuthorized, true);
+assert.equal(registry.method.routeRequalificationRequired, false);
+assert.equal(registry.globalEmp1CRouteAuthority, false);
+assert.equal(registry.releaseQualified, false);
 assert.equal(registry.scope.rawFoundationRadialHintIsPolarityAuthority, false);
 assert.equal(registry.scope.runtimeSourcePolarityEvidenceRequired, true);
 assert.equal(registry.scope.runtimeAttachmentSourceEvidenceRequired, true);
@@ -198,13 +208,33 @@ assert.throws(
   (error) => error?.code === 'EMP1_WRC537_4_5_QUALIFIED_SOURCE_AUTHORITY_REQUIRED',
 );
 
-let caught = null;
-try { runEmp1Wrc537Gamma5ZeroDpRoute(input); } catch (error) { caught = error; }
-assert.equal(caught?.code, 'EMP1_WRC537_GAMMA5_ZERO_DP_ROUTE_SUSPENDED');
-assert.deepEqual(caught.reasons, reasons);
+// The authorized route must still reject a run without a typed, sealed
+// attachment outside-diameter source. Qualify both negative and positive
+// runtime paths; no global route authorization is conferred.
+assert.throws(
+  () => runEmp1Wrc537Gamma5ZeroDpRoute(input),
+  (error) => error?.code === 'EMP1_WRC537_R0_QUALIFIED_SOURCE_AUTHORITY_REQUIRED',
+);
+const attachmentSourceAuthority = createEmp1Wrc537AttachmentSourceAuthority({
+  geometryIdentity: 'EMP1-15-ROUTE-CYLINDER',
+  outsideDiameter: 2 * input.geometry.attachmentOutsideRadius,
+  diameterBasis: EMP1_WRC537_ATTACHMENT_DIAMETER_BASIS,
+  physicalLocation: EMP1_WRC537_ATTACHMENT_PHYSICAL_LOCATION,
+  unit: 'mm',
+  sourceReference: 'EMP1-15/QUALIFICATION/ATTACHMENT-OD',
+  productionObservationUsedToSetAuthority: false,
+});
+const authorized = runEmp1Wrc537Gamma5ZeroDpRoute({ ...input, attachmentSourceAuthority });
+assert.equal(authorized.state, 'EVALUATED_AUTHORIZED_BOUNDED_GAMMA5_ZERO_DP_ROUTE');
+assert.equal(authorized.engineeringUseAuthorized, true);
+assert.equal(authorized.productionRouteAuthority, true);
+assert.equal(authorized.globalEmp1CRouteAuthority, false);
+assert.equal(authorized.runtimeSourceAuthority.attachmentSourceAuthority.semanticHash,
+  attachmentSourceAuthority.semanticHash);
+
 
 console.log(JSON.stringify({
-  status: 'PASS_POST_AUTHORITY_PRODUCTION_CANDIDATE_MATCHES_FROZEN_ORACLE_ROUTE_STILL_SUSPENDED',
+  status: 'PASS_POST_AUTHORITY_BOUNDED_ROUTE_AUTHORIZED_WITH_RUNTIME_SOURCE_GATES',
   oracleHash: postAuthorityOracle.semanticHash,
   stressComparisons,
   wrcLoads: comparison.numerics.wrcLoads,
@@ -222,8 +252,9 @@ console.log(JSON.stringify({
     nearestEndDistance: applicabilitySourceAuthority.nearestCylinderEndDistance,
   },
   remainingSuspensionReasons: reasons,
-  productionRouteAuthorized: false,
-  routeRequalificationRequired: true,
+  productionRouteAuthorized: true,
+  globalEmp1CRouteAuthority: false,
+  routeRequalificationRequired: false,
 }, null, 2));
 
 function routeFixture() {

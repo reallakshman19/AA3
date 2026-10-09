@@ -175,6 +175,7 @@ if (semanticHash !== frozen.semanticHash) {
   console.error(JSON.stringify({
     code: 'POST_AUTHORITY_ORACLE_SEMANTIC_HASH_DRIFT',
     expectedHash: frozen.semanticHash,
+    frozenPayloadHash: sha256(canonical(F)),
     recomputedHash: semanticHash,
     exactPayloadChanges: firstExactChanges(recomposedPayload, F, 'semanticPayload'),
   }, null, 2));

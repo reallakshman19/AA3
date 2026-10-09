@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/lfea-production-caesar-parity-check.mjs'
       - 'scripts/lfea-production-caesar-parity-evidence-check*.mjs'
+      - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'src/core/linear-fea-**'
@@ -19,6 +20,7 @@ on:
     paths:
       - 'scripts/lfea-production-caesar-parity-check.mjs'
       - 'scripts/lfea-production-caesar-parity-evidence-check*.mjs'
+      - 'scripts/lfea-bm4l-rx-source-topology-check.mjs'
       - 'scripts/lib/lfea-production-benchmark-actual.mjs'
       - 'src/core/linear-piping-analysis-consumer/**'
       - 'src/core/linear-fea-**'
@@ -49,6 +51,8 @@ jobs:
         run: node scripts/lfea-production-caesar-parity-evidence-check.test.mjs
       - name: Run actual LFEA production execution and CAESAR II comparison
         shell: bash
+        env:
+          LFEA_BM4L_PARITY_EVIDENCE_DIR: test-results/lfea
         run: |
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
@@ -59,6 +63,11 @@ jobs:
             --log test-results/lfea/bm4l-production-stdout.log \
             --accdb benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB \
             --out test-results/lfea/bm4l-production-parity-measurement.json
+      - name: Reconstruct the 221xx rotational hotspot from authentic source elements
+        run: |
+          node scripts/lfea-bm4l-rx-source-topology-check.mjs \
+            --accdb benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB \
+            --out test-results/lfea/bm4l-rx-source-topology.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

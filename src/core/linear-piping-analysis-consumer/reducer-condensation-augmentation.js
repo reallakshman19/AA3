@@ -33,8 +33,34 @@ import { INPUTXML_GRAVITY_ACCELERATION } from './inputxml-linear-preparation-pro
  */
 const CODE = 'REDUCER_AUGMENTATION_INVALID';
 
+/**
+ * An explicit engineering-authority boundary for a tapered reducer under
+ * pressure. The candidate ten-cylinder request only carries thermal initial
+ * strain; it has no pressure input or qualified axial-pressure section rule.
+ * Replacing an existing pressure+thermal vector with its thermal-only result
+ * would silently delete a physical pressure load while leaving a sealed frame.
+ */
+export function requireReducerAxialPressureBasis(frame, reducerId) {
+  const pressure = frame?.pressure ?? null;
+  if (pressure?.axialThrustApplied === true && pressure.axialStrain !== 0) {
+    failLinearPipingAnalysis(
+      `Reducer ${reducerId} cannot replace its pressure axial initial strain with a thermal-only ten-cylinder condensed vector.`,
+      'REDUCER_TAPERED_AXIAL_PRESSURE_BASIS_UNQUALIFIED',
+      {
+        reducerId,
+        pressurePrimitiveId: pressure.primitiveId,
+        pressureAxialStrain: pressure.axialStrain,
+        missingAuthority: 'TAPER_AWARE_AXIAL_PRESSURE_INITIAL_STRAIN_CONDENSATION',
+      },
+    );
+  }
+}
+
 export function augmentFrameElementReducer(input) {
   const accepted = requireFrameElement(input.frameElement);
+  // The pressure authority check precedes both condenser evaluation and the
+  // re-sealing of any local/global matrix. No partial candidate escapes.
+  requireReducerAxialPressureBasis(accepted, input.reducerId);
   const { reducer, section, material, gravityDirectionLocal, thermal, gravity, sourceEvidence } = input;
 
   const request = sealReducerCondensationRequest({

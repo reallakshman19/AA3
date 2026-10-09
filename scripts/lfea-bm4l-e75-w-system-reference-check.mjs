@@ -131,9 +131,10 @@ function selfTest(){
     },
   };
   // Actual interaction = (0.05,0.01,0.05) - (0.01,-0.01,-0.03)
-  //                      - (0.03,0.02,0.03) => (0.01,0,-0.01).
+  //                      - (0.03,0.02,0.03) => (0.01,0,+0.05).
+  // Keep the expectation independently arithmetically computed.
   exp.signedSourceLocalRotationChangesRelativeNativeRad.nonadditiveInteraction=[
-    0.01,0,-0.01,
+    0.01,0,0.05,
   ];
   const budget={
     schema:'lfea-bm4l-e75-rotation-basis-parity-diagnostic/v1',

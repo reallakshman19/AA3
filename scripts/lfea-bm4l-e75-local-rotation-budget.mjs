@@ -74,8 +74,8 @@ export function measureE75LocalRotations(report, evidence) {
     const byLocalComponent={RX_AXIAL:a[0],RY_TRANSVERSE:a[1],RZ_TRANSVERSE:a[2]};
     return {
       caseId, fromNode:NODE_I,toNode:NODE_J,
-      referenceGlobalIncrementRad,
-      productionGlobalIncrementRad,
+      referenceGlobalIncrementRad:referenceGlobalIncrement,
+      productionGlobalIncrementRad:productionGlobalIncrement,
       signedGlobalIncrementDiscrepancyRad:globalIncrementDiscrepancy,
       referenceLocalIncrementRad:referenceLocalIncrement,
       productionLocalIncrementRad:productionLocalIncrement,

@@ -162,6 +162,21 @@ test.describe('LFEA ACCDB real-model import', () => {
     await acknowledgeAndAuthorize(errorCheck);
     await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]'))
       .toBeEnabled();
+
+    // This workflow is already run by the required real-ACCDB browser CI.
+    // Re-import via the new shortcut after a manual, explicitly approved
+    // import: it must load the original raw counts and withdraw the previous
+    // source's approval, without starting a solver run.
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="INPUT"]').click();
+    await page.locator('[data-action="lfea-source-acquisition-reference-bm4l"]').click();
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('Loaded BM4_L.ACCDB: 96 element(s), 97 node(s)', { timeout: 120000 });
+    await expect(page.locator('[data-role="lfea-source-acquisition-reference-status"]'))
+      .toContainText('import completed');
+    await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]'))
+      .toHaveAttribute('data-step-status', 'BLOCKED');
+    await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]'))
+      .toHaveAttribute('data-step-status', 'BLOCKED');
     expect(pageErrors).toEqual([]);
   });
 

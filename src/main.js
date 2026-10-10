@@ -156,6 +156,10 @@ lfeaPipelineShell.configureReferenceBM4L({
   async onRequest() {
     const selection = ++referenceSelectionEpoch;
     referenceAbort?.abort();
+    // A newer reference selection supersedes an older in-flight manual parse
+    // at CLICK time, not only after a potentially long reference download.
+    // Otherwise an old manual model could commit while the new request waits.
+    lfeaAccdbInputPanel.invalidatePendingImport();
     const controller = new AbortController();
     referenceAbort = controller;
     try {

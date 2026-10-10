@@ -160,7 +160,7 @@ test.describe('BM4_L shortcut fail-closed and interaction boundaries', () => {
   test('no ACCDB request happens before reference click or after a normal reload', async ({ page }) => {
     const requests = [];
     page.on('request', (request) => {
-      if (accdbUrl.test(request.url())) requests.push(request.url());
+      if (isBm4lBinaryRequest(request.url())) requests.push(request.url());
     });
     await openSource(page);
     expect(requests).toEqual([]);

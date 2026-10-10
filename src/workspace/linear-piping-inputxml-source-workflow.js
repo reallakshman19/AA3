@@ -279,6 +279,12 @@ export class LinearPipingInputXmlSourceWorkflowController {
     if (normalized.length === 0) {
       throw workflowError('LINEAR_PIPING_INPUTXML_CASE_SELECTION_EMPTY', 'At least one requested physical case is required.');
     }
+    const applied = this.preFlight?.preparation?.requestedCaseIds ?? null;
+    if (Array.isArray(applied) && applied.length === normalized.length
+      && [...applied].sort().every((id, index) => id === normalized[index])) {
+      // A repeated Apply is presentation-only. Do not revoke a valid approval.
+      return this.getSnapshot();
+    }
     this.requestedCaseIds = normalized;
     if (!this.sourceInput) {
       this.render();

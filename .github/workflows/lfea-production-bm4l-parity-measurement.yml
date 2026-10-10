@@ -13,6 +13,8 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-action-recovery.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-wt-thermal-increments.mjs'
+      - 'scripts/lfea-bm4l-e75-wt-thermal-increment-audit.mjs'
       - 'scripts/lfea-bm4l-e75-w-end-action-audit.mjs'
       - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
       - 'scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs'
@@ -49,6 +51,8 @@ on:
       - 'scripts/lib/lfea-bm4l-e75-weight-bending-forensic.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-system-perturbation.mjs'
       - 'scripts/lib/lfea-bm4l-e75-w-action-recovery.mjs'
+      - 'scripts/lib/lfea-bm4l-e75-wt-thermal-increments.mjs'
+      - 'scripts/lfea-bm4l-e75-wt-thermal-increment-audit.mjs'
       - 'scripts/lfea-bm4l-e75-w-end-action-audit.mjs'
       - 'scripts/lfea-bm4l-e75-w-system-reference-check.mjs'
       - 'scripts/lfea-bm4l-e75-w-neighborhood-qualification-check.mjs'
@@ -107,6 +111,7 @@ jobs:
           LFEA_BM4L_E75_SOURCE_SECTION_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_WEIGHT_BENDING_EVIDENCE_DIR: test-results/lfea
           LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR: test-results/lfea
+          LFEA_BM4L_E75_WT_THERMAL_EVIDENCE_DIR: test-results/lfea
         run: |
           mkdir -p test-results/lfea
           node scripts/lfea-production-caesar-parity-check.mjs > test-results/lfea/bm4l-production-stdout.log 2>&1
@@ -193,6 +198,15 @@ jobs:
             --full-report test-results/lfea/bm4l-caesar-full-comparison.json \
             --source-topology test-results/lfea/bm4l-rx-source-topology.json \
             --out test-results/lfea/bm4l-e75-w-element-end-action-reference-audit.json
+      - name: Prove thermal case-difference candidate vs source negative controls
+        run: node scripts/lfea-bm4l-e75-wt-thermal-increment-audit.mjs --self-test
+      - name: Attribute E75 local thermal response in eight authentic unpressurized W+T full-system cases
+        run: |
+          node scripts/lfea-bm4l-e75-wt-thermal-increment-audit.mjs \
+            --experiment test-results/lfea/bm4l-e75-wt-thermal-counterfactual.json \
+            --attribution test-results/lfea/bm4l-e75-rotation-case-difference-attribution.json \
+            --original-w test-results/lfea/bm4l-e75-w-system-perturbation.json \
+            --out test-results/lfea/bm4l-e75-wt-thermal-source-increment-audit.json
       - name: Retain measured numerical discrepancies and logs
         if: always()
         uses: actions/upload-artifact@v4

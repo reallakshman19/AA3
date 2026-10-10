@@ -54,7 +54,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python .bm4l-v35-common/skills/engineering-pr-delivery-v3.5/scripts/delp_projection_v35.py sync-github --graph docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml --repository "$GITHUB_REPOSITORY" --dry-run
+          python .bm4l-v35-common/skills/engineering-pr-delivery-v3.5/scripts/delp_projection_v35.py sync-github --graph docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml --repository "$GITHUB_REPOSITORY" --dry-run > /tmp/bm4l-delp-dry-run.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/bm4l-delp-dry-run.json').read_text())
+          rejected = report.get('rejected_facts', [])
+          print(json.dumps({
+              'check': 'BM4_L live v3.5 DELP ledger',
+              'rejected_facts': rejected,
+              'derived_issue_titles': len(report.get('expected_titles') or {}),
+              'would_write_titles': report.get('would_write_titles'),
+          }, sort_keys=True))
+          if rejected:
+              raise SystemExit('DELP REJECTED_FACTS: repair evidence syntax, not implementation gate')
+          if len(report.get('expected_titles') or {}) != 6:
+              raise SystemExit('DELP EXPECTED_TITLES: six programme/child issues required')
+          PY
       - name: Authenticate original fixture and exercise fail-closed loader
         run: node scripts/lfea-bm4l-pinned-accdb-check.mjs
       - name: Regress real ACCDB preparation and source boundary

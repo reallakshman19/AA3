@@ -177,6 +177,37 @@ test.describe('LFEA ACCDB real-model import', () => {
       .toHaveAttribute('data-step-status', 'BLOCKED');
     await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]'))
       .toHaveAttribute('data-step-status', 'BLOCKED');
+
+    // A16: manual selection after a verified shortcut must replace its source,
+    // discarding any old authorization even when the ACCDB bytes are identical.
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles({
+      name: 'manual-after-reference.accdb',
+      mimeType: 'application/vnd.ms-access',
+      buffer: fs.readFileSync(fixturePath),
+    });
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('Loaded manual-after-reference.accdb: 96 element(s), 97 node(s)', { timeout: 120000 });
+    await expect(page.locator('[data-role="lfea-source-acquisition-summary"]'))
+      .toContainText('manual-after-reference.accdb');
+    const manualState = await page.evaluate(() => {
+      const state = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState();
+      return {
+        kind: state.source?.kind,
+        fileName: state.source?.fileName,
+        solveAuthorized: state.preparation?.preFlight?.solveAuthorized,
+        approver: state.preparation?.preFlight?.approverIdentity ?? null,
+      };
+    });
+    expect(manualState).toEqual({
+      kind: 'ACCDB',
+      fileName: 'manual-after-reference.accdb',
+      solveAuthorized: false,
+      approver: null,
+    });
+    await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="LOAD_CASE"]'))
+      .toHaveAttribute('data-step-status', 'BLOCKED');
+    await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]'))
+      .toHaveAttribute('data-step-status', 'BLOCKED');
     expect(pageErrors).toEqual([]);
   });
 

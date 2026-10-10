@@ -394,6 +394,14 @@ export class LfeaPipelineAccdbInputPanelController {
     this.notifyStateChanged();
   }
 
+  invalidatePendingImport() {
+    if (!this.busy) return;
+    ++this.importEpoch;
+    this.busy = false;
+    this.message = 'The previous ACCDB import was superseded by a newer source selection.';
+    this.render();
+  }
+
   clear() {
     ++this.importEpoch;
     this.busy = false;

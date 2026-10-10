@@ -49,6 +49,7 @@ import { buildE75ReducerMatrixDiagnostic } from './lib/lfea-bm4l-e75-reducer-mat
 import { diagnoseE75SourceSectionAndLoads } from './lib/lfea-bm4l-e75-source-section-load.mjs';
 import { buildBm4lE75WeightBendingForensic } from './lib/lfea-bm4l-e75-weight-bending-forensic.mjs';
 import { measureBm4lE75WSystemPerturbation } from './lib/lfea-bm4l-e75-w-system-perturbation.mjs';
+import { measureE75ThermalOnlyFullSystem } from './lib/lfea-bm4l-e75-wt-thermal-increments.mjs';
 import { computeInputXmlModelHealthSourceSemanticHash } from '../src/core/geometry/model-health/index.js';
 import {
   INPUTXML_THERMAL_INTERVAL_AUTHORITY_SCHEMA,
@@ -246,6 +247,35 @@ if (process.env.LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR) {
     officialWReproduced:true,
     sourceCaesarNumericalCertification:false,
     productionMechanicsChanged:false,
+  }));
+}
+
+// Pressureless E75 W+T research counterfactuals are NOT the original
+// CAESAR L5−L6 load basis. They pair each alternative unpressurized WT solve
+// with its identically stiffened and weighted original W solve, isolating the
+// E75 thermal-strain basis while preserving all original supports/elements.
+if (process.env.LFEA_BM4L_E75_WT_THERMAL_EVIDENCE_DIR) {
+  const dir=path.resolve(ROOT,process.env.LFEA_BM4L_E75_WT_THERMAL_EVIDENCE_DIR);
+  const wDir=process.env.LFEA_BM4L_E75_W_SYSTEM_EVIDENCE_DIR;
+  assert.ok(wDir,'ORIGINAL_W_EVIDENCE_REQUIRED_FOR_THERMAL_INCREMENT_RESEARCH');
+  const wReceipt=JSON.parse(fs.readFileSync(path.join(
+    path.resolve(ROOT,wDir),'bm4l-e75-w-system-perturbation.json'),'utf8'));
+  const officialWT=executed.execution.caseExecutions.find(row=>row.caseId==='IXP-WT');
+  assert.ok(officialWT?.execution,'AUTHORIZED_UNPRESSURIZED_WT_CASE_REQUIRED');
+  const evidence=measureE75ThermalOnlyFullSystem(
+    prepared.preparation,officialWT.execution,wReceipt);
+  fs.mkdirSync(dir,{recursive:true});
+  fs.writeFileSync(path.join(dir,'bm4l-e75-wt-thermal-counterfactual.json'),
+    JSON.stringify(evidence,null,2)+'\n','utf8');
+  console.log('BM4L_E75_WT_RESEARCH '+JSON.stringify({
+    status:evidence.status,
+    nativeWTminusWLocalMicrorad:
+      evidence.originalNativeWTMinusWLocalRotationRad.map(x=>x*1e6),
+    candidateWTminusWLocalMicrorad:
+      evidence.originalCandidateAllWTMinusWLocalRotationRad.map(x=>x*1e6),
+    scenarioCount:evidence.experimentScenarios.length,
+    onlyE75Changed:true,pressureCandidateNotEvaluated:true,
+    nativeAuthorizedWTReproduced:true,realCaesarWTParityNotQualified:true,
   }));
 }
 

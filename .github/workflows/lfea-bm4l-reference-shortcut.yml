@@ -51,6 +51,7 @@ jobs:
       - name: Compare manual vs shortcut and verify error/race/accessibility contracts
         run: |
           node scripts/run-playwright.mjs \
+            e2e/lfea-pipeline-accdb-real-model.spec.js \
             e2e/lfea-pipeline-accdb-repository-fixture.spec.js \
             e2e/lfea-pipeline-accdb-repository-fixture-negative.spec.js
       - name: Retain failed browser traces and snapshots

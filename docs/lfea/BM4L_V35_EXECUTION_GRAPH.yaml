@@ -10,7 +10,7 @@ programme:
   total_weight: 10000
   fact_authors: [reallakshman19]
   decomposition_policy:
-    mode: OFF
+    mode: 'OFF'
     units: {min: 3, max: 8, max_share_percent: 40}
     leaf_budget: {target_loc: 700, hard_loc: 1500, target_minutes: 15, hard_minutes: 20}
 nodes:

@@ -118,3 +118,7 @@ console.log(JSON.stringify({
   displayProjectionMutatesSession: false,
   sourceReplacementInvalidatesResult: true,
 }));
+
+// Keep the source-bound case-preference / no-op authorization regression in
+// the existing LFEA source-acquisition CI entrypoint.
+await import('./lfea-case-selection-preferences-check.mjs');

@@ -183,7 +183,9 @@ test.describe('LFEA ACCDB real-model import', () => {
     await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles({
       name: 'manual-after-reference.accdb',
       mimeType: 'application/vnd.ms-access',
-      buffer: fs.readFileSync(fixturePath),
+      // A16 is pinned to the repository model even if this legacy test
+      // suite was invoked with an alternate LFEA_ACCDB_FIXTURE override.
+      buffer: fs.readFileSync(committedFixturePath),
     });
     await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
       .toContainText('Loaded manual-after-reference.accdb: 96 element(s), 97 node(s)', { timeout: 120000 });

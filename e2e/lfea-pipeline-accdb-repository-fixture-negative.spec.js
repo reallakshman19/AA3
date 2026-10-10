@@ -141,6 +141,70 @@ test.describe('BM4_L shortcut fail-closed and interaction boundaries', () => {
       .toHaveAttribute('data-step-status', 'BLOCKED');
   });
 
+  test('reference click supersedes an older manual parse before reference download completes', async ({ page }) => {
+    // Hold a real manual File.arrayBuffer(), then click the newer reference
+    // selection while its binary GET is itself held. A stale manual model must
+    // not commit in the interval between click and reference download.
+    let releaseRoute;
+    let requestSeen;
+    const requested = new Promise((resolve) => { requestSeen = resolve; });
+    const pendingNetwork = new Promise((resolve) => { releaseRoute = resolve; });
+    await page.route(accdbUrl, async (route) => {
+      requestSeen();
+      await pendingNetwork;
+      try {
+        await route.fulfill({ status: 200, contentType: 'application/octet-stream', body: authenticBytes });
+      } catch {
+        // A failed or interrupted test may already have disposed this route.
+      }
+    });
+    await openSource(page);
+    await page.evaluate(() => {
+      const readFile = File.prototype.arrayBuffer;
+      let releaseManual;
+      const pendingManual = new Promise((resolve) => { releaseManual = resolve; });
+      window.__bm4lOlderManualRead = { entered: false, release: releaseManual };
+      File.prototype.arrayBuffer = async function guardedManualRead() {
+        if (this.name === 'older-manual.accdb') {
+          window.__bm4lOlderManualRead.entered = true;
+          await pendingManual;
+        }
+        return readFile.call(this);
+      };
+    });
+    try {
+      await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles({
+        name: 'older-manual.accdb',
+        mimeType: 'application/vnd.ms-access',
+        buffer: authenticBytes,
+      });
+      await expect.poll(() => page.evaluate(() => window.__bm4lOlderManualRead.entered))
+        .toBe(true);
+      await page.locator(referenceAction).click();
+      await requested;
+      await expect(page.locator(referenceAction)).toBeDisabled();
+      await page.evaluate(() => window.__bm4lOlderManualRead.release());
+      // Give the old parser time to complete if it was not invalidated.
+      // The race's ordering is deterministic (manual read released while
+      // reference GET is still pending), not based on network timing.
+      await page.waitForTimeout(2000);
+      await assertNoUnauthorizedSource(page);
+      await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+        .not.toContainText('Loaded older-manual.accdb');
+      releaseRoute();
+      await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+        .toContainText('Loaded BM4_L.ACCDB: 96 element(s), 97 node(s)', { timeout: 120000 });
+      const source = await page.evaluate(() => globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().source);
+      expect(source.kind).toBe('ACCDB');
+      expect(source.fileName).toBe('BM4_L.ACCDB');
+      await expect(page.locator('[data-role="lfea-pipeline-step"][data-step-id="RUN"]'))
+        .toHaveAttribute('data-step-status', 'BLOCKED');
+    } finally {
+      await page.evaluate(() => window.__bm4lOlderManualRead?.release?.()).catch(() => {});
+      releaseRoute?.();
+    }
+  });
+
   test('rapid clicks cause only one fetch while busy', async ({ page }) => {
     let count = 0;
     await page.route(accdbUrl, async (route) => {

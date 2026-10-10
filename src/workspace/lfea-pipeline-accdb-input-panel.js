@@ -249,9 +249,17 @@ export class LfeaPipelineAccdbInputPanelController {
     if (!Array.isArray(caseIds) || caseIds.length === 0) {
       throw new TypeError('Select at least one load case.');
     }
-    this.requestedCaseIds = [...caseIds];
+    const normalized = [...new Set(caseIds.map((id) => String(id).trim()).filter(Boolean))].sort();
+    if (normalized.length === 0) throw new TypeError('Select at least one load case.');
+    const applied = this.preFlight?.preparation?.requestedCaseIds ?? null;
+    if (Array.isArray(applied) && applied.length === normalized.length
+      && [...applied].sort().every((id, index) => id === normalized[index])) {
+      // Repeated Apply cannot revoke the same pre-flight's authorization.
+      return this.getSnapshot();
+    }
+    this.requestedCaseIds = normalized;
     if (this.effectiveTables) this.prepare(this.effectiveTables);
-    this.message = `Prepared for ${caseIds.length} case(s). Any previous acceptance no longer applies to this selection.`;
+    this.message = `Prepared for ${normalized.length} case(s). Any previous acceptance no longer applies to this selection.`;
     this.render();
     this.notifyStateChanged();
     return this.getSnapshot();

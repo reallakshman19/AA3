@@ -1,3 +1,8 @@
+import {
+  createLfeaCaseSelectionPreferences,
+  lfeaCaseSelectionBrowserStorage,
+} from './lfea-case-selection-preferences.js';
+
 export const LFEA_PIPELINE_CASE_SELECTION_PANEL_SCHEMA = 'lfea-pipeline-case-selection-panel/v1';
 
 /**
@@ -58,6 +63,8 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.hostElement = hostElement;
     this.documentRef = documentRef;
     this.options = options;
+    this.preferences = options.preferences
+      ?? createLfeaCaseSelectionPreferences(lfeaCaseSelectionBrowserStorage(documentRef.defaultView));
     this.elements = null;
     this.initialized = false;
     this.selected = new Set();
@@ -130,7 +137,7 @@ export class LfeaPipelineCaseSelectionPanelController {
       return null;
     }
     if (this.sourceSemanticHash === null) {
-      this.sourceSemanticHash = current;
+      this.resetSelectionForSource(current);
       return current;
     }
     if (this.sourceSemanticHash !== current) this.resetSelectionForSource(current);
@@ -141,8 +148,21 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.selected.clear();
     this.selectionExplicit = false;
     this.sourceSemanticHash = sourceSemanticHash;
+    if (sourceSemanticHash !== null) {
+      const availableCaseIds = this.availableCases().map((row) => row.caseId);
+      const stored = this.preferences?.load(sourceSemanticHash, availableCaseIds);
+      if (stored !== null && stored !== undefined) {
+        this.selected = new Set(stored);
+        this.selectionExplicit = true;
+      }
+    }
     this.message = EMPTY_MESSAGE;
     this.error = '';
+  }
+
+  saveSelectionPreference() {
+    if (!this.selectionExplicit || this.sourceSemanticHash === null) return;
+    this.preferences?.save(this.sourceSemanticHash, [...this.selected]);
   }
 
   /**
@@ -160,7 +180,11 @@ export class LfeaPipelineCaseSelectionPanelController {
     const selectedCaseIds = this.getSelectedCaseIds();
     const appliedCaseIds = this.getAppliedCaseIds();
     if (hangerIds.length === 0) {
-      return Object.freeze({ ready: true, reason: null, selectedCaseIds, appliedCaseIds, hangerCaseIds: [] });
+      const ready = !this.selectionExplicit || sameCaseIds(selectedCaseIds, appliedCaseIds);
+      return Object.freeze({
+        ready, reason: ready ? null : 'Load-case selection changed. Apply selection before Run.',
+        selectedCaseIds, appliedCaseIds, hangerCaseIds: [],
+      });
     }
     if (sourceSemanticHash === null) {
       return Object.freeze({
@@ -198,9 +222,14 @@ export class LfeaPipelineCaseSelectionPanelController {
     try {
       const caseIds = this.getSelectedCaseIds();
       if (caseIds.length === 0) throw new Error('Select at least one analysis case.');
-      this.options.onApplyCaseSelection?.(caseIds);
-      this.message = `Requested ${caseIds.length} case(s). The pre-flight was regenerated for this selection. `
-        + 'If Error check requires acceptance again, clear it there; execution then continues on Run.';
+      if (sameCaseIds(caseIds, this.getAppliedCaseIds())) {
+        // Reapplying an identical case set must not invalidate existing review.
+        this.message = `Already applied ${caseIds.length} case(s). Pre-flight and Error Check authorization are unchanged.`;
+      } else {
+        this.options.onApplyCaseSelection?.(caseIds);
+        this.message = `Requested ${caseIds.length} case(s). The pre-flight was regenerated for this selection. `
+          + 'A changed case set needs fresh Error Check acceptance before Run.';
+      }
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }
@@ -233,6 +262,7 @@ export class LfeaPipelineCaseSelectionPanelController {
               this.selectionExplicit = true;
             }
             if (checked) this.selected.add(caseId); else this.selected.delete(caseId);
+            this.saveSelectionPreference();
           },
         ));
       }
@@ -299,7 +329,7 @@ function createCaseSelectionSection(doc) {
   title.textContent = 'Load cases';
   const intro = doc.createElement('p');
   intro.className = 'lfea-pipeline-case-selection__intro';
-  intro.textContent = 'Choose and seal the physical cases for this pre-flight. Run executes them in the next step.';
+  intro.textContent = 'Choose and seal physical cases for this pre-flight. Apply changed cases before Error Check approval. Checkbox choices are saved locally as preferences only; they never restore Run authorization.';
   const list = doc.createElement('div');
   list.className = 'lfea-pipeline-case-selection__list';
   list.dataset.role = 'lfea-pipeline-case-list';

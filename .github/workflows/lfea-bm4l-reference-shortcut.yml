@@ -1,0 +1,60 @@
+name: LFEA BM4_L repository reference shortcut
+
+on:
+  pull_request:
+    paths:
+      - 'src/main.js'
+      - 'src/workspace/lfea-bm4l-pinned-accdb.js'
+      - 'src/workspace/lfea-source-acquisition.js'
+      - 'src/workspace/lfea-source-acquisition.css'
+      - 'src/workspace/lfea-pipeline-shell-controller.js'
+      - 'src/workspace/lfea-pipeline-accdb-input-panel.js'
+      - 'e2e/lfea-pipeline-accdb-repository-fixture*.spec.js'
+      - 'scripts/lfea-bm4l-*.mjs'
+      - 'benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB'
+      - '.github/workflows/lfea-bm4l-reference-shortcut.yml'
+
+# Never grant PR code write authority. This workflow builds/tests the untrusted
+# PR candidate with read-only repository access, not pull_request_target.
+permissions:
+  contents: read
+
+jobs:
+  real-bm4l-shortcut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned application dependencies
+        run: npm ci
+      - name: Authenticate original fixture and exercise fail-closed loader
+        run: node scripts/lfea-bm4l-pinned-accdb-check.mjs
+      - name: Regress real ACCDB preparation and source boundary
+        run: |
+          node scripts/lfea-accdb-preparation-regression-check.mjs
+          node scripts/lfea-ui-source-acquisition-check.mjs
+          npm run check:imports
+      - name: Build production Pages application
+        run: npm run build
+      - name: Verify emitted /AA3/ ACCDB asset has authentic bytes and remains separate
+        run: node scripts/lfea-bm4l-built-asset-check.mjs
+      - name: Install project-local Chromium
+        run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium
+      - name: Compare manual vs shortcut and verify error/race/accessibility contracts
+        run: |
+          node scripts/run-playwright.mjs \
+            e2e/lfea-pipeline-accdb-repository-fixture.spec.js \
+            e2e/lfea-pipeline-accdb-repository-fixture-negative.spec.js
+      - name: Retain failed browser traces and snapshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-reference-shortcut-browser-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

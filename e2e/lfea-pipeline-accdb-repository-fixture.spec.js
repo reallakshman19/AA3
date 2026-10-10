@@ -45,8 +45,9 @@ test.describe('BM4_L authentic repository shortcut vs independent manual import'
         await expect(panel).toHaveAttribute('data-requested-profile', 'DISCLOSED_GENERIC_ANALYZER_APPROXIMATION_V1');
 
         const session = await page.evaluate(() => {
-          const source = globalThis.AnalysisWorkspace?.getLfeaEngineeringSessionState?.()?.source;
-          const pre = source?.preFlight;
+          const state = globalThis.AnalysisWorkspace?.getLfeaEngineeringSessionState?.();
+          const source = state?.source;
+          const pre = state?.preparation?.preFlight;
           if (!source || !pre) throw new Error('Missing governed LFEA source/pre-flight');
           return {
             sourceKind: source.kind,
@@ -54,8 +55,8 @@ test.describe('BM4_L authentic repository shortcut vs independent manual import'
             sourceIdentity: source.identityKey,
             providerIdentity: source.providerIdentityKey,
             preparationOwner: source.preparationOwner,
-            requestedProfile: source.requestedProfileId,
-            requestedCases: source.requestedCaseIds,
+            requestedProfile: state.preparation.requestedProfileId,
+            requestedCases: state.preparation.requestedCaseIds,
             overrides: source.provenance?.overrideCount ?? 0,
             semanticHash: pre.semanticHash,
             intakeContentHash: pre.intake?.contentSha256,

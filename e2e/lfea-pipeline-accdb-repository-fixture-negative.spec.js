@@ -183,6 +183,10 @@ test.describe('BM4_L shortcut fail-closed and interaction boundaries', () => {
       await page.locator(referenceAction).click();
       await requested;
       await expect(page.locator(referenceAction)).toBeDisabled();
+      // Deterministic click-time cancellation assertion: this failed before
+      // the fix even if a slow runner had not yet finished parsing the old file.
+      await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+        .toContainText('superseded by a newer source selection');
       await page.evaluate(() => window.__bm4lOlderManualRead.release());
       // Give the old parser time to complete if it was not invalidated.
       // The race's ordering is deterministic (manual read released while

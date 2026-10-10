@@ -1,0 +1,101 @@
+name: LFEA BM4_L repository reference shortcut
+
+on:
+  pull_request:
+    paths:
+      - 'src/main.js'
+      - 'src/workspace/lfea-bm4l-pinned-accdb.js'
+      - 'src/workspace/lfea-source-acquisition.js'
+      - 'src/workspace/lfea-source-acquisition.css'
+      - 'src/workspace/lfea-pipeline-shell-controller.js'
+      - 'src/workspace/lfea-pipeline-accdb-input-panel.js'
+      - 'e2e/lfea-pipeline-accdb-repository-fixture*.spec.js'
+      - 'scripts/lfea-bm4l-*.mjs'
+      - 'benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB'
+      - '.github/workflows/lfea-bm4l-reference-shortcut.yml'
+      - '.github/workflows/bm4l-v35-delp-scoreboard.yml'
+      - 'docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml'
+
+# Never grant PR code write authority. This workflow builds/tests the untrusted
+# PR candidate with read-only repository access, not pull_request_target.
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  real-bm4l-shortcut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify scoped Git diff formatting
+        run: git diff --check origin/main...HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned application dependencies
+        run: npm ci
+      - name: Load immutable Common V3.5 projector for read-only graph diagnostics
+        uses: actions/checkout@v4
+        with:
+          repository: reallakshman19/Common
+          ref: d006990b6637b5cabba656883c905c42cc8e947d
+          path: .bm4l-v35-common
+          persist-credentials: false
+      - name: Check derived-status graph can be read by actual Common projector
+        run: |
+          python -m pip install PyYAML
+          python .bm4l-v35-common/skills/engineering-pr-delivery-v3.5/scripts/delp_projection_v35.py validate-graph --graph docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml
+      - name: Read back exact live DELP projections without privileged write access
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python .bm4l-v35-common/skills/engineering-pr-delivery-v3.5/scripts/delp_projection_v35.py sync-github --graph docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml --repository "$GITHUB_REPOSITORY" --dry-run > /tmp/bm4l-delp-dry-run.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/bm4l-delp-dry-run.json').read_text())
+          rejected = report.get('rejected_facts', [])
+          print(json.dumps({
+              'check': 'BM4_L live v3.5 DELP ledger',
+              'rejected_facts': rejected,
+              'derived_issue_titles': len(report.get('expected_titles') or {}),
+              'would_write_titles': report.get('would_write_titles'),
+          }, sort_keys=True))
+          if rejected:
+              raise SystemExit('DELP REJECTED_FACTS: repair evidence syntax, not implementation gate')
+          if len(report.get('expected_titles') or {}) != 6:
+              raise SystemExit('DELP EXPECTED_TITLES: six programme/child issues required')
+          PY
+      - name: Authenticate original fixture and exercise fail-closed loader
+        run: node scripts/lfea-bm4l-pinned-accdb-check.mjs
+      - name: Regress real ACCDB preparation and source boundary
+        run: |
+          node scripts/lfea-accdb-preparation-regression-check.mjs
+          node scripts/lfea-ui-source-acquisition-check.mjs
+          npm run check:imports
+      - name: Build production Pages application
+        run: npm run build
+      - name: Verify emitted /AA3/ ACCDB asset has authentic bytes and remains separate
+        run: node scripts/lfea-bm4l-built-asset-check.mjs
+      - name: Install project-local Chromium
+        run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium
+      - name: Compare manual vs shortcut and verify error/race/accessibility contracts
+        run: |
+          node scripts/run-playwright.mjs \
+            e2e/lfea-pipeline-accdb-real-model.spec.js \
+            e2e/lfea-pipeline-accdb-repository-fixture.spec.js \
+            e2e/lfea-pipeline-accdb-repository-fixture-negative.spec.js
+      - name: Retain failed browser traces and snapshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bm4l-reference-shortcut-browser-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

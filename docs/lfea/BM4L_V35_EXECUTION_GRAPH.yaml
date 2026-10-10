@@ -1,0 +1,97 @@
+# BM4_L standalone v3.5 execution graph; Owner-selected process admission OFF.
+# This graph is the denominators for DELP projections; agents only publish evidence facts.
+# Source authority: https://github.com/reallakshman19/AA3/issues/36#issuecomment-6093229825
+schema: relay-v3.5-delp-execution-graph
+programme:
+  id: AA3-BM4L-REFERENCE-IMPORT-V35
+  root: AA3#36
+  repository: reallakshman19/AA3
+  base_ref: main
+  total_weight: 10000
+  fact_authors: [reallakshman19]
+  decomposition_policy:
+    mode: 'OFF'
+    units: {min: 3, max: 8, max_share_percent: 40}
+    leaf_budget: {target_loc: 700, hard_loc: 1500, target_minutes: 15, hard_minutes: 20}
+nodes:
+  - {ref: AA3#36, kind: ROOT}
+  - ref: AA3#37
+    kind: LEAF
+    parent: AA3#36
+    weight: 20
+    responsibility_id: BM4L-I1
+    primary_pr: AA3#42
+    critical: true
+    outcome: "Lazy exact authenticated repository ACCDB binary fetch and File handoff"
+    size_budget: {target_loc: 650, hard_loc: 1400, target_minutes: 15, hard_minutes: 20}
+    write_surface: ["src/workspace/lfea-bm4l-pinned-accdb.js", "scripts/lfea-bm4l-pinned-accdb-check.mjs"]
+    units:
+      - {id: U01, weight: 20, verify: "Pin exact original fixture length, SHA-256, Git blob and distribution basis"}
+      - {id: U02, weight: 35, verify: "Return a named File only after successful size and SHA-256 validation"}
+      - {id: U03, weight: 25, verify: "Reject HTTP/network/corrupt/crypto-missing cases in focused tests"}
+      - {id: U04, weight: 20, verify: "Demonstrate Vite emitted asset URL and no eager binary bundling"}
+  - ref: AA3#38
+    kind: LEAF
+    parent: AA3#36
+    weight: 30
+    responsibility_id: BM4L-I2
+    primary_pr: AA3#42
+    critical: true
+    depends_on: [AA3#37]
+    outcome: "Reference button uses existing importer with last-user-selection-wins semantics"
+    size_budget: {target_loc: 650, hard_loc: 1400, target_minutes: 15, hard_minutes: 20}
+    write_surface: ["src/workspace/lfea-source-acquisition.js", "src/workspace/lfea-source-acquisition.css", "src/workspace/lfea-pipeline-shell-controller.js", "src/main.js", "src/workspace/lfea-pipeline-accdb-input-panel.js"]
+    units:
+      - {id: U01, weight: 25, verify: "Accessible adjacent control and source/qualification disclosure"}
+      - {id: U02, weight: 25, verify: "Call authentic verified-file loader then existing ACCDB loadFile and show recoverable state"}
+      - {id: U03, weight: 30, verify: "Fence stale imports and early-mutating asynchronous parse, including manual and alternate sources"}
+      - {id: U04, weight: 20, verify: "Preserve explicit engineering approval, factors and Run gates and manual chooser"}
+  - ref: AA3#39
+    kind: LEAF
+    parent: AA3#36
+    weight: 20
+    responsibility_id: BM4L-I3
+    primary_pr: AA3#42
+    critical: true
+    depends_on: [AA3#38]
+    outcome: "Independent clean-context golden parity of manual and shortcut import"
+    size_budget: {target_loc: 650, hard_loc: 1400, target_minutes: 15, hard_minutes: 20}
+    write_surface: ["e2e/lfea-pipeline-accdb-repository-fixture.spec.js"]
+    units:
+      - {id: U01, weight: 25, verify: "Capture canonical manual ACCDB golden import on clean context"}
+      - {id: U02, weight: 25, verify: "Capture shortcut import on isolated clean context"}
+      - {id: U03, weight: 35, verify: "Compare authentic raw counts, identities, findings, profile, authority and override states"}
+      - {id: U04, weight: 15, verify: "Verify profile/case/source approval invalidation and Run stays blocked until governed"}
+  - ref: AA3#40
+    kind: LEAF
+    parent: AA3#36
+    weight: 20
+    responsibility_id: BM4L-I4
+    primary_pr: AA3#42
+    critical: true
+    depends_on: [AA3#39]
+    outcome: "Browser adversarial failure and concurrency, accessibility and lazy-network proofs"
+    size_budget: {target_loc: 650, hard_loc: 1400, target_minutes: 15, hard_minutes: 20}
+    write_surface: ["e2e/lfea-pipeline-accdb-repository-fixture-negative.spec.js"]
+    units:
+      - {id: U01, weight: 30, verify: "Reject 404/503/aborted/truncated/extra/same-size tampering and missing crypto"}
+      - {id: U02, weight: 30, verify: "Prove stale download never overwrites later selection, double click single-flight and recoverable failure"}
+      - {id: U03, weight: 20, verify: "Verify keyboard focus, labels, busy, error announcements and recovery"}
+      - {id: U04, weight: 20, verify: "Verify no eager resource GET, correct /AA3/ hash emitted resource, resource cost"}
+  - ref: AA3#41
+    kind: LEAF
+    parent: AA3#36
+    weight: 10
+    responsibility_id: BM4L-I5
+    primary_pr: AA3#42
+    critical: true
+    depends_on: [AA3#40]
+    outcome: "Fresh CR-01..10 self-review, final SHA CI/review, governed Pages release evidence"
+    size_budget: {target_loc: 650, hard_loc: 1400, target_minutes: 15, hard_minutes: 20}
+    write_surface: ["docs/lfea/BM4L_REFERENCE_IMPORT_RELEASE.md"]
+    units:
+      - {id: U01, weight: 15, verify: "Freeze full diff, source and protected fixture integrity"}
+      - {id: U02, weight: 25, verify: "Run honest standalone CR-01..CR-10 self-review and bounded repair/replay"}
+      - {id: U03, weight: 30, verify: "Run focused, real-model, negative, application/regression and real PR head CI"}
+      - {id: U04, weight: 15, verify: "Apply required reviewer and Owner authority to current merge head"}
+      - {id: U05, weight: 15, verify: "Verify GitHub Pages commit, deployed binary and live browser/Opera, publish rollback"}

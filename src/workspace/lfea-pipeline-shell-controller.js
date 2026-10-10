@@ -72,6 +72,10 @@ export class LfeaPipelineShellController {
 
   setAssemblyHandlers(handlers) { this.assemblyHandlers = handlers; }
 
+  configureReferenceBM4L(handlers) {
+    this.sourceAcquisition?.configureReferenceBM4L(handlers);
+  }
+
   setActiveSourceKind(kind) {
     const engineeringState = globalThis.AnalysisWorkspace?.getLfeaEngineeringSessionState?.() ?? null;
     const model = buildLfeaSourceAcquisitionModel(engineeringState, kind);

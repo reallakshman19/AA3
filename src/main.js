@@ -36,6 +36,7 @@ import { retireStandaloneInputXmlAnalyzerEntry } from './workspace/linear-piping
 import { mountLinearPipingInputXmlSourceWorkflow } from './workspace/linear-piping-inputxml-source-workflow.js';
 import { mountLfeaPipelineStagedJsonInputPanel } from './workspace/lfea-pipeline-stagedjson-input-panel.js';
 import { mountLfeaPipelineAccdbInputPanel } from './workspace/lfea-pipeline-accdb-input-panel.js';
+import { loadVerifiedBM4LReferenceFile } from './workspace/lfea-bm4l-pinned-accdb.js';
 import { mountLfeaPipelineVerificationDrawer } from './workspace/lfea-pipeline-verification-drawer.js';
 import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-analysis-consumer/inputxml-linear-authored-physical-cases.js';
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
@@ -74,6 +75,17 @@ const lfeaEngineeringSession = createLfeaEngineeringSession();
 let lfeaAnalysisSurface = null;
 let lfeaStepGuidanceReady = false;
 let lfeaStagedJsonHandoff = null;
+let lfeaAccdbInputPanel = null;
+let referenceSelectionEpoch = 0;
+let referenceAbort = null;
+
+// Any newer source intent cancels the shortcut and its uncommitted ACCDB parse.
+function supersedeBM4LReferenceIntent() {
+  ++referenceSelectionEpoch;
+  referenceAbort?.abort();
+  referenceAbort = null;
+  lfeaAccdbInputPanel?.invalidatePendingImport();
+}
 const lfeaEngineeringSessionUnsubscribe = lfeaEngineeringSession.subscribe((_state, event) => {
   if (['SOURCE_REPLACED', 'SOURCE_CLEARED', 'PREFLIGHT_CHANGED'].includes(event?.type)) {
     invalidateLfeaDownstreamPresentation(event.type);
@@ -83,6 +95,7 @@ const lfeaEngineeringSessionUnsubscribe = lfeaEngineeringSession.subscribe((_sta
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   onStateChanged: (snapshot) => {
+    if (snapshot.fileName !== null) supersedeBM4LReferenceIntent();
     if (lfeaStepGuidanceReady) {
       if (snapshot.fileName !== null && lfeaAccdbInputPanel.getSnapshot().fileName !== null) {
         lfeaAccdbInputPanel.clear();
@@ -97,6 +110,7 @@ const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(appli
 const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
   onConversionComplete: (result) => {
+    supersedeBM4LReferenceIntent();
     const staged = lfeaStagedJsonInputPanel.getSnapshot();
     lfeaStagedJsonHandoff = Object.freeze({
       identityKey: `STAGED_JSON:${staged.fileName ?? result.outputName}`,
@@ -117,8 +131,9 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
   },
   onClear: () => linearPipingInputXmlSource.clear(),
 });
-const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
+lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
+  onImportIntent: () => supersedeBM4LReferenceIntent(),
   onStateChanged: (snapshot) => {
     if (lfeaStepGuidanceReady) {
       if (snapshot.fileName !== null && snapshot.elementCount !== null
@@ -130,6 +145,42 @@ const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.g
     refreshLfeaStepGuidance();
   },
 });
+// Direct file input changes (including provider-specific panels) supersede any
+// delayed reference download, even when the central source button was not used.
+applicationRoot.addEventListener('change', (event) => {
+  if (event.target?.type === 'file') supersedeBM4LReferenceIntent();
+}, true);
+
+lfeaPipelineShell.configureReferenceBM4L({
+  onOtherSourceIntent: () => supersedeBM4LReferenceIntent(),
+  async onRequest() {
+    const selection = ++referenceSelectionEpoch;
+    referenceAbort?.abort();
+    // A newer reference selection supersedes an older in-flight manual parse
+    // at CLICK time, not only after a potentially long reference download.
+    // Otherwise an old manual model could commit while the new request waits.
+    lfeaAccdbInputPanel.invalidatePendingImport();
+    const controller = new AbortController();
+    referenceAbort = controller;
+    try {
+      const file = await loadVerifiedBM4LReferenceFile({ signal: controller.signal });
+      if (selection !== referenceSelectionEpoch) {
+        throw new DOMException('A newer source was selected.', 'AbortError');
+      }
+      const accepted = await lfeaAccdbInputPanel.loadFile(file);
+      if (selection !== referenceSelectionEpoch) {
+        throw new DOMException('A newer source was selected.', 'AbortError');
+      }
+      if (!accepted) {
+        const snapshot = lfeaAccdbInputPanel.getSnapshot();
+        throw new Error(snapshot.error ?? 'The authentic ACCDB could not be prepared.');
+      }
+    } finally {
+      if (referenceAbort === controller) referenceAbort = null;
+    }
+  },
+});
+
 const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surface.js')
   .then(({ mountLfeaPipelineAnalysisSurface }) => {
     lfeaAnalysisSurface = mountLfeaPipelineAnalysisSurface({

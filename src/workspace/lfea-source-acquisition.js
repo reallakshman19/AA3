@@ -67,11 +67,48 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
   const elements = createElements(documentRef);
   sourceHostElement.append(elements.section);
   let model = buildLfeaSourceAcquisitionModel(null);
+  let onReferenceRequested = null;
+  let onOtherSelection = null;
+  let referenceBusy = false;
 
   for (const button of elements.sourceButtons) {
     button.addEventListener('click', () => requestImport(button.dataset.sourceKind));
   }
   elements.clearButton.addEventListener('click', () => clearActiveSource());
+  elements.referenceButton.addEventListener('click', async () => {
+    if (referenceBusy) return;
+    const restoreFocus = documentRef.activeElement === elements.referenceButton;
+    let cancelled = false;
+    referenceBusy = true;
+    elements.referenceButton.disabled = true;
+    elements.referenceButton.setAttribute('aria-busy', 'true');
+    elements.referenceStatus.textContent = 'Downloading and verifying the authentic BM4_L.ACCDB…';
+    elements.referenceStatus.dataset.status = 'ok';
+    try {
+      if (typeof onReferenceRequested !== 'function') {
+        throw new Error('The Reference BM4_L importer is not available.');
+      }
+      await onReferenceRequested();
+      elements.referenceStatus.textContent = 'Reference BM4_L import completed. Review Error Check and code factors before analysis.';
+    } catch (error) {
+      cancelled = error?.name === 'AbortError';
+      elements.referenceStatus.dataset.status = cancelled ? 'ok' : 'error';
+      elements.referenceStatus.textContent = cancelled
+        ? 'Reference BM4_L request cancelled because a newer source was selected.'
+        : (error?.message ?? String(error));
+    } finally {
+      referenceBusy = false;
+      elements.referenceButton.disabled = false;
+      elements.referenceButton.removeAttribute('aria-busy');
+      // Disabling an activated button removes keyboard focus in Chromium.
+      // Restore it only if the previous focus fell to the document body and
+      // the request was not superseded by another source selection.
+      if (restoreFocus && !cancelled
+        && (!documentRef.activeElement || documentRef.activeElement === documentRef.body)) {
+        elements.referenceButton.focus();
+      }
+    }
+  });
 
   function requestImport(kind) {
     const sourceKind = requireSourceKind(kind);
@@ -85,6 +122,7 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
       setStatus(`The ${SOURCE_LABELS[sourceKind]} importer is not available.`, true);
       return;
     }
+    onOtherSelection?.(sourceKind);
     setStatus(
       model.active
         ? `Choose the replacement ${SOURCE_LABELS[sourceKind]} file. The current engineering model remains active until a replacement loads successfully.`
@@ -101,6 +139,7 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
       setStatus(`The active ${model.sourceLabel} source could not be cleared from this view.`, true);
       return;
     }
+    onOtherSelection?.('CLEAR');
     button.click();
   }
 
@@ -176,6 +215,10 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
   return Object.freeze({
     render,
     getModel: () => model,
+    configureReferenceBM4L({ onRequest, onOtherSourceIntent } = {}) {
+      onReferenceRequested = onRequest;
+      onOtherSelection = onOtherSourceIntent;
+    },
     destroy() { elements.section.remove(); },
   });
 }
@@ -215,6 +258,17 @@ function createElements(doc) {
     return button;
   });
 
+  const referenceButton = doc.createElement('button');
+  referenceButton.type = 'button';
+  referenceButton.dataset.action = 'lfea-source-acquisition-reference-bm4l';
+  referenceButton.setAttribute('aria-label', 'Reference BM4_L — load the authentic repository ACCDB');
+  referenceButton.title = 'Loads the real BM4_L.ACCDB fixture from the repository. Not an engineering qualification.';
+  const referenceIcon = doc.createElement('span');
+  referenceIcon.setAttribute('aria-hidden', 'true');
+  referenceIcon.textContent = '↳ ';
+  referenceButton.append(referenceIcon, doc.createTextNode('Reference BM4_L'));
+  actions.append(referenceButton);
+
   const stagedOptions = doc.createElement('label');
   stagedOptions.className = 'lfea-source-acquisition__staged-option';
   stagedOptions.textContent = 'For next StagedJSON import: infer missing OD from nominal bore ';
@@ -236,8 +290,18 @@ function createElements(doc) {
   status.dataset.role = 'lfea-source-acquisition-status';
   status.setAttribute('aria-live', 'polite');
 
-  section.append(header, summary, actions, status);
-  return { section, activeBadge, summary, actions, actionLead, sourceButtons, stagedInferOd, clearButton, status };
+  const referenceNote = doc.createElement('p');
+  referenceNote.className = 'lfea-source-acquisition__reference-note';
+  referenceNote.textContent = 'Reference BM4_L loads the original CAESAR II model, not a qualified solver result. Error Check and code-factor approval still apply.';
+  const referenceStatus = doc.createElement('output');
+  referenceStatus.dataset.role = 'lfea-source-acquisition-reference-status';
+  referenceStatus.className = 'lfea-source-acquisition__status';
+  referenceStatus.setAttribute('role', 'status');
+  referenceStatus.setAttribute('aria-live', 'polite');
+  referenceStatus.setAttribute('aria-atomic', 'true');
+
+  section.append(header, summary, actions, referenceNote, status, referenceStatus);
+  return { section, activeBadge, summary, actions, actionLead, sourceButtons, referenceButton, referenceStatus, stagedInferOd, clearButton, status };
 }
 
 function requireSourceKind(value) {

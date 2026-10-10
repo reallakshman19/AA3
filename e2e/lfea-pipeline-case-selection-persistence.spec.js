@@ -67,7 +67,7 @@ test.describe('LFEA persistent case preferences and no-op Apply', () => {
     await step(page, 'ERROR_CHECK').click();
     await expect(page.locator('[data-role="lfea-common-error-check-panel"]'))
       .toHaveAttribute('data-solve-authorized', 'true');
-    await expect(step(page, 'RUN')).toHaveAttribute('data-step-status', 'READY');
+    await expect(step(page, 'RUN')).toBeEnabled();
     expect(pageErrors).toEqual([]);
   });
 

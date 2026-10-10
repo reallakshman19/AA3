@@ -47,8 +47,7 @@ jobs:
       - name: Check derived-status graph can be read by actual Common projector
         run: |
           python -m pip install PyYAML
-          python .bm4l-v35-common/skills/engineering-pr-delivery-v3.5/scripts/delp_projection_v35.py \\
-            validate-graph --graph docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml
+          python .bm4l-v35-common/skills/engineering-pr-delivery-v3.5/scripts/delp_projection_v35.py validate-graph --graph docs/lfea/BM4L_V35_EXECUTION_GRAPH.yaml
       - name: Authenticate original fixture and exercise fail-closed loader
         run: node scripts/lfea-bm4l-pinned-accdb-check.mjs
       - name: Regress real ACCDB preparation and source boundary

@@ -13,7 +13,7 @@ test.describe('BM4_L authentic repository shortcut vs independent manual import'
     const contexts = [];
     try {
       for (const method of ['manual', 'reference']) {
-        const context = await browser.newContext();
+        const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
         contexts.push(context);
         const page = await context.newPage();
         const pageErrors = [];

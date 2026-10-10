@@ -77,6 +77,8 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
   elements.clearButton.addEventListener('click', () => clearActiveSource());
   elements.referenceButton.addEventListener('click', async () => {
     if (referenceBusy) return;
+    const restoreFocus = documentRef.activeElement === elements.referenceButton;
+    let cancelled = false;
     referenceBusy = true;
     elements.referenceButton.disabled = true;
     elements.referenceButton.setAttribute('aria-busy', 'true');
@@ -89,7 +91,7 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
       await onReferenceRequested();
       elements.referenceStatus.textContent = 'Reference BM4_L import completed. Review Error Check and code factors before analysis.';
     } catch (error) {
-      const cancelled = error?.name === 'AbortError';
+      cancelled = error?.name === 'AbortError';
       elements.referenceStatus.dataset.status = cancelled ? 'ok' : 'error';
       elements.referenceStatus.textContent = cancelled
         ? 'Reference BM4_L request cancelled because a newer source was selected.'
@@ -98,6 +100,13 @@ export function createLfeaSourceAcquisitionController(sourceHostElement, documen
       referenceBusy = false;
       elements.referenceButton.disabled = false;
       elements.referenceButton.removeAttribute('aria-busy');
+      // Disabling an activated button removes keyboard focus in Chromium.
+      // Restore it only if the previous focus fell to the document body and
+      // the request was not superseded by another source selection.
+      if (restoreFocus && !cancelled
+        && (!documentRef.activeElement || documentRef.activeElement === documentRef.body)) {
+        elements.referenceButton.focus();
+      }
     }
   });
 

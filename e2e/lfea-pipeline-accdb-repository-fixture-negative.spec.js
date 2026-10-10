@@ -73,6 +73,22 @@ test.describe('BM4_L shortcut fail-closed and interaction boundaries', () => {
     });
   }
 
+  test('missing browser SHA-256 capability fails closed before any binary GET', async ({ page }) => {
+    let transferred = 0;
+    await page.route(accdbUrl, async (route) => {
+      transferred += 1;
+      await route.fulfill({ status: 200, contentType: 'application/octet-stream', body: authenticBytes });
+    });
+    await openSource(page);
+    await page.evaluate(() => {
+      Object.defineProperty(window.crypto, 'subtle', { configurable: true, value: undefined });
+    });
+    await page.locator(referenceAction).click();
+    await expect(page.locator(referenceStatus)).toContainText(/requires browser SHA-256 support/iu);
+    expect(transferred).toBe(0);
+    await assertNoUnauthorizedSource(page);
+  });
+
   test('failed shortcut retains existing governed manual source', async ({ page }) => {
     await openSource(page);
     await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
@@ -108,6 +124,8 @@ test.describe('BM4_L shortcut fail-closed and interaction boundaries', () => {
     await openSource(page);
     await page.locator(referenceAction).click();
     await requested;
+    await expect(page.locator(referenceAction)).toBeDisabled();
+    await expect(page.locator(referenceAction)).toHaveAttribute('aria-busy', 'true');
     await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles({
       name: 'newer-manual.accdb',
       mimeType: 'application/vnd.ms-access',

@@ -157,6 +157,8 @@ test.describe('BM4_L shortcut fail-closed and interaction boundaries', () => {
     await openSource(page);
     expect(requests).toEqual([]);
     await page.reload();
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
     expect(requests).toEqual([]);
     await page.locator(referenceAction).click();
     await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))

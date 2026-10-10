@@ -75,6 +75,7 @@ const lfeaEngineeringSession = createLfeaEngineeringSession();
 let lfeaAnalysisSurface = null;
 let lfeaStepGuidanceReady = false;
 let lfeaStagedJsonHandoff = null;
+let lfeaAccdbInputPanel = null;
 let referenceSelectionEpoch = 0;
 let referenceAbort = null;
 
@@ -94,7 +95,7 @@ const lfeaEngineeringSessionUnsubscribe = lfeaEngineeringSession.subscribe((_sta
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
   onStateChanged: (snapshot) => {
-    supersedeBM4LReferenceIntent();
+    if (snapshot.fileName !== null) supersedeBM4LReferenceIntent();
     if (lfeaStepGuidanceReady) {
       if (snapshot.fileName !== null && lfeaAccdbInputPanel.getSnapshot().fileName !== null) {
         lfeaAccdbInputPanel.clear();
@@ -130,7 +131,7 @@ const lfeaStagedJsonInputPanel = mountLfeaPipelineStagedJsonInputPanel(lfeaPipel
   },
   onClear: () => linearPipingInputXmlSource.clear(),
 });
-const lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
+lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSourceHost(), {
   documentRef: applicationRoot.ownerDocument,
   onImportIntent: () => supersedeBM4LReferenceIntent(),
   onStateChanged: (snapshot) => {

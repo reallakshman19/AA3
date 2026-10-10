@@ -4,6 +4,14 @@ import { expect, test } from '@playwright/test';
 
 const fixturePath = fileURLToPath(new URL('../benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB', import.meta.url));
 
+function isBm4lBinaryRequest(urlString) {
+  const url = new URL(urlString);
+  // Vite may request a tiny ?url ESM module at startup. Only the actual binary
+  // body is a transfer; intercepting the ESM import would break app boot.
+  return /\/BM4_L(?:-[A-Za-z0-9_-]+)?\.ACCDB$/iu.test(url.pathname)
+    && !url.searchParams.has('url') && !url.searchParams.has('import');
+}
+
 test.describe('BM4_L authentic repository shortcut vs independent manual import', () => {
   test.setTimeout(300000);
   test.skip(!fs.existsSync(fixturePath), 'The committed original BM4_L.ACCDB is required.');
@@ -22,7 +30,7 @@ test.describe('BM4_L authentic repository shortcut vs independent manual import'
         page.on('pageerror', (error) => pageErrors.push(error.message));
         page.on('filechooser', () => { fileChooserCount += 1; });
         page.on('request', (request) => {
-          if (/BM4_L[^/]*\.ACCDB(?:\?|$)/iu.test(request.url())) accdbRequests.push(request.url());
+          if (isBm4lBinaryRequest(request.url())) accdbRequests.push(request.url());
         });
         await page.goto('/', { timeout: 120000 });
         await page.getByRole('navigation', { name: 'Application views' })

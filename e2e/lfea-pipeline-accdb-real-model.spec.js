@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+// Include case preference/regeneration browser regressions in the existing exact-head CI suite.
+import './lfea-pipeline-case-selection-persistence.spec.js';
 
 /**
  * Import a real CAESAR II .ACCDB through the actual UI and assert the verdict.

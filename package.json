@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "check:lfea-accdb-repair": "node scripts/lfea-accdb-repair-transaction-check.mjs",
     "build:lafea": "node scripts/lafea-standalone-boundary-check.mjs && vite build --config vite.lafea.config.js && node scripts/lafea-standalone-build-artifact-check.mjs",
     "check:lafea-standalone": "node scripts/lafea-standalone-boundary-check.mjs && node scripts/lafea-standalone-boundary-self-test.mjs && node scripts/lafea-stage15-neutral-shared-primitives-check.mjs",
     "check:lafea-e2e": "node scripts/run-playwright.mjs e2e/lafea-standalone.spec.js",

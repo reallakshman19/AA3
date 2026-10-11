@@ -129,12 +129,17 @@ test('UI08 exact production LFEA InputXML six-step workflow and profile currentn
 });
 
 async function acknowledgeAndAuthorize(errorCheck) {
-  const acknowledgements = errorCheck.locator('[data-action="lfea-error-check-acknowledge-limitation"]');
-  const count = await acknowledgements.count();
+  // Review is expand-to-review: opening a CONDITIONAL group's details marks it
+  // reviewed, so there is no per-group acknowledge button to click any more.
+  const conditionalGroups = errorCheck.locator(
+    '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"]',
+  );
+  const count = await conditionalGroups.count();
   expect(count).toBeGreaterThan(0);
   for (let index = 0; index < count; index += 1) {
-    await acknowledgements.nth(index).click();
+    await conditionalGroups.nth(index).locator('summary').click();
   }
+  await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
   await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('ui08-production-browser');
   await errorCheck.locator('[data-role="lfea-error-check-reason"]')
     .fill('Exact-head browser qualification of disclosed InputXML limitations.');

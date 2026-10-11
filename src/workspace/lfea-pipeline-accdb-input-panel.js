@@ -16,6 +16,7 @@ import {
 import {
   createLinearPipingAccdbIntake,
   prepareLinearPipingAccdbPreFlight,
+  LINEAR_PIPING_ACCDB_LENGTH_UNITS,
 } from './linear-piping-accdb-intake.js';
 import { parseAccdbModelHealthSource } from '../core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import { diagnoseInputXmlLinearModelHealth } from '../core/linear-piping-analysis-consumer/inputxml-linear-model-health.js';
@@ -471,9 +472,9 @@ export class LfeaPipelineAccdbInputPanelController {
     return Object.freeze({
       sourceIdentity: this.sourceBaseIdentity,
       revision: this.coordinateRevision,
-      unit: this.sourceBundle?.unitSystem?.declared?.length
-        ? String(this.sourceBundle.unitSystem.declared.length).replace(/\.$/u, '').toLowerCase()
-        : null,
+      unit: LINEAR_PIPING_ACCDB_LENGTH_UNITS[
+        String(this.sourceBundle?.unitSystem?.declared?.length ?? '').trim().toUpperCase()
+      ] ?? null,
       undoCount: this.coordinateCursor,
       redoCount: this.coordinateEdits.length - this.coordinateCursor,
       editedNodeCount: new Set(this.coordinateEdits.slice(0, this.coordinateCursor)

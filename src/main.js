@@ -143,6 +143,7 @@ lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSour
       syncLfeaAccdbEngineeringSession(snapshot);
     }
     refreshLfeaStepGuidance();
+    lfeaAnalysisSurface?.refreshSourceStep();
   },
 });
 // Direct file input changes (including provider-specific panels) supersede any
@@ -188,6 +189,9 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
       getPreFlight: () => activeLfeaPreFlight(),
+      getAccdbRepairController: () =>
+        lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+          === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB ? lfeaAccdbInputPanel : null,
       onAuthorizePreFlight: (approval) => authorizeActiveLfeaPreFlight(approval),
       onContinueFromErrorCheck: () => lfeaPipelineShell.setActiveStep('LOAD_CASE'),
       onApplyCaseSelection: (caseIds) => applyLfeaCaseSelection(caseIds),

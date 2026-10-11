@@ -537,6 +537,56 @@ export class LfeaPipelineAccdbInputPanelController {
     });
   }
 
+
+  /** Prospective governed raw-property edit on detached source tables. */
+  previewPropertyFieldEdit(request) {
+    if (!this.tables || !this.sourceBaseIdentity
+        || request?.expectedSourceIdentity !== this.sourceBaseIdentity
+        || request?.expectedCoordinateRevision !== this.coordinateRevision
+        || request?.expectedPreparationHash !== this.preFlight?.semanticHash) {
+      throw new TypeError('Property edit is stale for this ACCDB preparation.');
+    }
+    const id = String(request.accdbElementId ?? '').trim();
+    const field = String(request.field ?? '').trim();
+    const drafts = new Map(this.overrideDrafts);
+    drafts.set(id + ':' + field, String(request.rawValue ?? '').trim());
+    const overrides = [...drafts.entries()].map(([key, rawValue]) => {
+      const sep = key.lastIndexOf(':');
+      return { accdbElementId: key.slice(0, sep), field: key.slice(sep + 1), rawValue };
+    });
+    const applied = applyAccdbFieldOverrides(this.tables, {
+      approver: request.approver, reason: request.reason, overrides,
+    });
+    const candidate = this.prepareCandidate(this.withCoordinateEdits(applied.tables).tables);
+    const changed = applied.disclosures.find((entry) => entry.data.accdbElementId === id
+      && entry.data.field === field);
+    if (!changed) throw new TypeError('No exact source property row was changed.');
+    const datum = changed.data;
+    return Object.freeze({
+      sourceIdentity: this.sourceBaseIdentity, revision: this.coordinateRevision,
+      expectedPreparationHash: this.preFlight?.semanticHash ?? null,
+      elementId: id, field, before: datum.originalRawValue, after: datum.overrideRawValue,
+      changed: String(datum.originalRawValue ?? '') !== String(datum.overrideRawValue ?? ''),
+      statusBefore: this.preFlight?.status ?? 'UNAVAILABLE',
+      statusAfter: candidate.preFlight?.status ?? 'UNAVAILABLE',
+      findingCountBefore: this.preFlight?.preparation?.findings?.length ?? 0,
+      findingCountAfter: candidate.preFlight?.preparation?.findings?.length ?? 0,
+      preparationWillChange: candidate.preFlight?.semanticHash !== this.preFlight?.semanticHash,
+      overrideCount: applied.disclosures.length,
+    });
+  }
+
+  applyPropertyFieldEdit(request) {
+    const preview = this.previewPropertyFieldEdit(request);
+    if (!preview.changed) throw new TypeError('The source property is unchanged; no correction to Apply.');
+    this.setOverrideDraft(preview.elementId, preview.field, preview.after);
+    this.overrideApprover = String(request.approver ?? '').trim();
+    this.overrideReason = String(request.reason ?? '').trim();
+    this.applyOverrides();
+    if (this.error) throw new TypeError(this.error);
+    return preview;
+  }
+
   /** A successful Apply changes the exact tables that the analysis intake seals. */
   applyCoordinateEdit(request) {
     const preview = this.previewCoordinateEdit(request);

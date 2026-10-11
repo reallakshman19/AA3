@@ -39,6 +39,7 @@ export class LfeaAccdbRepairWorkspaceController {
     this.focusedFinding = null;
     this.sourceIdentity = null;
     this.pending = null;
+    this.pendingProperty = null;
     this.loadedDraft = null;
     this.message = '';
     this.error = '';
@@ -79,6 +80,7 @@ export class LfeaAccdbRepairWorkspaceController {
       this.selection = null;
       this.focusedFinding = null;
       this.pending = null;
+      this.pendingProperty = null;
       this.loadedDraft = null;
       this.viewBoxByMode.clear();
       this.searchTerm = '';
@@ -213,6 +215,7 @@ export class LfeaAccdbRepairWorkspaceController {
   selectNode(node) {
     this.selection = { kind: 'NODE', id: node.nodeId };
     this.pending = null;
+    this.pendingProperty = null;
     this.axis = 'X';
     this.rawValue = '';
     this.message = 'Source node ' + node.nodeId + ' selected.';
@@ -222,6 +225,7 @@ export class LfeaAccdbRepairWorkspaceController {
   selectSegment(segment) {
     this.selection = { kind: 'SEGMENT', id: segment.segmentId };
     this.pending = null;
+    this.pendingProperty = null;
     this.message = 'Segment ' + segment.segmentId + ' selected. Choose a source endpoint to edit.';
     this.render();
   }
@@ -262,19 +266,47 @@ export class LfeaAccdbRepairWorkspaceController {
     this.refresh();
   }
 
+  propertyEditRequest(record, pre, editor) {
+    const snapshot = editor.getCoordinateEditorSnapshot();
+    return {
+      accdbElementId: record.accdbElementId,
+      field: this.field, rawValue: this.propertyValue,
+      approver: this.approver, reason: this.reason,
+      expectedSourceIdentity: snapshot.sourceIdentity,
+      expectedCoordinateRevision: snapshot.revision,
+      expectedPreparationHash: pre.semanticHash,
+    };
+  }
+
+  previewProperty(record) {
+    const active = this.active();
+    if (!active || this.representation !== 'SOURCE') throw new TypeError('Select an imported ACCDB element.');
+    this.pendingProperty = active.editor.previewPropertyFieldEdit(
+      this.propertyEditRequest(record, active.pre, active.editor));
+    this.error = '';
+    this.message = 'Property preview evaluated through the existing raw-cell whitelist; preparation remains unchanged.';
+    this.render();
+  }
+
   applyProperty(record) {
     const active = this.active();
-    if (!active || this.representation !== 'SOURCE') throw new TypeError('Only source-element raw fields are editable.');
-    const editor = active.editor;
-    editor.overrideApprover = this.approver;
-    editor.overrideReason = this.reason;
-    editor.setOverrideDraft(record.accdbElementId, this.field, this.propertyValue);
-    editor.applyOverrides();
-    const snapshot = editor.getSnapshot();
-    if (snapshot.error) throw new TypeError(snapshot.error);
+    if (!active || this.representation !== 'SOURCE' || !this.pendingProperty?.changed) {
+      throw new TypeError('Preview a supported changed source property before Apply.');
+    }
+    const request = this.propertyEditRequest(record, active.pre, active.editor);
+    if (this.pendingProperty.sourceIdentity !== request.expectedSourceIdentity
+        || this.pendingProperty.revision !== request.expectedCoordinateRevision
+        || this.pendingProperty.expectedPreparationHash !== request.expectedPreparationHash
+        || this.pendingProperty.elementId !== String(request.accdbElementId)
+        || this.pendingProperty.field !== request.field
+        || String(this.pendingProperty.after) !== String(request.rawValue)) {
+      throw new TypeError('Property changed after preview; preview the current source again.');
+    }
+    active.editor.applyPropertyFieldEdit(request);
+    this.pendingProperty = null;
     this.pending = null;
     this.focusedFinding = null;
-    this.message = 'Property raw-cell correction applied through the existing ACCDB whitelist and preflight.';
+    this.message = 'Source raw property applied through governed ACCDB whitelist; fresh preparation, new run authorization required.';
     this.refresh();
   }
 
@@ -552,7 +584,7 @@ export class LfeaAccdbRepairWorkspaceController {
     }
     const fieldSelect = this.selectInput('Raw element field ',
       ACCDB_ELEMENT_FIELD_SPECS.map((spec) => spec.name), this.field, (name) => {
-        this.field = name; this.propertyValue = ''; this.render();
+        this.field = name; this.propertyValue = ''; this.pendingProperty = null; this.render();
       }, 'lfea-repair-property-field');
     const evidence = record.fieldEvidence?.[this.field];
     const original = this.doc.createElement('p');
@@ -563,8 +595,31 @@ export class LfeaAccdbRepairWorkspaceController {
     const value = this.textInput('New value (ACCDB raw unit) ',
       this.propertyValue, (v) => { this.propertyValue = v; }, 'lfea-repair-property-value');
     host.append(fieldSelect.wrap, original, value.wrap,
-      this.button('Apply property via governed override', 'lfea-repair-apply-property', () =>
-        this.applyProperty(record)));
+      this.button('Preview governed property correction', 'lfea-repair-preview-property', () =>
+        this.previewProperty(record)));
+    if (this.pendingProperty && this.pendingProperty.elementId === String(record.accdbElementId)
+        && this.pendingProperty.field === this.field) {
+      const preview = this.doc.createElement('div');
+      preview.dataset.role = 'lfea-accdb-property-preview';
+      const text = this.doc.createElement('p');
+      const check = this.pendingProperty;
+      text.textContent = 'PREVIEW ONLY · INPUT_BASIC_ELEMENT_DATA ELEMENTID '
+        + check.elementId + ' ' + check.field + ': ' + String(check.before)
+        + ' → ' + String(check.after) + ' (source raw value) · '
+        + check.overrideCount + ' total whitelisted field override(s). '
+        + 'Preflight ' + check.statusBefore + ' → ' + check.statusAfter
+        + '; finding occurrences ' + check.findingCountBefore + ' → '
+        + check.findingCountAfter + '. Never accepts a mechanical limitation.';
+      preview.append(text,
+        this.button('Apply property correction and re-check', 'lfea-repair-apply-property',
+          () => this.applyProperty(record), !check.changed),
+        this.button('Cancel property preview', 'lfea-repair-cancel-property', () => {
+          this.pendingProperty = null;
+          this.message = 'Property correction canceled; ACCDB model unchanged.';
+          this.render();
+        }));
+      host.append(preview);
+    }
     const related = findingsForAccdbSelection(active.pre.preparation.findings,
       active.source, descriptor, this.selection);
     const note = this.doc.createElement('p');

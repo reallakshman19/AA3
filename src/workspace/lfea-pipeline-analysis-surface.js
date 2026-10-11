@@ -10,6 +10,7 @@ import { mountLfeaPipelineLoadCaseAuthoringPanel } from './lfea-pipeline-load-ca
 import { mountLfeaPipelineModelRepairPanel } from './lfea-pipeline-model-repair-panel.js';
 import { mountLfeaModelReviewPanel } from './lfea-model-review/lfea-model-review-panel.js';
 import { mountLfeaCommonErrorCheckPanel } from './lfea-diagnostics/lfea-error-check-panel.js';
+import { mountLfeaAccdbRepairWorkspace } from './lfea-diagnostics/lfea-accdb-repair-workspace.js';
 import { mountLfeaResultsAuthorityPanel } from './lfea-results-authority/lfea-results-authority-panel.js';
 
 /** Shared presentation surface for the LFEA pipeline. */
@@ -46,15 +47,22 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   });
   const modelRepairPanel = mountLfeaPipelineModelRepairPanel(options.sourceHost, { documentRef: options.documentRef, getSourceText: options.getSourceText, onRepaired: options.onRepaired });
   const modelReviewPanel = mountLfeaModelReviewPanel(options.sourceHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
+  let repairWorkspace = null;
   const errorCheckPanel = mountLfeaCommonErrorCheckPanel(options.sourceHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
     onAuthorizePreFlight: options.onAuthorizePreFlight,
     onContinue: options.onContinueFromErrorCheck,
+    onLocateOccurrence: (finding, locateOptions) => repairWorkspace?.locateOccurrence(finding, locateOptions),
+  });
+  repairWorkspace = mountLfeaAccdbRepairWorkspace(errorCheckPanel.getWorkspaceHost(), {
+    documentRef: options.documentRef,
+    getPreFlight: options.getPreFlight,
+    getAccdbController: options.getAccdbRepairController,
   });
 
   return Object.freeze({
-    analysisController, modelRepairPanel, modelReviewPanel, errorCheckPanel,
+    analysisController, modelRepairPanel, modelReviewPanel, errorCheckPanel, repairWorkspace,
     caseSelectionPanel, layoutPanel, runPanel, resultsPanel, exportPanel,
     resultsAuthorityPanel, taskVisibility, sortPresentation, loadCaseAuthoringPanel,
     refreshLoadCaseStep() {
@@ -64,7 +72,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       runPanel.refresh();
     },
     refreshRunStep() { runPanel.refresh(); },
-    refreshSourceStep() { modelRepairPanel.refresh(); modelReviewPanel.refresh(); errorCheckPanel.refresh(); },
+    refreshSourceStep() { modelRepairPanel.refresh(); modelReviewPanel.refresh(); errorCheckPanel.refresh(); repairWorkspace.refresh(); },
     refreshResultsStep() { resultsAuthorityPanel.refresh(); exportPanel.refresh(); sortPresentation.refresh(); taskVisibility.refresh(); },
     destroy() {
       taskVisibility.destroy();
@@ -78,6 +86,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
       loadCaseAuthoringPanel.destroy();
       modelRepairPanel.destroy();
       modelReviewPanel.destroy();
+      repairWorkspace.destroy();
       errorCheckPanel.destroy();
     },
   });

@@ -99,6 +99,8 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     return;
   }
 
+  const highlightedSegments = new Set(options.highlightSegmentIds ?? []);
+  const highlightedNodes = new Set(options.highlightNodeIds ?? []);
   const density = lfeaGeometryReviewDisplayDensity(descriptor.segments.length);
   host.dataset.segmentLabels = density.segmentLabelsVisible ? 'VISIBLE' : 'SUPPRESSED_FOR_DENSITY';
   const axes = isometricAxes(verticalAxis);
@@ -128,6 +130,20 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     line.dataset.segmentId = segment.segmentId;
     line.dataset.segmentType = segment.type;
     line.dataset.segmentCategory = lfeaSegmentCategory(segment.type);
+    line.dataset.selected = highlightedSegments.has(segment.segmentId) ? 'true' : 'false';
+    if (typeof options.onSelectSegment === 'function') {
+      line.setAttribute('tabindex', '0');
+      line.setAttribute('role', 'button');
+      line.setAttribute('aria-label', 'Select piping segment ' + segment.segmentId
+        + ' from ' + segment.startNodeId + ' to ' + segment.endNodeId);
+      line.addEventListener('click', () => options.onSelectSegment(segment));
+      line.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          options.onSelectSegment(segment);
+        }
+      });
+    }
     const title = host.ownerDocument.createElementNS(SVG_NS, 'title');
     title.textContent = `${segment.segmentId}: ${segment.type} ${segment.startNodeId} → ${segment.endNodeId}`;
     line.append(title);
@@ -152,6 +168,19 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     marker.setAttribute('r', '3.5');
     marker.setAttribute('class', 'lfea-geometry-review__node');
     marker.dataset.nodeId = node.nodeId;
+    marker.dataset.selected = highlightedNodes.has(node.nodeId) ? 'true' : 'false';
+    if (typeof options.onSelectNode === 'function') {
+      marker.setAttribute('tabindex', '0');
+      marker.setAttribute('role', 'button');
+      marker.setAttribute('aria-label', 'Select source node ' + node.nodeId);
+      marker.addEventListener('click', () => options.onSelectNode(node));
+      marker.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          options.onSelectNode(node);
+        }
+      });
+    }
     svg.append(marker);
 
     for (const restraint of node.restraints) {

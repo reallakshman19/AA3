@@ -53,6 +53,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     getPreFlight: options.getPreFlight,
     onAuthorizePreFlight: options.onAuthorizePreFlight,
     onContinue: options.onContinueFromErrorCheck,
+    onNavigatePrerequisite: options.onNavigatePrerequisite,
     onLocateOccurrence: (finding, locateOptions) => repairWorkspace?.locateOccurrence(finding, locateOptions),
   });
   repairWorkspace = mountLfeaAccdbRepairWorkspace(errorCheckPanel.getWorkspaceHost(), {

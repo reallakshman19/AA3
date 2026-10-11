@@ -7,6 +7,7 @@ import {
   selectLfeaErrorCheckSections,
 } from './lfea-error-check-presentation.js';
 import { lfeaPipelineIcon } from '../lfea-pipeline-icon-manifest.js';
+import { classifyLfeaAccdbFindingAction } from './lfea-accdb-capability-actions.js';
 import { mountLfeaInlineBendFactorAuthorityControl } from '../lfea-bend-factor-authority-control.js';
 
 export const LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA = 'lfea-common-error-check-panel/v1';
@@ -416,6 +417,21 @@ function renderGroup(controller, group) {
     details.append(action);
   }
 
+  if (controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
+    const mapped = classifyLfeaAccdbFindingAction(group.code);
+    const route = labelledParagraph(doc, 'Actual ACCDB action',
+      mapped.actionClass + ' — ' + mapped.action, 'lfea-accdb-finding-action-class');
+    route.dataset.actionClass = mapped.actionClass;
+    details.append(route);
+    if (mapped.nextStep && typeof controller.options.onNavigatePrerequisite === 'function') {
+      const go = actionButton(doc, 'Go to ' + (mapped.nextStep === 'LOAD_CASE' ? 'Load case' : mapped.nextStep),
+        'icon-step-load-case');
+      go.dataset.action = 'lfea-error-check-next-step';
+      go.addEventListener('click', () => controller.options.onNavigatePrerequisite(mapped.nextStep));
+      details.append(go);
+    }
+  }
+
   details.append(labelledParagraph(doc, 'Applies to',
     `${group.occurrences} location${group.occurrences === 1 ? '' : 's'}`,
     'lfea-common-error-check-occurrences'));
@@ -423,20 +439,27 @@ function renderGroup(controller, group) {
     details.append(labelledParagraph(doc, 'Source features',
       summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
   }
-  details.append(
+  details.append(renderOccurrenceFinder(controller, group));
+  const technical = doc.createElement('details');
+  technical.className = 'lfea-common-error-check__technical';
+  technical.dataset.role = 'lfea-error-check-technical-details';
+  const technicalTitle = doc.createElement('summary');
+  technicalTitle.textContent = 'Technical details · evidence and governed source references';
+  technical.append(technicalTitle);
+  technical.append(
     labelledParagraph(doc, 'Finding code', group.code, 'lfea-common-error-check-code'),
     labelledParagraph(doc, 'Governed disposition', group.disposition, 'lfea-common-error-check-governed-disposition'),
     labelledParagraph(doc, 'Authority message', group.rows[0].message, 'lfea-common-error-check-authority-message'),
   );
   if (group.rows[0].technicalBasis) {
-    details.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
+    technical.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
   }
   if (group.rows[0].remediation) {
-    details.append(labelledParagraph(doc, 'Remediation', group.rows[0].remediation, 'lfea-common-error-check-remediation'));
+    technical.append(labelledParagraph(doc, 'Remediation', group.rows[0].remediation, 'lfea-common-error-check-remediation'));
   }
-  details.append(labelledParagraph(doc, 'Finding IDs',
+  technical.append(labelledParagraph(doc, 'Finding IDs',
     summarizeList(group.findingIds), 'lfea-common-error-check-finding-id'));
-  details.append(renderOccurrenceFinder(controller, group));
+  details.append(technical);
   card.append(details);
   const action = renderGroupAction(controller, group);
   if (action) card.append(action);

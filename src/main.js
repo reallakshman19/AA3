@@ -194,6 +194,7 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
           === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB ? lfeaAccdbInputPanel : null,
       onAuthorizePreFlight: (approval) => authorizeActiveLfeaPreFlight(approval),
       onContinueFromErrorCheck: () => lfeaPipelineShell.setActiveStep('LOAD_CASE'),
+      onNavigatePrerequisite: (stepId) => lfeaPipelineShell.setActiveStep(stepId),
       onApplyCaseSelection: (caseIds) => applyLfeaCaseSelection(caseIds),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),

@@ -429,7 +429,8 @@ export class LfeaAccdbRepairWorkspaceController {
     caption.dataset.role = 'lfea-accdb-repair-identity';
     caption.textContent = source.fileName + ' · ' + descriptor.label + ' · ' + snap.unit
       + ' (raw correction unit; viewport ' + (descriptor.unit ?? 'm') + ') · preflight ' + pre.status
-      + ' · original 11-table intake SHA ' + String(snap.sourceIdentity).slice(0, 16);
+      + ' · imported 11-table intake SHA ' + String(snap.sourceIdentity).slice(0, 16)
+      + ' · original ACCDB byte ' + String(snap.originalAccdbByteSha256).slice(0, 24);
     shell.append(heading, caption);
     for (const representation of ['SOURCE', 'ANALYSIS']) {
       shell.append(this.button(representation === 'SOURCE' ? 'Imported source' : 'Conditioned analysis',

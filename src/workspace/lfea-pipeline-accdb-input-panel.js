@@ -105,6 +105,7 @@ export class LfeaPipelineAccdbInputPanelController {
     this.overrideDisclosures = Object.freeze([]);
     this.overrideDrafts = new Map();
     this.sourceBaseIdentity = null;
+    this.originalAccdbByteSha256 = null;
     this.coordinateEdits = [];
     this.coordinateCursor = 0;
     this.coordinateRevision = 0;
@@ -164,6 +165,10 @@ export class LfeaPipelineAccdbInputPanelController {
       const readLog = [];
       const tables = await this.readTables(bytes, LFEA_PIPELINE_ACCDB_MODEL_TABLES, readLog);
       if (epoch !== this.importEpoch) return false;
+      // Bind the detached 11-table intake to the exact read-only original file
+      // bytes. The browser never rewrites/repackages the source ACCDB.
+      const originalByteSha256 = await hashOriginalAccdbBytes(bytes);
+      if (epoch !== this.importEpoch) return false;
 
       // Reuse the exact existing extraction/pre-flight methods on detached state.
       // Only the successful candidate crosses into the live controller.
@@ -177,6 +182,7 @@ export class LfeaPipelineAccdbInputPanelController {
       this.fileName = file.name;
       this.tables = tables;
       this.sourceBaseIdentity = prepared.preFlight?.intake?.contentSha256 ?? null;
+      this.originalAccdbByteSha256 = originalByteSha256;
       this.coordinateEdits = [];
       this.coordinateCursor = 0;
       this.coordinateRevision += 1;
@@ -436,6 +442,7 @@ export class LfeaPipelineAccdbInputPanelController {
     return {
       schema: ACCDB_COORDINATE_DRAFT_SCHEMA,
       sourceIdentity: this.sourceBaseIdentity,
+      originalAccdbByteSha256: this.originalAccdbByteSha256,
       approver, reason,
       edits: edits.map((edit) => ({ nodeId: edit.nodeId, axis: edit.axis, value: edit.value, unit: edit.unit })),
     };
@@ -471,6 +478,7 @@ export class LfeaPipelineAccdbInputPanelController {
   getCoordinateEditorSnapshot() {
     return Object.freeze({
       sourceIdentity: this.sourceBaseIdentity,
+      originalAccdbByteSha256: this.originalAccdbByteSha256,
       revision: this.coordinateRevision,
       unit: LINEAR_PIPING_ACCDB_LENGTH_UNITS[
         String(this.sourceBundle?.unitSystem?.declared?.length ?? '').trim().toUpperCase()
@@ -643,6 +651,10 @@ export class LfeaPipelineAccdbInputPanelController {
     if (!this.sourceBaseIdentity) throw new TypeError('Import an ACCDB before loading a repair draft.');
     const draft = typeof json === 'string' ? JSON.parse(json) : json;
     requireAccdbCoordinateDraft(draft, this.sourceBaseIdentity);
+    if (!draft.originalAccdbByteSha256
+        || draft.originalAccdbByteSha256 !== this.originalAccdbByteSha256) {
+      throw new TypeError('Saved correction does not match the original ACCDB binary SHA-256; reload the exact source file.');
+    }
     let input = this.tables;
     if (this.overrideSet) input = applyAccdbFieldOverrides(input, this.overrideSet).tables;
     const replay = replayAccdbCoordinateDraft(input, draft, this.sourceBaseIdentity);
@@ -692,6 +704,7 @@ export class LfeaPipelineAccdbInputPanelController {
     this.overrideDisclosures = Object.freeze([]);
     this.overrideDrafts.clear();
     this.sourceBaseIdentity = null;
+    this.originalAccdbByteSha256 = null;
     this.coordinateEdits = [];
     this.coordinateCursor = 0;
     this.coordinateRevision += 1;
@@ -737,6 +750,7 @@ export class LfeaPipelineAccdbInputPanelController {
       overrideCount: this.overrideSet?.overrides.length ?? 0,
       coordinateEditCount: this.coordinateCursor,
       sourceBaseIdentity: this.sourceBaseIdentity,
+      originalAccdbByteSha256: this.originalAccdbByteSha256,
       overrideApprover: this.overrideSet?.approver ?? null,
       engineeringSanityFindingCount: this.engineeringSanity?.summary.findingCount ?? null,
       message: this.message,
@@ -777,6 +791,16 @@ export class LfeaPipelineAccdbInputPanelController {
     this.elements.section.dataset.requestedProfile = this.requestedProfileId;
     this.elements.section.dataset.overrideCount = String(this.overrideSet?.overrides.length ?? 0);
   }
+}
+
+
+async function hashOriginalAccdbBytes(bytes) {
+  if (!globalThis.crypto?.subtle) {
+    throw new TypeError('ACCDB correction requires SHA-256 to bind exact original source bytes; secure cryptography is unavailable.');
+  }
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  return 'sha256:' + [...new Uint8Array(digest)]
+    .map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
 function requireProfileId(requestedProfileId) {

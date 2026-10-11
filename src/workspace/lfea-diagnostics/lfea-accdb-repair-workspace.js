@@ -177,6 +177,39 @@ export class LfeaAccdbRepairWorkspaceController {
     this.focusCurrentSelection();
   }
 
+  /**
+   * Follow an existing bend-retopology source ID only when it resolves to a
+   * retained imported segment. Derived analysis nodes must never be edited.
+   */
+  exactSourceAncestor(kind, id, pre) {
+    const geometry = pre?.preparation?.structuralPreparation?.conditionedTopology?.geometry;
+    const collection = kind === 'NODE' ? geometry?.nodes : geometry?.segments;
+    const raw = collection?.find((row) => String(row.id) === String(id));
+    if (!raw) return null;
+    const meta = raw.meta ?? {};
+    const lineage = kind === 'NODE'
+      ? (meta.bendRetopologyOf ?? meta.bendWorkingPointOf)
+      : (meta.bendChordOf ?? meta.parentSegmentId);
+    const exact = String(lineage ?? '');
+    if (!exact) return null;
+    const source = this.geometry(pre).representations.SOURCE;
+    return source.segments.some((row) => row.segmentId === exact) ? exact : null;
+  }
+
+  showExactSourceAncestor(segmentId) {
+    const pre = this.active()?.pre;
+    if (!pre) throw new TypeError('No active ACCDB model.');
+    this.representation = 'SOURCE';
+    const source = this.geometry(pre).selected;
+    const segment = source.segments.find((row) => row.segmentId === segmentId);
+    if (!segment) throw new TypeError('Conditioned source lineage no longer matches imported geometry.');
+    this.selectSegment(segment);
+    this.focusCurrentSelection();
+    this.message = 'Exact retained source span ' + segmentId
+      + ' located from analysis retopology. Analysis-only nodes remain read-only.';
+    this.render();
+  }
+
   selectNode(node) {
     this.selection = { kind: 'NODE', id: node.nodeId };
     this.pending = null;
@@ -501,8 +534,13 @@ export class LfeaAccdbRepairWorkspaceController {
     host.append(title);
     if (this.representation !== 'SOURCE' || !record) {
       const p = this.doc.createElement('p');
-      p.textContent = 'Derived analysis segment or unresolved source identity — read-only. Use Imported source for an exact ACCDB locator.';
+      p.textContent = 'Derived analysis segment or unresolved source identity — read-only. No inferred ACCDB field is editable.';
       host.append(p);
+      if (this.representation === 'ANALYSIS') {
+        const ancestor = this.exactSourceAncestor('SEGMENT', segment.segmentId, active.pre);
+        if (ancestor) host.append(this.button('Show retained source span ' + ancestor,
+          'lfea-repair-show-source-ancestor', () => this.showExactSourceAncestor(ancestor)));
+      }
       return;
     }
     const sourceLabel = this.doc.createElement('p');
@@ -551,8 +589,16 @@ export class LfeaAccdbRepairWorkspaceController {
     }
     if (this.representation !== 'SOURCE') {
       const p = this.doc.createElement('p');
-      p.textContent = 'This analysis node may be derived by conditioning. It is not a source-coordinate edit locator.';
+      p.textContent = 'This analysis node may be generated or repositioned by conditioning. It is not a source-coordinate edit locator.';
       host.append(p);
+      const ancestor = this.exactSourceAncestor('NODE', node.nodeId, active.pre);
+      if (ancestor) host.append(this.button('Show retained source span ' + ancestor,
+        'lfea-repair-show-source-ancestor', () => this.showExactSourceAncestor(ancestor)));
+      else {
+        const note = this.doc.createElement('p');
+        note.textContent = 'No authenticated source-span lineage retained for this analysis node; source edit unavailable.';
+        host.append(note);
+      }
       return;
     }
     const raw = active.editor.getCoordinateRawValue(this.selection.id, this.axis);

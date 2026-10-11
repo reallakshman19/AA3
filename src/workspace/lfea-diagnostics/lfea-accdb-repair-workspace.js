@@ -1,5 +1,10 @@
 import { buildLfeaGeometryReview } from '../lfea-model-review/lfea-geometry-review.js';
-import { renderLfeaGeometryReviewSvg } from '../lfea-model-review/lfea-geometry-review-svg.js';
+import {
+  renderLfeaGeometryReviewSvg,
+  zoomLfeaGeometryViewBox,
+  LFEA_GEOMETRY_DEFAULT_VIEW_BOX,
+  LFEA_GEOMETRY_BUTTON_ZOOM_FACTOR,
+} from '../lfea-model-review/lfea-geometry-review-svg.js';
 import { ACCDB_ELEMENT_FIELD_SPECS } from '../../core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import {
   resolveLfeaAccdbFindingTargets,
@@ -28,6 +33,8 @@ export class LfeaAccdbRepairWorkspaceController {
     this.section = null;
     this.representation = 'SOURCE';
     this.verticalAxis = 'Y';
+    this.viewBoxByMode = new Map();
+    this.searchTerm = '';
     this.selection = null;
     this.focusedFinding = null;
     this.sourceIdentity = null;
@@ -73,6 +80,8 @@ export class LfeaAccdbRepairWorkspaceController {
       this.focusedFinding = null;
       this.pending = null;
       this.loadedDraft = null;
+      this.viewBoxByMode.clear();
+      this.searchTerm = '';
       this.message = '';
       this.error = '';
     }
@@ -101,12 +110,71 @@ export class LfeaAccdbRepairWorkspaceController {
       this.message += ' Select the correct endpoint node to edit; no automatic relocation.';
     }
     this.render();
+    if (this.selection) this.focusCurrentSelection();
     this.section.scrollIntoView?.({ block: 'nearest' });
     return targets.visibleTargetCount > 0;
   }
 
   geometry(pre) {
     return buildLfeaGeometryReview(pre, { source: { kind: 'ACCDB' } }, this.representation);
+  }
+
+  viewKey() { return this.representation + ':' + this.verticalAxis; }
+
+  currentViewBox() {
+    return this.viewBoxByMode.get(this.viewKey()) ?? LFEA_GEOMETRY_DEFAULT_VIEW_BOX;
+  }
+
+  /** Existing renderer uses a fixed 760x420 projected coordinate frame. */
+  focusCurrentSelection() {
+    if (!this.selection) return;
+    const svg = this.section?.querySelector('[data-role="lfea-accdb-repair-svg-host"] svg');
+    if (!svg) return;
+    const key = this.selection.kind === 'NODE' ? 'nodeId' : 'segmentId';
+    const mark = [...svg.querySelectorAll('[data-' + (key === 'nodeId' ? 'node-id' : 'segment-id') + ']')]
+      .find((el) => el.dataset[key] === this.selection.id
+        && (el.tagName.toLowerCase() === 'circle' || el.tagName.toLowerCase() === 'line'));
+    if (!mark) return;
+    const x = mark.tagName.toLowerCase() === 'circle'
+      ? Number(mark.getAttribute('cx'))
+      : (Number(mark.getAttribute('x1')) + Number(mark.getAttribute('x2'))) / 2;
+    const y = mark.tagName.toLowerCase() === 'circle'
+      ? Number(mark.getAttribute('cy'))
+      : (Number(mark.getAttribute('y1')) + Number(mark.getAttribute('y2'))) / 2;
+    if (![x, y].every(Number.isFinite)) return;
+    const { width, height } = LFEA_GEOMETRY_DEFAULT_VIEW_BOX;
+    const narrowed = { x: x - width * 0.3 / 2, y: y - height * 0.3 / 2,
+      width: width * 0.3, height: height * 0.3 };
+    this.viewBoxByMode.set(this.viewKey(), narrowed);
+    this.render();
+  }
+
+  findExactSourceObject() {
+    const active = this.active();
+    if (!active) return;
+    const descriptor = this.geometry(active.pre).selected;
+    const query = this.searchTerm.trim().toUpperCase();
+    if (!query) throw new TypeError('Enter a source node, span or ACCDB element ID.');
+    const node = descriptor.nodes.find((entry) => entry.nodeId.toUpperCase() === query);
+    if (node) {
+      this.selectNode(node);
+      this.focusCurrentSelection();
+      return;
+    }
+    let segment = descriptor.segments.find((entry) => entry.segmentId.toUpperCase() === query);
+    if (!segment && this.representation === 'SOURCE') {
+      const records = active.source.elementRecords.filter((record) =>
+        String(record.accdbElementId).toUpperCase() === query
+        || String(record.sourceFeatureId).toUpperCase() === query);
+      if (records.length === 1) {
+        segment = descriptor.segments.find((entry) =>
+          entry.segmentId === records[0].canonicalSegmentId);
+      }
+    }
+    if (!segment) throw new TypeError('No exact ' + this.representation
+      + ' source object found for ' + this.searchTerm + '. No nearest-object guess was made.');
+    this.selectSegment(segment);
+    this.focusCurrentSelection();
   }
 
   selectNode(node) {
@@ -295,7 +363,7 @@ export class LfeaAccdbRepairWorkspaceController {
     const caption = this.doc.createElement('p');
     caption.dataset.role = 'lfea-accdb-repair-identity';
     caption.textContent = source.fileName + ' · ' + descriptor.label + ' · ' + snap.unit
-      + ' (raw correction unit) · preflight ' + pre.status
+      + ' (raw correction unit; viewport ' + (descriptor.unit ?? 'm') + ') · preflight ' + pre.status
       + ' · original source ' + String(snap.sourceIdentity).slice(0, 16);
     shell.append(heading, caption);
     for (const representation of ['SOURCE', 'ANALYSIS']) {
@@ -313,6 +381,28 @@ export class LfeaAccdbRepairWorkspaceController {
         this.render();
       }));
     }
+    shell.append(
+      this.button('Fit whole model', 'lfea-repair-fit', () => {
+        this.viewBoxByMode.delete(this.viewKey()); this.render();
+      }),
+      this.button('Zoom in', 'lfea-repair-zoom-in', () => {
+        this.viewBoxByMode.set(this.viewKey(),
+          zoomLfeaGeometryViewBox(this.currentViewBox(), 1 / LFEA_GEOMETRY_BUTTON_ZOOM_FACTOR));
+        this.render();
+      }),
+      this.button('Zoom out', 'lfea-repair-zoom-out', () => {
+        this.viewBoxByMode.set(this.viewKey(),
+          zoomLfeaGeometryViewBox(this.currentViewBox(), LFEA_GEOMETRY_BUTTON_ZOOM_FACTOR));
+        this.render();
+      }),
+    );
+    const search = this.textInput('Find exact node, segment or ACCDB ELEMENTID ',
+      this.searchTerm, (term) => { this.searchTerm = term; }, 'lfea-repair-object-search');
+    search.input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') this.run(() => this.findExactSourceObject());
+    });
+    shell.append(search.wrap, this.button('Find in model', 'lfea-repair-find', () =>
+      this.findExactSourceObject()));
     const svgHost = this.doc.createElement('div');
     svgHost.className = 'lfea-accdb-repair-workspace__svg';
     svgHost.dataset.role = 'lfea-accdb-repair-svg-host';
@@ -327,6 +417,8 @@ export class LfeaAccdbRepairWorkspaceController {
       highlightNodeIds: [...(loc?.nodeIds ?? []), selectedNodeId].filter(Boolean),
       onSelectSegment: (segment) => this.selectSegment(segment),
       onSelectNode: (node) => this.selectNode(node),
+      viewBox: this.currentViewBox(),
+      onViewBoxChange: (box) => this.viewBoxByMode.set(this.viewKey(), { ...box }),
     });
     if (loc) {
       const evidence = this.doc.createElement('p');
@@ -437,6 +529,14 @@ export class LfeaAccdbRepairWorkspaceController {
     label.textContent = 'Node ' + this.selection.id + ' · (' + node.x + ', ' + node.y
       + ', ' + node.z + ') m';
     host.append(label);
+    if (node.restraints?.length) {
+      const support = this.doc.createElement('p');
+      support.dataset.role = 'lfea-repair-support-inspection';
+      support.textContent = node.restraints.map((entry) => String(entry.typeLabel)
+        + ' (' + entry.actionSense + ')').join(' · ')
+        + '. Source supports shown from ACCDB; exact friction/gap/unilateral mechanics are not editable here.';
+      host.append(support);
+    }
     if (this.representation !== 'SOURCE') {
       const p = this.doc.createElement('p');
       p.textContent = 'This analysis node may be derived by conditioning. It is not a source-coordinate edit locator.';

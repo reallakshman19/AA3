@@ -52,10 +52,16 @@ export function sourceElementForSegment(segment, sourceBundle) {
 
 export function findingsForAccdbSelection(findings, sourceBundle, descriptor, selection) {
   if (!selection) return Object.freeze([]);
+  const incidentSegmentIds = new Set(selection.kind === 'NODE'
+    ? (descriptor?.segments ?? []).filter((segment) =>
+      segment.startNodeId === selection.id || segment.endNodeId === selection.id)
+      .map((segment) => segment.segmentId)
+    : []);
   return Object.freeze((findings ?? []).filter((finding) => {
     const targets = resolveLfeaAccdbFindingTargets(finding, sourceBundle, descriptor);
     return selection.kind === 'NODE'
       ? targets.nodeIds.includes(selection.id)
+        || targets.segmentIds.some((id) => incidentSegmentIds.has(id))
       : targets.segmentIds.includes(selection.id);
   }));
 }

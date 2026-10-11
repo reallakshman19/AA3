@@ -519,3 +519,8 @@
   .lfea-accdb-repair-workspace__svg, .lfea-accdb-repair-workspace__inspector { grid-column: 1; }
   .lfea-accdb-repair-workspace__svg svg { max-height: 430px; }
 }
+
+.lfea-accdb-repair-workspace__history [data-role="lfea-accdb-correction-ledger"] { flex-basis: 100%; margin: 8px 0 0; padding-left: 20px; font-size: 11px; }
+.lfea-accdb-repair-workspace__history [data-role="lfea-accdb-correction-ledger"] li { padding: 3px 0; }
+.lfea-accdb-repair-workspace__inspector [data-role="lfea-accdb-diagnostic-preview"] { padding: 6px 8px; border: 1px solid var(--workspace-border); border-radius: 4px; }
+.lfea-accdb-repair-workspace__inspector [data-role="lfea-accdb-diagnostic-preview"] p { margin: 4px 0; }

@@ -364,7 +364,7 @@ export class LfeaAccdbRepairWorkspaceController {
     caption.dataset.role = 'lfea-accdb-repair-identity';
     caption.textContent = source.fileName + ' · ' + descriptor.label + ' · ' + snap.unit
       + ' (raw correction unit; viewport ' + (descriptor.unit ?? 'm') + ') · preflight ' + pre.status
-      + ' · original source ' + String(snap.sourceIdentity).slice(0, 16);
+      + ' · original 11-table intake SHA ' + String(snap.sourceIdentity).slice(0, 16);
     shell.append(heading, caption);
     for (const representation of ['SOURCE', 'ANALYSIS']) {
       shell.append(this.button(representation === 'SOURCE' ? 'Imported source' : 'Conditioned analysis',
@@ -461,6 +461,18 @@ export class LfeaAccdbRepairWorkspaceController {
     });
     upload.append(fileInput);
     history.append(upload);
+    const ledger = this.doc.createElement('ol');
+    ledger.dataset.role = 'lfea-accdb-correction-ledger';
+    ledger.setAttribute('aria-label', 'Applied coordinate corrections and source provenance');
+    for (const disclosure of snap.disclosures) {
+      const line = this.doc.createElement('li');
+      line.textContent = 'Source node ' + disclosure.nodeId + ' · ' + disclosure.axis
+        + ': ' + disclosure.before + ' → ' + disclosure.after + ' ' + disclosure.unit
+        + ' · ' + disclosure.changes.length + ' raw table cells changed'
+        + ' · incident ACCDB elements ' + disclosure.affectedElementIds.join(', ');
+      ledger.append(line);
+    }
+    history.append(ledger);
     if (this.loadedDraft) {
       history.append(this.button('Apply loaded draft after review', 'lfea-repair-apply-loaded', () =>
         this.applyImportedDraft()));
@@ -570,6 +582,31 @@ export class LfeaAccdbRepairWorkspaceController {
         list.append(item);
       }
       preview.append(list);
+      if (this.pending.diagnosticPreview) {
+        const next = this.pending.diagnosticPreview;
+        const diagnostics = this.doc.createElement('div');
+        diagnostics.dataset.role = 'lfea-accdb-diagnostic-preview';
+        const headline = this.doc.createElement('p');
+        headline.textContent = 'PREVIEW ONLY — governed preparation: ' + next.previousStatus
+          + ' → ' + next.proposedStatus + '; finding occurrences '
+          + next.previousFindingCount + ' → ' + next.proposedFindingCount
+          + '; preparation hash changes: '
+          + String(next.previousPreparationSemanticHash !== next.proposedPreparationSemanticHash)
+          + '. This does not grant run or code authority.';
+        diagnostics.append(headline);
+        for (const difference of next.changedCodes.slice(0, 12)) {
+          const line = this.doc.createElement('p');
+          line.textContent = difference.code + ': ' + difference.before + ' → ' + difference.after;
+          diagnostics.append(line);
+        }
+        if (next.changedCodes.length > 12) {
+          const more = this.doc.createElement('p');
+          more.textContent = (next.changedCodes.length - 12)
+            + ' additional finding-code count changes; inspect the new Error Check after Apply.';
+          diagnostics.append(more);
+        }
+        preview.append(diagnostics);
+      }
       if (this.pending.changes.length > 30) {
         const notice = this.doc.createElement('p');
         notice.textContent = 'And ' + (this.pending.changes.length - 30)

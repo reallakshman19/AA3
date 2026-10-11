@@ -498,13 +498,42 @@ export class LfeaPipelineAccdbInputPanelController {
   previewCoordinateEdit(request) {
     if (!this.tables || !this.sourceBaseIdentity) throw new TypeError('Load a supported ACCDB before editing.');
     const snapshot = this.getCoordinateEditorSnapshot();
-    return previewAccdbNodeCoordinateEdit(this.effectiveTables, {
+    const preview = previewAccdbNodeCoordinateEdit(this.effectiveTables, {
       ...request,
       sourceIdentity: this.sourceBaseIdentity,
       expectedSourceIdentity: request.expectedSourceIdentity,
       revision: this.coordinateRevision,
       expectedRevision: request.expectedRevision,
       unit: request.unit ?? snapshot.unit,
+    });
+    if (!preview.changed) return preview;
+    // Preview the actual next governed preparation without crossing the
+    // live-controller boundary. This makes failures visible before Apply.
+    const prepared = this.prepareCandidate(preview.tables);
+    const previous = this.preFlight?.preparation?.findings ?? [];
+    const proposed = prepared.preFlight?.preparation?.findings ?? [];
+    const countCodes = (rows) => {
+      const counts = new Map();
+      for (const row of rows) counts.set(row.code, (counts.get(row.code) ?? 0) + 1);
+      return counts;
+    };
+    const before = countCodes(previous);
+    const after = countCodes(proposed);
+    const changedCodes = [...new Set([...before.keys(), ...after.keys()])]
+      .filter((code) => (before.get(code) ?? 0) !== (after.get(code) ?? 0))
+      .sort()
+      .map((code) => Object.freeze({ code, before: before.get(code) ?? 0, after: after.get(code) ?? 0 }));
+    return Object.freeze({
+      ...preview,
+      diagnosticPreview: Object.freeze({
+        previousFindingCount: previous.length,
+        proposedFindingCount: proposed.length,
+        previousStatus: this.preFlight?.status ?? 'UNAVAILABLE',
+        proposedStatus: prepared.preFlight?.status ?? 'UNAVAILABLE',
+        previousPreparationSemanticHash: this.preFlight?.semanticHash ?? null,
+        proposedPreparationSemanticHash: prepared.preFlight?.semanticHash ?? null,
+        changedCodes: Object.freeze(changedCodes),
+      }),
     });
   }
 

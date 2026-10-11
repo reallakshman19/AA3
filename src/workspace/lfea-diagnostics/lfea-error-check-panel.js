@@ -440,12 +440,20 @@ function renderGroup(controller, group) {
       summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
   }
   details.append(renderOccurrenceFinder(controller, group));
-  const technical = doc.createElement('details');
+  const technical = doc.createElement('div');
   technical.className = 'lfea-common-error-check__technical';
   technical.dataset.role = 'lfea-error-check-technical-details';
-  const technicalTitle = doc.createElement('summary');
-  technicalTitle.textContent = 'Technical details · evidence and governed source references';
-  technical.append(technicalTitle);
+  technical.hidden = true;
+  const technicalToggle = doc.createElement('button');
+  technicalToggle.type = 'button';
+  technicalToggle.textContent = 'Technical details · evidence and governed source references';
+  technicalToggle.dataset.action = 'lfea-error-check-technical-toggle';
+  technicalToggle.setAttribute('aria-expanded', 'false');
+  technicalToggle.addEventListener('click', () => {
+    technical.hidden = !technical.hidden;
+    technicalToggle.setAttribute('aria-expanded', String(!technical.hidden));
+  });
+  details.append(technicalToggle);
   technical.append(
     labelledParagraph(doc, 'Finding code', group.code, 'lfea-common-error-check-code'),
     labelledParagraph(doc, 'Governed disposition', group.disposition, 'lfea-common-error-check-governed-disposition'),

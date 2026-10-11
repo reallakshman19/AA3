@@ -409,7 +409,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(await conditional.count()).toBeGreaterThan(0);
     for (let i = 0; i < await conditional.count(); i += 1) {
       const item = conditional.nth(i);
-      if (!(await item.locator('..').getAttribute('open'))) await item.click();
+      if (!(await item.locator('..').evaluate((node) => node.open))) await item.click();
     }
     await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
     await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('Issue 47 test engineer');
@@ -454,7 +454,9 @@ test.describe('LFEA ACCDB real-model import', () => {
     const labels = (await caseTabs.allTextContents()).map((label) => label.trim());
     expect(new Set(labels)).toEqual(requested);
     for (const name of requested) {
-      await caseTabs.filter({ hasText: name }).first().click();
+      const index = labels.findIndex((label) => label === name);
+      expect(index).toBeGreaterThanOrEqual(0);
+      await caseTabs.nth(index).click();
       await expect(page.locator('[data-role="lfea-pipeline-results-status"]')).toContainText(name);
       await expect(page.locator('[data-role="lfea-pipeline-results-table"] tr[data-node-id]'))
         .not.toHaveCount(0);

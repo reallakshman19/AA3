@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 // Include case preference/regeneration browser regressions in the existing exact-head CI suite.
 import './lfea-pipeline-case-selection-persistence.spec.js';
 
@@ -314,6 +315,162 @@ test.describe('LFEA ACCDB real-model import', () => {
 
     expect(pageErrors).toEqual([]);
   });
+
+  test('issue #47: find exact source, preview/cancel/apply real ACCDB coordinate, undo/redo and four Output cases', async ({ page }) => {
+    test.setTimeout(300000);
+    const pageErrors = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-bend-factor-edition"]').selectOption('B31_3_2022_B31J_2017');
+    await page.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('YES');
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
+    const step = (id) => page.locator('[data-role="lfea-pipeline-step"][data-step-id="' + id + '"]');
+    await step('ERROR_CHECK').click();
+    const errorCheck = page.locator('[data-role="lfea-common-error-check-panel"]');
+    const workspace = errorCheck.locator('[data-role="lfea-accdb-repair-workspace"]');
+    await expect(workspace).toBeVisible();
+    await expect(workspace.locator('[data-role="lfea-accdb-repair-svg-host"] svg'))
+      .toHaveAttribute('data-representation', 'SOURCE');
+    const groups = errorCheck.locator('[data-role="lfea-common-error-check-finding-group"]');
+    let located = false;
+    for (let i = 0; i < Math.min(await groups.count(), 18); i += 1) {
+      const group = groups.nth(i);
+      const summary = group.locator('summary');
+      if (!(await group.locator('details').count())) continue;
+      await summary.click();
+      const buttons = group.locator('[data-action="lfea-error-check-locate-occurrence"]');
+      if (await buttons.count()) {
+        await buttons.first().click();
+        const detail = await errorCheck.locator('[data-role="lfea-accdb-finding-location"]').textContent();
+        if (detail?.includes('EXACT')) { located = true; break; }
+      }
+      await summary.click();
+    }
+    expect(located).toBe(true);
+    await expect(errorCheck.locator('[data-role="lfea-accdb-finding-location"]'))
+      .toContainText('EXACT');
+    const nodeAction = workspace.locator('[data-action="lfea-repair-select-node"]').first();
+    if (await nodeAction.count()) await nodeAction.click();
+    else {
+      // A near-node finding can select its source node directly.
+      await expect(workspace.locator('[data-role="lfea-repair-coordinate-axis"]')).toBeVisible();
+    }
+    await workspace.locator('[data-role="lfea-repair-approver"]').fill('Issue 47 test engineer');
+    await workspace.locator('[data-role="lfea-repair-reason"]')
+      .fill('Source-node coordinate input correction; affected elements inspected');
+    const current = await workspace.locator('p').filter({ hasText: /Raw source X:/u }).first().textContent();
+    const match = /Raw source X:\s*([-+]?\d+(?:\.\d+)?(?:e[-+]?\d+)?)/iu.exec(current);
+    expect(match).toBeTruthy();
+    const newRaw = Number(match[1]) + 10;
+    const preFlightState = () => page.evaluate(() => {
+      const p = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight;
+      return { hash: p.semanticHash, authorization: p.authorization?.semanticHash ?? null, solveAuthorized: p.solveAuthorized };
+    });
+    const before = await preFlightState();
+    await workspace.locator('[data-role="lfea-repair-coordinate-value"]').fill(String(newRaw));
+    await workspace.locator('[data-action="lfea-repair-preview"]').click();
+    await expect(workspace.locator('[data-role="lfea-accdb-coordinate-preview"]'))
+      .toContainText('affected elements');
+    expect((await preFlightState()).hash).toBe(before.hash, 'preview must not mutate the consumed preparation');
+    await workspace.locator('[data-action="lfea-repair-cancel"]').click();
+    expect((await preFlightState()).hash).toBe(before.hash, 'Cancel must not mutate the consumed preparation');
+    await workspace.locator('[data-action="lfea-repair-preview"]').click();
+    await workspace.locator('[data-action="lfea-repair-apply"]').click();
+    await expect(workspace.locator('[data-role="lfea-accdb-repair-status"]'))
+      .toContainText('fresh diagnostics');
+    const after = await preFlightState();
+    expect(after.hash).not.toBe(before.hash);
+    expect(after.solveAuthorized).toBe(false);
+    await workspace.locator('[data-action="lfea-repair-undo"]').click();
+    expect((await preFlightState()).hash).toBe(before.hash);
+    await workspace.locator('[data-action="lfea-repair-redo"]').click();
+    expect((await preFlightState()).hash).toBe(after.hash);
+    const dl = page.waitForEvent('download');
+    await workspace.locator('[data-action="lfea-repair-save"]').click();
+    const download = await dl;
+    expect(download.suggestedFilename()).toContain('ACCDB-coordinate-corrections');
+    const savedPath = await download.path();
+    expect(savedPath).toBeTruthy();
+    await workspace.locator('[data-role="lfea-repair-load-file"]').setInputFiles(savedPath);
+    await expect(workspace.locator('[data-role="lfea-accdb-repair-status"]'))
+      .toContainText('loaded for preview');
+    await workspace.locator('[data-action="lfea-repair-apply-loaded"]').click();
+    expect((await preFlightState()).solveAuthorized).toBe(false);
+
+    // This is a new preflight; the prior owner's diagnostic acceptance must
+    // not be carried into the changed geometry.
+    const conditional = errorCheck.locator(
+      '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"] summary',
+    );
+    expect(await conditional.count()).toBeGreaterThan(0);
+    for (let i = 0; i < await conditional.count(); i += 1) {
+      const item = conditional.nth(i);
+      if (!(await item.locator('..').getAttribute('open'))) await item.click();
+    }
+    await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
+    await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('Issue 47 test engineer');
+    await errorCheck.locator('[data-role="lfea-error-check-reason"]')
+      .fill('Reviewed the entire new preparation after coordinate correction.');
+    await errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]').click();
+    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'true');
+
+    await step('LOAD_CASE').click();
+    const caseRows = page.locator('.lfea-pipeline-case-selection__row');
+    const requested = new Set(['W', 'W+P1', 'W+P1+T1', 'W+T1']);
+    const seen = new Set();
+    for (let i = 0; i < await caseRows.count(); i += 1) {
+      const row = caseRows.nth(i);
+      const label = (await row.locator('strong').textContent()).trim();
+      const checkbox = row.locator('input[type="checkbox"]');
+      if (requested.has(label)) { seen.add(label); await checkbox.check(); }
+      else await checkbox.uncheck();
+    }
+    expect(seen).toEqual(requested);
+    await page.locator('[data-action="lfea-pipeline-apply-cases"]').click();
+    await step('ERROR_CHECK').click();
+    const freshConditional = errorCheck.locator(
+      '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"] summary',
+    );
+    for (let i = 0; i < await freshConditional.count(); i += 1) {
+      await freshConditional.nth(i).click();
+    }
+    await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
+    await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('Issue 47 test engineer');
+    await errorCheck.locator('[data-role="lfea-error-check-reason"]')
+      .fill('Explicit renewed authorization for the selected four-case preflight.');
+    await errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]').click();
+    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'true');
+    await step('RUN').click();
+    await page.locator('[data-role="lfea-pipeline-run-panel"] [data-action="lfea-pipeline-analyze"]').click();
+    await expect(page.locator('[data-role="lfea-pipeline-results-summary"]'))
+      .toBeVisible({ timeout: 180000 });
+    await expect(page.locator('[data-role="lfea-pipeline-active-step-context"]'))
+      .toHaveAttribute('data-step-id', 'OUTPUT');
+    const caseTabs = page.locator('[data-role="lfea-pipeline-results-cases"] button');
+    const labels = (await caseTabs.allTextContents()).map((label) => label.trim());
+    expect(new Set(labels)).toEqual(requested);
+    for (const name of requested) {
+      await caseTabs.filter({ hasText: name }).first().click();
+      await expect(page.locator('[data-role="lfea-pipeline-results-status"]')).toContainText(name);
+      await expect(page.locator('[data-role="lfea-pipeline-results-table"] tr[data-node-id]'))
+        .not.toHaveCount(0);
+    }
+    expect(pageErrors).toEqual([]);
+  });
+
+  test('issue #47 real ACCDB transaction and exact-source locator regression', () => {
+    const output = execFileSync(process.execPath, ['scripts/lfea-accdb-repair-transaction-check.mjs'],
+      { cwd: process.cwd(), encoding: 'utf8', timeout: 180000 });
+    const result = JSON.parse(output.trim());
+    expect(result.status).toBe('PASS');
+    expect(result.originalBytesUnchanged).toBe(true);
+    expect(result.preparationHashChanged).toBe(true);
+  });
+
 });
 
 async function acknowledgeAndAuthorize(errorCheck) {

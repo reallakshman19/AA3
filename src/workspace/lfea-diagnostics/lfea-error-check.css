@@ -437,3 +437,85 @@
   .lfea-common-error-check__content { grid-template-columns: 1fr; }
   .lfea-common-error-check__authorization { position: static; margin: 0 14px 12px; }
 }
+
+
+/* #47 — source provenance and governed ACCDB correction, not SVG-only edits. */
+.lfea-common-error-check__model-host { margin: 4px 14px 14px; min-width: 0; }
+.lfea-accdb-repair-workspace {
+  border: 1px solid var(--workspace-border);
+  border-radius: 8px;
+  background: var(--workspace-panel);
+  padding: 12px;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 10px 14px;
+}
+.lfea-accdb-repair-workspace[hidden] { display: none; }
+.lfea-accdb-repair-workspace__toolbar,
+.lfea-accdb-repair-workspace__custody,
+.lfea-accdb-repair-workspace__history,
+.lfea-accdb-repair-workspace > output {
+  grid-column: 1 / -1;
+}
+.lfea-accdb-repair-workspace__toolbar h3 { margin: 0 0 4px; font-size: 13px; }
+.lfea-accdb-repair-workspace__toolbar p { margin: 0 0 8px; font-size: 11px; color: var(--workspace-muted); overflow-wrap: anywhere; }
+.lfea-accdb-repair-workspace button,
+.lfea-common-error-check__occurrence button {
+  font: inherit;
+  font-size: 11px;
+  background: var(--workspace-panel);
+  color: var(--workspace-text);
+  border: 1px solid var(--workspace-border);
+  border-radius: 5px;
+  padding: 5px 8px;
+  margin: 2px 5px 2px 0;
+  cursor: pointer;
+}
+.lfea-accdb-repair-workspace button:disabled,
+.lfea-common-error-check__occurrence button:disabled { opacity: .45; cursor: not-allowed; }
+.lfea-accdb-repair-workspace button:hover:not(:disabled),
+.lfea-common-error-check__occurrence button:hover:not(:disabled) { border-color: var(--workspace-accent); }
+.lfea-accdb-repair-workspace__svg { min-width: 0; overflow: hidden; }
+.lfea-accdb-repair-workspace__svg svg { display: block; width: 100%; height: auto; border-radius: 6px; background: var(--workspace-panel-strong); }
+.lfea-accdb-repair-workspace__svg [data-selected="true"][data-segment-id] {
+  stroke: #f97316;
+  stroke-width: 5;
+  filter: drop-shadow(0 0 2px #fed7aa);
+}
+.lfea-accdb-repair-workspace__svg [data-selected="true"][data-node-id] {
+  fill: #fb923c;
+  stroke: #fff;
+  stroke-width: 2;
+  r: 6;
+}
+.lfea-accdb-repair-workspace__svg [role="button"]:focus-visible { outline: 2px solid #fb923c; }
+.lfea-accdb-repair-workspace__inspector { font-size: 12px; min-width: 0; max-height: 460px; overflow-y: auto; }
+.lfea-accdb-repair-workspace__inspector strong { display: block; margin-bottom: 6px; }
+.lfea-accdb-repair-workspace__inspector p { line-height: 1.45; overflow-wrap: anywhere; }
+.lfea-accdb-repair-workspace label { display: inline-flex; flex-direction: column; gap: 3px; margin: 3px 9px 5px 0; font-size: 11px; }
+.lfea-accdb-repair-workspace input:not([type="file"]),
+.lfea-accdb-repair-workspace select { box-sizing: border-box; min-width: 115px; max-width: 260px; padding: 6px; background: var(--workspace-panel-strong); color: var(--workspace-text); border: 1px solid var(--workspace-border); }
+.lfea-accdb-repair-workspace__custody { display: flex; flex-wrap: wrap; gap: 4px; }
+.lfea-accdb-repair-workspace__history { border-top: 1px solid var(--workspace-border); padding-top: 8px; display: flex; flex-wrap: wrap; align-items: center; }
+.lfea-accdb-repair-workspace > output { color: var(--workspace-muted); font-size: 11px; }
+.lfea-accdb-repair-workspace > output[data-status="error"] { color: #f87171; }
+[data-role="lfea-accdb-coordinate-preview"] { border-top: 1px solid var(--workspace-border); padding-top: 8px; }
+[data-role="lfea-accdb-coordinate-preview"] ul { max-height: 120px; overflow-y: auto; margin: 6px 0; padding-left: 20px; }
+.lfea-common-error-check__occurrence-finder { border-top: 1px solid var(--workspace-border); margin-top: 12px; padding-top: 8px; }
+.lfea-common-error-check__occurrence-finder > strong { display: block; font-size: 12px; margin-bottom: 6px; }
+.lfea-common-error-check__occurrence-finder input[type="search"] {
+  width: 100%; box-sizing: border-box; margin-bottom: 6px; padding: 7px;
+  background: var(--workspace-panel-strong); color: var(--workspace-text); border: 1px solid var(--workspace-border);
+}
+.lfea-common-error-check__occurrence {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 4px 8px; padding: 6px 0; border-bottom: 1px solid var(--workspace-border);
+}
+.lfea-common-error-check__occurrence > span { flex: 1 1 260px; overflow-wrap: anywhere; font-size: 11px; }
+.lfea-common-error-check__occurrence-pager { display: flex; gap: 6px; align-items: center; justify-content: end; padding-top: 6px; font-size: 11px; }
+@media (max-width: 880px) {
+  .lfea-accdb-repair-workspace { grid-template-columns: minmax(0, 1fr); }
+  .lfea-accdb-repair-workspace__svg, .lfea-accdb-repair-workspace__inspector { grid-column: 1; }
+  .lfea-accdb-repair-workspace__svg svg { max-height: 430px; }
+}

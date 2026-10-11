@@ -64,7 +64,7 @@ export class LfeaPipelineCaseSelectionPanelController {
     this.documentRef = documentRef;
     this.options = options;
     this.preferences = options.preferences
-      ?? createLfeaCaseSelectionPreferences(lfeaCaseSelectionBrowserStorage(documentRef.defaultView));
+      ?? createLfeaCaseSelectionPreferences(lfeaCaseSelectionBrowserStorage(documentRef?.defaultView));
     this.elements = null;
     this.initialized = false;
     this.selected = new Set();

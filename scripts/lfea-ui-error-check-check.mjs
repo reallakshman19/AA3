@@ -107,7 +107,8 @@ assert.doesNotMatch(
   /authorizeLinearPiping|setSource\(|clearSource\(|conditionGeometry|compileLinear|runLinear|preFlight\.solveAuthorized\s*=|presentation\.solveAuthorized\s*=/u,
 );
 assert.match(panelSource, /selectLfeaErrorCheckSections\(this\.presentation, this\.activeCategory\)/u);
-assert.match(panelSource, /dataset\.action = 'lfea-error-check-acknowledge-limitation'/u);
+assert.match(panelSource, /markLimitationReviewed\(group\.groupId\)/u);
+assert.match(panelSource, /dataset\.role = 'lfea-error-check-accept-limitations'/u);
 assert.match(panelSource, /dataset\.action = 'authorize-lfea-error-check-limitations'/u);
 assert.match(panelSource, /this\.options\.onAuthorizePreFlight\(\{/u);
 assert.match(surfaceSource, /mountLfeaCommonErrorCheckPanel/u);

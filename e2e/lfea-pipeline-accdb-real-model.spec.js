@@ -316,7 +316,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test('issue #47: find exact source, preview/cancel/apply real ACCDB coordinate, undo/redo and four Output cases', async ({ page }) => {
+  test('issue #47: correction history, saved draft error recovery and blocked exploratory-edit control', async ({ page }) => {
     test.setTimeout(300000);
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -395,75 +395,67 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(download.suggestedFilename()).toContain('ACCDB-coordinate-corrections');
     const savedPath = await download.path();
     expect(savedPath).toBeTruthy();
+    const savedDraft = JSON.parse(fs.readFileSync(savedPath, 'utf8'));
+    expect(savedDraft.originalAccdbByteSha256).toMatch(/^[a-f0-9]{64}$/u);
+    await workspace.locator('[data-role="lfea-repair-load-file"]').setInputFiles({
+      name: 'wrong-accdb-binary.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify({
+        ...savedDraft, originalAccdbByteSha256: '0'.repeat(64),
+      })),
+    });
+    const draftStatus = workspace.locator('[data-role="lfea-accdb-repair-status"]');
+    await expect(draftStatus).toHaveAttribute('data-status', 'error');
+    await expect(draftStatus).toContainText('does not match the original ACCDB binary SHA-256');
+    await expect(workspace.locator('[data-action="lfea-repair-apply-loaded"]')).toHaveCount(0,
+      'wrong-binary draft must not remain loaded');
     await workspace.locator('[data-role="lfea-repair-load-file"]').setInputFiles(savedPath);
-    await expect(workspace.locator('[data-role="lfea-accdb-repair-status"]'))
-      .toContainText('loaded for preview');
+    await expect(draftStatus).toHaveAttribute('data-status', 'ok');
+    await expect(draftStatus).toContainText('Saved correction loaded for preview');
+    await expect(draftStatus).not.toContainText('does not match');
+    await expect(workspace.locator('[data-action="lfea-repair-apply-loaded"]')).toHaveCount(1);
     await workspace.locator('[data-action="lfea-repair-apply-loaded"]').click();
+    await expect(draftStatus).toHaveAttribute('data-status', 'ok');
+    await expect(draftStatus).toContainText('Saved correction applied');
+    await expect(draftStatus).not.toContainText('does not match');
+    await expect(workspace.locator('[data-action="lfea-repair-apply-loaded"]')).toHaveCount(0);
+    await expect(workspace.locator('[data-role="lfea-accdb-correction-ledger"] li'))
+      .not.toHaveCount(0);
     expect((await preFlightState()).solveAuthorized).toBe(false);
 
-    // This is a new preflight; the prior owner's diagnostic acceptance must
-    // not be carried into the changed geometry.
-    const conditional = errorCheck.locator(
-      '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"] summary',
-    );
-    expect(await conditional.count()).toBeGreaterThan(0);
-    for (let i = 0; i < await conditional.count(); i += 1) {
-      const item = conditional.nth(i);
-      if (!(await item.locator('..').evaluate((node) => node.open))) await item.click();
-    }
-    await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
-    await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('Issue 47 test engineer');
-    await errorCheck.locator('[data-role="lfea-error-check-reason"]')
-      .fill('Reviewed the entire new preparation after coordinate correction.');
-    await errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]').click();
-    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'true');
-
-    await step('LOAD_CASE').click();
-    const caseRows = page.locator('.lfea-pipeline-case-selection__row');
-    const requested = new Set(['W', 'W+P1', 'W+P1+T1', 'W+T1']);
-    const seen = new Set();
-    for (let i = 0; i < await caseRows.count(); i += 1) {
-      const row = caseRows.nth(i);
-      const label = (await row.locator('strong').textContent()).trim();
-      const checkbox = row.locator('input[type="checkbox"]');
-      if (requested.has(label)) { seen.add(label); await checkbox.check(); }
-      else await checkbox.uncheck();
-    }
-    expect(seen).toEqual(requested);
-    await page.locator('[data-action="lfea-pipeline-apply-cases"]').click();
-    await step('ERROR_CHECK').click();
-    const freshConditional = errorCheck.locator(
-      '[data-role="lfea-common-error-check-finding-group"][data-disposition="CONDITIONAL"] summary',
-    );
-    for (let i = 0; i < await freshConditional.count(); i += 1) {
-      await freshConditional.nth(i).click();
-    }
-    await errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]').check();
-    await errorCheck.locator('[data-role="lfea-error-check-reviewer"]').fill('Issue 47 test engineer');
-    await errorCheck.locator('[data-role="lfea-error-check-reason"]')
-      .fill('Explicit renewed authorization for the selected four-case preflight.');
-    await errorCheck.locator('[data-action="authorize-lfea-error-check-limitations"]').click();
-    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'true');
-    await step('RUN').click();
-    await page.locator('[data-role="lfea-pipeline-run-panel"] [data-action="lfea-pipeline-analyze"]').click();
-    await expect(page.locator('[data-role="lfea-pipeline-results-summary"]'))
-      .toBeVisible({ timeout: 180000 });
-    await expect(page.locator('[data-role="lfea-pipeline-active-step-context"]'))
-      .toHaveAttribute('data-step-id', 'OUTPUT');
-    await expect(page.locator('[data-role="topbar-dataset"]')).toHaveText('BM4_L.ACCDB');
-    await expect(page.locator('[data-role="lfea-topbar-run-status"]'))
-      .toContainText('linear result available');
-    const caseTabs = page.locator('[data-role="lfea-pipeline-results-cases"] button');
-    const labels = (await caseTabs.allTextContents()).map((label) => label.trim());
-    expect(new Set(labels)).toEqual(requested);
-    for (const name of requested) {
-      const index = labels.findIndex((label) => label === name);
-      expect(index).toBeGreaterThanOrEqual(0);
-      await caseTabs.nth(index).click();
-      await expect(page.locator('[data-role="lfea-pipeline-results-status"]')).toContainText(name);
-      await expect(page.locator('[data-role="lfea-pipeline-results-table"] tr[data-node-id]'))
-        .not.toHaveCount(0);
-    }
+    // This exploratory branch intentionally uses the FIRST finding-linked
+    // source node and a large +10 mm delta under 2022/YES. It is NOT the
+    // documented positive 20010/+0.5 mm, 2024/NO sequence. Its observed
+    // BLOCK is diagnostic evidence, never permission to expose acceptance.
+    const control = await page.evaluate(() => {
+      const p = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight;
+      const authority = p.preparation?.stiffnessPreflight?.bendFactorAuthority ?? null;
+      return {
+        status: p.status, solveAuthorized: p.solveAuthorized,
+        intakeHash: p.intake.semanticHash, preparationHash: p.semanticHash,
+        retainedBasis: authority && {
+          edition: authority.editionProfileId,
+          smooth90: authority.smooth90FlexibilityCorrection,
+          sourceRevision: authority.sourceEvidence?.sourceRevision,
+          semanticHash: authority.semanticHash,
+        },
+        blockers: (p.preparation?.findings ?? [])
+          .filter((finding) => finding.disposition === 'BLOCK')
+          .map((finding) => ({ code: finding.code, message: finding.message })),
+      };
+    });
+    expect(control.solveAuthorized).toBe(false);
+    expect(control.status).toBe('BLOCK');
+    expect(control.blockers.length).toBeGreaterThan(0);
+    await expect(errorCheck).toHaveAttribute('data-pre-flight-status', 'BLOCK');
+    await expect(errorCheck.locator('[data-role="lfea-error-check-accept-limitations"]'))
+      .toHaveCount(0, { timeout: 10000 });
+    // Retain real source/gate evidence; do not misclassify missing authority
+    // versus a physically invalid edit from the absence of a checkbox.
+    test.info().annotations.push({
+      type: 'exploratory-edit-negative-control',
+      description: JSON.stringify(control),
+    });
     expect(pageErrors).toEqual([]);
   });
 

@@ -131,6 +131,24 @@ export class LfeaPipelineAccdbInputPanelController {
     this.elements.profileSelect.addEventListener('change', () => {
       this.setRequestedProfile(this.elements.profileSelect.value);
     });
+    // In particular, correction -> Undo/Redo -> B31/B31J selection must
+    // rebuild from the *current corrected* 11-table intake. Never infer a
+    // basis, and never preserve an earlier preparation's consent.
+    this.onComponentFactorAuthorityRefreshed = () => {
+      if (!this.effectiveTables) return;
+      try {
+        this.extract(this.effectiveTables);
+        this.error = '';
+      } catch (error) {
+        this.preFlight = null;
+        this.preFlightError = errorMessage(error);
+        this.error = this.preFlightError;
+      }
+      this.render();
+      this.notifyStateChanged();
+    };
+    this.documentRef.addEventListener?.('lfea-component-factor-authority-refreshed',
+      this.onComponentFactorAuthorityRefreshed);
     this.initialized = true;
     this.render();
     return this;

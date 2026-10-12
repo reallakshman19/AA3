@@ -558,6 +558,12 @@ test.describe('LFEA ACCDB real-model import', () => {
     await workspace.locator('[data-action="lfea-repair-undo"]').click();
     await workspace.locator('[data-action="lfea-repair-redo"]').click();
     await expect(bendBlock).toHaveCount(1);
+    const correctedIntake = await page.evaluate(() => {
+      const p = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight;
+      return { intakeHash: p.intake.semanticHash, preFlightHash: p.semanticHash,
+        authority: p.preparation?.stiffnessPreflight?.bendFactorAuthority ?? null };
+    });
+    expect(correctedIntake.authority).toBeNull();
 
     const top = page.locator(
       '[data-role="linear-piping-consumer-root"] > [data-role="lfea-bend-factor-authority-control"]',
@@ -572,10 +578,34 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(bendBlock).toHaveCount(0, { timeout: 60000 });
     const currentPreflight = await page.evaluate(() => {
       const p = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight;
-      return { status: p.status, authorized: p.solveAuthorized };
+      const basis = p.preparation?.stiffnessPreflight?.bendFactorAuthority ?? null;
+      const branch = p.preparation?.stiffnessPreflight?.branchFactorAuthority ?? null;
+      return {
+        status: p.status, authorized: p.solveAuthorized,
+        intakeHash: p.intake.semanticHash, preFlightHash: p.semanticHash,
+        sealedBasis: basis && {
+          edition: basis.editionProfileId, smooth90: basis.smooth90FlexibilityCorrection,
+          sourceRevision: basis.sourceRevision, semanticHash: basis.semanticHash,
+        },
+        sealedBranchEdition: branch?.editionProfileId ?? null,
+        blockerCodes: (p.preparation?.findings ?? [])
+          .filter((finding) => finding.disposition === 'BLOCK').map((finding) => finding.code),
+      };
     });
     expect(currentPreflight.status).toBe('WARN');
     expect(currentPreflight.authorized).toBe(false);
+    expect(currentPreflight.intakeHash).toBe(correctedIntake.intakeHash,
+      'basis must be sealed against the current corrected ACCDB, never a reimported source');
+    expect(currentPreflight.preFlightHash).not.toBe(correctedIntake.preFlightHash,
+      'the explicit selected authority must generate a fresh preparation');
+    expect(currentPreflight.sealedBasis).toMatchObject({
+      edition: 'B31_3_2024_B31J_2023',
+      smooth90: false,
+      sourceRevision: 'INTAKE-' + correctedIntake.intakeHash,
+    });
+    expect(currentPreflight.sealedBasis.semanticHash).toBeTruthy();
+    expect(currentPreflight.sealedBranchEdition).toBe('B31_3_2024_B31J_2023');
+    expect(currentPreflight.blockerCodes).not.toContain('BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED');
     await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'false');
     // No acceptance or Output execution for the changed preparation.
   });
@@ -594,21 +624,53 @@ test.describe('LFEA ACCDB real-model import', () => {
     await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
     const authorize = page.locator('[data-action="authorize-lfea-error-check-limitations"]');
     await expect(authorize).toBeVisible();
-    const boxes = await page.evaluate(() => {
-      const rect = (selector) => {
-        const r = document.querySelector(selector).getBoundingClientRect();
-        return { left: r.left, right: r.right, width: r.width };
+    await expect(page.locator('[data-role="topbar-dataset-kind"]')).toHaveText('Source:');
+    await expect(page.locator('[data-role="topbar-dataset"]')).toHaveText('BM4_L.ACCDB');
+    await expect(page.locator('[data-role="lfea-topbar-run-status"]')).toContainText('Run blocked');
+    await expect(page.locator('[data-role="topbar-dataset"]')).toBeVisible();
+    await expect(page.locator('[data-role="lfea-topbar-run-status"]')).toBeVisible();
+    const layout = await page.evaluate(() => {
+      const box = (element) => {
+        const r = element.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom,
+          width: r.width, height: r.height, scrollWidth: element.scrollWidth,
+          clientWidth: element.clientWidth };
       };
+      const navigation = document.querySelector('[data-role="application-navigation"]');
+      const buttons = [...navigation.querySelectorAll('button')].filter((node) =>
+        getComputedStyle(node).display !== 'none');
       return {
-        header: rect('.application-navigation-shell'),
-        navigation: rect('[data-role="application-navigation"]'),
-        authorize: rect('[data-action="authorize-lfea-error-check-limitations"]'),
+        viewport: document.documentElement.clientWidth,
+        documentScrollWidth: document.documentElement.scrollWidth,
+        header: box(document.querySelector('.application-navigation-shell')),
+        nav: box(navigation),
+        source: box(document.querySelector('[data-role="topbar-dataset"]')),
+        sourceLabel: box(document.querySelector('[data-role="topbar-dataset-kind"]')),
+        runStatus: box(document.querySelector('[data-role="lfea-topbar-run-status"]')),
+        authorize: box(document.querySelector('[data-action="authorize-lfea-error-check-limitations"]')),
+        navButtons: buttons.map((button) => ({ text: button.textContent.trim(), ...box(button) })),
       };
     });
-    for (const [name, rect] of Object.entries(boxes)) {
+    expect(layout.navButtons.length).toBeGreaterThanOrEqual(4);
+    expect(layout.documentScrollWidth).toBeLessThanOrEqual(391);
+    for (const [name, rect] of Object.entries({
+      header: layout.header, navigation: layout.nav, source: layout.source,
+      sourceLabel: layout.sourceLabel, runStatus: layout.runStatus,
+      authorize: layout.authorize,
+      ...Object.fromEntries(layout.navButtons.map((button, i) => ['navButton' + i, button])),
+    })) {
+      expect(rect.width, name + ' has visible width').toBeGreaterThan(0);
       expect(rect.left, name + ' left edge').toBeGreaterThanOrEqual(-1);
       expect(rect.right, name + ' right edge').toBeLessThanOrEqual(391);
-      expect(rect.width, name + ' width').toBeLessThanOrEqual(391);
+      expect(rect.scrollWidth, name + ' content not clipped').toBeLessThanOrEqual(rect.clientWidth + 2);
+    }
+    for (let i = 0; i < layout.navButtons.length; i += 1) {
+      for (let j = i + 1; j < layout.navButtons.length; j += 1) {
+        const a = layout.navButtons[i]; const b = layout.navButtons[j];
+        const overlaps = a.left < b.right - 1 && b.left < a.right - 1
+          && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+        expect(overlaps, 'navigation must not overlap: ' + a.text + ' / ' + b.text).toBe(false);
+      }
     }
   });
 

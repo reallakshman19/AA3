@@ -6,6 +6,7 @@ import {
   buildLfeaErrorCheckPresentation,
   selectLfeaErrorCheckSections,
 } from '../src/workspace/lfea-diagnostics/lfea-error-check-presentation.js';
+import { lfeaFindingSuggestedAction } from '../src/workspace/lfea-finding-suggested-action.js';
 
 const findings = Object.freeze([
   finding('F-SOURCE', 'SOURCE_NOTE', 'SOURCE', 'PASS', 'INFO', 'Source evidence retained.'),
@@ -14,6 +15,33 @@ const findings = Object.freeze([
   finding('F-LOAD', 'PRESSURE_BLOCK', 'PRESSURE', 'BLOCK', 'INFO', 'Pressure authority is incomplete.'),
   finding('F-OTHER', 'VENDOR_EXTENSION', 'VENDOR_PRIVATE_CATEGORY', 'ADVISORY', 'WARNING', 'Vendor-specific source note.'),
 ]);
+// Unsupported-mechanics guidance is informational and MUST NOT state
+// engineering suitability, directional error or code qualification. The
+// existing governed disposition/acceptance path stays unchanged.
+const unsupportedGuidanceCodes = [
+  'MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE',
+  'MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE',
+  'MODEL_REDUCER_EXACT_MECHANICS_UNAVAILABLE',
+  'MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED',
+  'MODEL_RESTRAINT_FRICTION_UNSUPPORTED',
+  'ACCDB_RESTRAINT_FRICTION_NOT_MODELED',
+  'MODEL_RESTRAINT_GAP_UNSUPPORTED',
+  'ACCDB_RESTRAINT_GAP_NOT_MODELED',
+  'MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED',
+  'MODEL_SIF_TYPE_UNSUPPORTED',
+  'ACCDB_SIF_TYPE_UNCLASSIFIED',
+];
+for (const code of unsupportedGuidanceCodes) {
+  const advice = lfeaFindingSuggestedAction(code);
+  assert.ok(advice && advice.length > 35, 'missing supported limitation explanation: ' + code);
+  assert.doesNotMatch(advice,
+    /normally safe|fine to accept|accept unless|accept for a|simplification cost you nothing|reads high|reads low|will read high|will read low/iu,
+    'Unsupported mechanics must not present an unqualified engineering-suitability or signed-error claim: ' + code);
+}
+assert.match(lfeaFindingSuggestedAction('MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED'),
+  /code-stress assessment is not performed/iu);
+assert.match(lfeaFindingSuggestedAction('ACCDB_FORCES_MOMENTS_PRESENT_NOT_COMPILED'),
+  /not compiled into active linear load cases/iu);
 const preFlight = makePreFlight(findings);
 const before = JSON.stringify(preFlight);
 

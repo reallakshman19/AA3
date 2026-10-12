@@ -125,8 +125,9 @@ function readOnlyNote(doc) {
   const note = doc.createElement('p');
   note.className = 'lfea-pipeline-layout__note';
   note.dataset.role = 'lfea-pipeline-layout-readonly-note';
-  note.textContent = 'Read-only. Edit the model in CAESAR II and re-import; '
-    + 'coordinate editing here is not available yet.';
+  note.textContent = 'This layout table is read-only. For an imported ACCDB, supported source-node '
+    + 'coordinate corrections are available in the Error Check model inspector as reviewed, '
+    + 'source-bound drafts. Other geometry and topology changes require source-authority edits and re-import.';
   return note;
 }
 

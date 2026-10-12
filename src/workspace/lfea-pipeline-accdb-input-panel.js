@@ -1,7 +1,17 @@
 import { readAccdbNamedTables } from '../core/fea-benchmarks/caesar-accdb-reader-core.js';
 import { applyAccdbFieldOverrides } from '../core/linear-piping-analysis-consumer/accdb-field-overrides.js';
+import {
+  previewAccdbNodeCoordinateEdit,
+  replayAccdbCoordinateDraft,
+  requireAccdbCoordinateDraft,
+  ACCDB_COORDINATE_DRAFT_SCHEMA,
+} from '../core/linear-piping-analysis-consumer/accdb-coordinate-overrides.js';
 import { authorizeLinearPipingInputXmlPreFlight } from './linear-piping-inputxml-prefea.js';
-import { revealLfeaBendFactorAuthorityControl } from './lfea-bend-factor-authority-control.js';
+import {
+  lfeaBendFactorAuthoritySelection,
+  revealLfeaBendFactorAuthorityControl,
+  subscribeLfeaBendFactorAuthoritySelection,
+} from './lfea-bend-factor-authority-control.js';
 import { lfeaProximityOptions } from './lfea-geometry-allowance.js';
 import {
   plainLanguageForCapability,
@@ -10,6 +20,7 @@ import {
 import {
   createLinearPipingAccdbIntake,
   prepareLinearPipingAccdbPreFlight,
+  LINEAR_PIPING_ACCDB_LENGTH_UNITS,
 } from './linear-piping-accdb-intake.js';
 import { parseAccdbModelHealthSource } from '../core/linear-piping-analysis-consumer/accdb-source-binding.js';
 import { diagnoseInputXmlLinearModelHealth } from '../core/linear-piping-analysis-consumer/inputxml-linear-model-health.js';
@@ -97,6 +108,14 @@ export class LfeaPipelineAccdbInputPanelController {
     this.overrideSet = null;
     this.overrideDisclosures = Object.freeze([]);
     this.overrideDrafts = new Map();
+    this.sourceBaseIdentity = null;
+    this.originalAccdbByteSha256 = null;
+    this.coordinateEdits = [];
+    this.coordinateCursor = 0;
+    this.coordinateRevision = 0;
+    this.coordinateApprover = '';
+    this.coordinateReason = '';
+    this.coordinateDisclosures = Object.freeze([]);
     this.overrideApprover = '';
     this.overrideReason = '';
     this.showProperties = false;
@@ -104,6 +123,8 @@ export class LfeaPipelineAccdbInputPanelController {
     this.error = '';
     this.busy = false;
     this.importEpoch = 0;
+    this.unsubscribeComponentBasis = null;
+    this.lastComponentBasisRefresh = null;
   }
 
   init() {
@@ -116,6 +137,12 @@ export class LfeaPipelineAccdbInputPanelController {
     this.elements.profileSelect.addEventListener('change', () => {
       this.setRequestedProfile(this.elements.profileSelect.value);
     });
+    // A direct subscription, not a synthetic DOM/profile change, rebuilds
+    // *the current effective table intake* even after source-coordinate edits
+    // and Error Check inline control replacement. A detached candidate is
+    // adopted only on successful real preparation; no BLOCK is hidden.
+    this.unsubscribeComponentBasis = subscribeLfeaBendFactorAuthoritySelection(
+      (selection) => this.refreshForComponentFactorAuthority(selection));
     this.initialized = true;
     this.render();
     return this;
@@ -150,6 +177,10 @@ export class LfeaPipelineAccdbInputPanelController {
       const readLog = [];
       const tables = await this.readTables(bytes, LFEA_PIPELINE_ACCDB_MODEL_TABLES, readLog);
       if (epoch !== this.importEpoch) return false;
+      // Bind the detached 11-table intake to the exact read-only original file
+      // bytes. The browser never rewrites/repackages the source ACCDB.
+      const originalByteSha256 = await hashOriginalAccdbBytes(bytes);
+      if (epoch !== this.importEpoch) return false;
 
       // Reuse the exact existing extraction/pre-flight methods on detached state.
       // Only the successful candidate crosses into the live controller.
@@ -162,6 +193,15 @@ export class LfeaPipelineAccdbInputPanelController {
 
       this.fileName = file.name;
       this.tables = tables;
+      this.sourceBaseIdentity = prepared.preFlight?.intake?.contentSha256 ?? null;
+      this.originalAccdbByteSha256 = originalByteSha256;
+      this.lastComponentBasisRefresh = null;
+      this.coordinateEdits = [];
+      this.coordinateCursor = 0;
+      this.coordinateRevision += 1;
+      this.coordinateApprover = '';
+      this.coordinateReason = '';
+      this.coordinateDisclosures = Object.freeze([]);
       this.effectiveTables = prepared.effectiveTables;
       this.sourceBundle = prepared.sourceBundle;
       this.modelHealth = prepared.modelHealth;
@@ -197,6 +237,43 @@ export class LfeaPipelineAccdbInputPanelController {
         if (!this.error && this.fileName === file.name) this.notifyStateChanged();
       }
     }
+  }
+
+  /**
+   * A basis change must consume the same effective ACCDB tables as the latest
+   * successful Apply/Undo/Redo, with the selected explicit authority read by
+   * the native preparation gateway. No editor approval is a run approval.
+   */
+  refreshForComponentFactorAuthority(selection = lfeaBendFactorAuthoritySelection()) {
+    if (!this.effectiveTables || !this.fileName) return;
+    try {
+      const candidate = this.prepareCandidate(this.effectiveTables);
+      this.adoptCandidate(candidate);
+      this.error = '';
+      this.lastComponentBasisRefresh = Object.freeze({
+        editionProfileId: selection.editionProfileId,
+        smooth90FlexibilityCorrection: selection.smooth90FlexibilityCorrection,
+        intakeSemanticHash: this.preFlight?.intake?.semanticHash ?? null,
+        sealedAuthorityHash: this.preFlight?.preparation?.stiffnessPreflight?.bendFactorAuthority?.semanticHash ?? null,
+        preFlightSemanticHash: this.preFlight?.semanticHash ?? null,
+        status: this.preFlight?.status ?? 'UNAVAILABLE',
+      });
+      this.message = 'The current corrected ACCDB was re-prepared for the explicit component basis. '
+        + 'Review the current Error Check; previous diagnostic acceptance does not transfer.';
+    } catch (error) {
+      // Preserve the former BLOCK and surface the actual preparation failure;
+      // a visibly selected basis must not silently promote a failed seal.
+      this.error = errorMessage(error);
+      this.message = 'Component basis selected, but the current ACCDB could not be re-prepared: ' + this.error;
+      this.lastComponentBasisRefresh = Object.freeze({
+        editionProfileId: selection.editionProfileId,
+        smooth90FlexibilityCorrection: selection.smooth90FlexibilityCorrection,
+        status: 'FAILED',
+        error: this.error,
+      });
+    }
+    this.render();
+    this.notifyStateChanged();
   }
 
   /** Build every derived record from one exact table set. */
@@ -377,9 +454,12 @@ export class LfeaPipelineAccdbInputPanelController {
         reason: this.overrideReason,
         overrides,
       });
-      this.extract(applied.tables);
+      const effective = this.withCoordinateEdits(applied.tables);
+      const prepared = this.prepareCandidate(effective.tables);
+      this.adoptCandidate(prepared);
       this.overrideSet = applied.overrideSet;
       this.overrideDisclosures = applied.disclosures;
+      this.coordinateDisclosures = effective.disclosures;
       this.message = `Applied ${applied.disclosures.length} engineer override(s) to ${this.fileName} and re-ran extraction.`;
     } catch (error) {
       this.error = errorMessage(error);
@@ -396,10 +476,259 @@ export class LfeaPipelineAccdbInputPanelController {
     this.overrideSet = null;
     this.overrideDisclosures = Object.freeze([]);
     this.error = '';
-    this.extract(this.tables);
-    this.message = `Overrides withdrawn; ${this.fileName} is back to its imported values.`;
+    const effective = this.withCoordinateEdits(this.tables);
+    this.adoptCandidate(this.prepareCandidate(effective.tables));
+    this.coordinateDisclosures = effective.disclosures;
+    this.message = this.coordinateCursor
+      ? 'Element overrides withdrawn; source-bound coordinate corrections remain in force.'
+      : 'Overrides withdrawn; ' + this.fileName + ' is back to its imported values.';
     this.render();
     this.notifyStateChanged();
+  }
+
+
+  /** Draft edits are bound to the original model tables, not an already-edited intake. */
+  coordinateDraft(edits = this.coordinateEdits.slice(0, this.coordinateCursor), approver = this.coordinateApprover, reason = this.coordinateReason) {
+    return {
+      schema: ACCDB_COORDINATE_DRAFT_SCHEMA,
+      sourceIdentity: this.sourceBaseIdentity,
+      originalAccdbByteSha256: this.originalAccdbByteSha256,
+      approver, reason,
+      edits: edits.map((edit) => ({ nodeId: edit.nodeId, axis: edit.axis, value: edit.value, unit: edit.unit })),
+    };
+  }
+
+  withCoordinateEdits(tables, edits = this.coordinateEdits.slice(0, this.coordinateCursor),
+    approver = this.coordinateApprover, reason = this.coordinateReason) {
+    if (!edits.length) return { tables, disclosures: Object.freeze([]) };
+    return replayAccdbCoordinateDraft(tables, this.coordinateDraft(edits, approver, reason), this.sourceBaseIdentity);
+  }
+
+  prepareCandidate(tables) {
+    // Recompute all importer, model-health and preflight evidence on detached
+    // state. Never retire the live authorized preparation for a failed edit.
+    const candidate = Object.create(LfeaPipelineAccdbInputPanelController.prototype);
+    candidate.fileName = this.fileName;
+    candidate.requestedCaseIds = this.requestedCaseIds;
+    candidate.requestedProfileId = this.requestedProfileId;
+    candidate.extract(tables);
+    if (!candidate.preFlight) {
+      throw new TypeError(candidate.preFlightError || 'The edited source cannot be prepared.');
+    }
+    return candidate;
+  }
+
+  adoptCandidate(candidate) {
+    for (const key of ['effectiveTables', 'sourceBundle', 'modelHealth', 'healthView',
+      'propertyRows', 'engineeringSanity', 'preFlight', 'preFlightError']) {
+      this[key] = candidate[key];
+    }
+  }
+
+  getCoordinateEditorSnapshot() {
+    return Object.freeze({
+      sourceIdentity: this.sourceBaseIdentity,
+      originalAccdbByteSha256: this.originalAccdbByteSha256,
+      revision: this.coordinateRevision,
+      unit: LINEAR_PIPING_ACCDB_LENGTH_UNITS[
+        String(this.sourceBundle?.unitSystem?.declared?.length ?? '').trim().toUpperCase()
+      ] ?? null,
+      undoCount: this.coordinateCursor,
+      redoCount: this.coordinateEdits.length - this.coordinateCursor,
+      editedNodeCount: new Set(this.coordinateEdits.slice(0, this.coordinateCursor)
+        .map((row) => row.nodeId)).size,
+      disclosures: this.coordinateDisclosures,
+    });
+  }
+
+  getCoordinateRawValue(sourceNodeId, axis) {
+    const id = String(sourceNodeId);
+    const letter = String(axis).toUpperCase();
+    const rows = this.effectiveTables?.INPUT_NODAL_COORDINATES?.rows ?? [];
+    for (const row of rows) {
+      for (const side of ['FROM', 'TO']) {
+        if (String(row[side + '_NODE']) === id) return row[side + '_NODE_' + letter] ?? null;
+      }
+    }
+    return null;
+  }
+
+  previewCoordinateEdit(request) {
+    if (!this.tables || !this.sourceBaseIdentity) throw new TypeError('Load a supported ACCDB before editing.');
+    const snapshot = this.getCoordinateEditorSnapshot();
+    const preview = previewAccdbNodeCoordinateEdit(this.effectiveTables, {
+      ...request,
+      sourceIdentity: this.sourceBaseIdentity,
+      expectedSourceIdentity: request.expectedSourceIdentity,
+      revision: this.coordinateRevision,
+      expectedRevision: request.expectedRevision,
+      unit: request.unit ?? snapshot.unit,
+    });
+    if (!preview.changed) return preview;
+    // Preview the actual next governed preparation without crossing the
+    // live-controller boundary. This makes failures visible before Apply.
+    const prepared = this.prepareCandidate(preview.tables);
+    const previous = this.preFlight?.preparation?.findings ?? [];
+    const proposed = prepared.preFlight?.preparation?.findings ?? [];
+    const countCodes = (rows) => {
+      const counts = new Map();
+      for (const row of rows) counts.set(row.code, (counts.get(row.code) ?? 0) + 1);
+      return counts;
+    };
+    const before = countCodes(previous);
+    const after = countCodes(proposed);
+    const changedCodes = [...new Set([...before.keys(), ...after.keys()])]
+      .filter((code) => (before.get(code) ?? 0) !== (after.get(code) ?? 0))
+      .sort()
+      .map((code) => Object.freeze({ code, before: before.get(code) ?? 0, after: after.get(code) ?? 0 }));
+    return Object.freeze({
+      ...preview,
+      diagnosticPreview: Object.freeze({
+        previousFindingCount: previous.length,
+        proposedFindingCount: proposed.length,
+        previousStatus: this.preFlight?.status ?? 'UNAVAILABLE',
+        proposedStatus: prepared.preFlight?.status ?? 'UNAVAILABLE',
+        previousPreparationSemanticHash: this.preFlight?.semanticHash ?? null,
+        proposedPreparationSemanticHash: prepared.preFlight?.semanticHash ?? null,
+        changedCodes: Object.freeze(changedCodes),
+      }),
+    });
+  }
+
+
+  /** Prospective governed raw-property edit on detached source tables. */
+  previewPropertyFieldEdit(request) {
+    if (!this.tables || !this.sourceBaseIdentity
+        || request?.expectedSourceIdentity !== this.sourceBaseIdentity
+        || request?.expectedCoordinateRevision !== this.coordinateRevision
+        || request?.expectedPreparationHash !== this.preFlight?.semanticHash) {
+      throw new TypeError('Property edit is stale for this ACCDB preparation.');
+    }
+    const id = String(request.accdbElementId ?? '').trim();
+    const field = String(request.field ?? '').trim();
+    const drafts = new Map(this.overrideDrafts);
+    drafts.set(id + ':' + field, String(request.rawValue ?? '').trim());
+    const overrides = [...drafts.entries()].map(([key, rawValue]) => {
+      const sep = key.lastIndexOf(':');
+      return { accdbElementId: key.slice(0, sep), field: key.slice(sep + 1), rawValue };
+    });
+    const applied = applyAccdbFieldOverrides(this.tables, {
+      approver: request.approver, reason: request.reason, overrides,
+    });
+    const candidate = this.prepareCandidate(this.withCoordinateEdits(applied.tables).tables);
+    const changed = applied.disclosures.find((entry) => entry.data.accdbElementId === id
+      && entry.data.field === field);
+    if (!changed) throw new TypeError('No exact source property row was changed.');
+    const datum = changed.data;
+    return Object.freeze({
+      sourceIdentity: this.sourceBaseIdentity, revision: this.coordinateRevision,
+      expectedPreparationHash: this.preFlight?.semanticHash ?? null,
+      elementId: id, field, before: datum.originalRawValue, after: datum.overrideRawValue,
+      changed: String(datum.originalRawValue ?? '') !== String(datum.overrideRawValue ?? ''),
+      statusBefore: this.preFlight?.status ?? 'UNAVAILABLE',
+      statusAfter: candidate.preFlight?.status ?? 'UNAVAILABLE',
+      findingCountBefore: this.preFlight?.preparation?.findings?.length ?? 0,
+      findingCountAfter: candidate.preFlight?.preparation?.findings?.length ?? 0,
+      preparationWillChange: candidate.preFlight?.semanticHash !== this.preFlight?.semanticHash,
+      overrideCount: applied.disclosures.length,
+    });
+  }
+
+  applyPropertyFieldEdit(request) {
+    const preview = this.previewPropertyFieldEdit(request);
+    if (!preview.changed) throw new TypeError('The source property is unchanged; no correction to Apply.');
+    this.setOverrideDraft(preview.elementId, preview.field, preview.after);
+    this.overrideApprover = String(request.approver ?? '').trim();
+    this.overrideReason = String(request.reason ?? '').trim();
+    this.applyOverrides();
+    if (this.error) throw new TypeError(this.error);
+    return preview;
+  }
+
+  /** A successful Apply changes the exact tables that the analysis intake seals. */
+  applyCoordinateEdit(request) {
+    const preview = this.previewCoordinateEdit(request);
+    if (!preview.changed) return preview;
+    const approver = String(request.approver ?? '').trim();
+    const reason = String(request.reason ?? '').trim();
+    if (!approver || !reason) throw new TypeError('A coordinate correction requires approver and reason.');
+    const edits = [...this.coordinateEdits.slice(0, this.coordinateCursor), {
+      nodeId: preview.nodeId, axis: preview.axis, value: preview.after, unit: preview.unit,
+    }];
+    let input = this.tables;
+    if (this.overrideSet) input = applyAccdbFieldOverrides(input, this.overrideSet).tables;
+    const effective = this.withCoordinateEdits(input, edits, approver, reason);
+    const candidate = this.prepareCandidate(effective.tables);
+    this.adoptCandidate(candidate);
+    this.coordinateEdits = edits;
+    this.coordinateCursor = edits.length;
+    this.coordinateRevision += 1;
+    this.coordinateApprover = approver;
+    this.coordinateReason = reason;
+    this.coordinateDisclosures = effective.disclosures;
+    this.error = '';
+    this.message = 'Applied source-bound coordinate correction; diagnostics and preparation regenerated. Previous run authorization was invalidated.';
+    this.render();
+    this.notifyStateChanged();
+    return preview;
+  }
+
+  navigateCoordinateHistory(direction) {
+    const cursor = this.coordinateCursor + direction;
+    if (direction !== -1 && direction !== 1) throw new TypeError('Undo/redo direction must be -1 or +1.');
+    if (cursor < 0 || cursor > this.coordinateEdits.length) return false;
+    let input = this.tables;
+    if (this.overrideSet) input = applyAccdbFieldOverrides(input, this.overrideSet).tables;
+    const effective = this.withCoordinateEdits(input, this.coordinateEdits.slice(0, cursor));
+    const candidate = this.prepareCandidate(effective.tables);
+    this.adoptCandidate(candidate);
+    this.coordinateCursor = cursor;
+    this.coordinateRevision += 1;
+    this.coordinateDisclosures = effective.disclosures;
+    this.message = (direction === -1 ? 'Undo' : 'Redo') + ' applied to prepared model; diagnostics regenerated and prior authorization not reused.';
+    this.render();
+    this.notifyStateChanged();
+    return true;
+  }
+
+  /** Save as a source-bound JSON overlay, never as a modified ACCDB binary. */
+  exportCoordinateDraft() {
+    if (!this.sourceBaseIdentity) throw new TypeError('No ACCDB source to export.');
+    return JSON.stringify(this.coordinateDraft(), null, 2);
+  }
+
+  previewImportedCoordinateDraft(json) {
+    if (!this.sourceBaseIdentity) throw new TypeError('Import an ACCDB before loading a repair draft.');
+    const draft = typeof json === 'string' ? JSON.parse(json) : json;
+    requireAccdbCoordinateDraft(draft, this.sourceBaseIdentity);
+    if (!draft.originalAccdbByteSha256
+        || draft.originalAccdbByteSha256 !== this.originalAccdbByteSha256) {
+      throw new TypeError('Saved correction does not match the original ACCDB binary SHA-256; reload the exact source file.');
+    }
+    let input = this.tables;
+    if (this.overrideSet) input = applyAccdbFieldOverrides(input, this.overrideSet).tables;
+    const replay = replayAccdbCoordinateDraft(input, draft, this.sourceBaseIdentity);
+    this.prepareCandidate(replay.tables);
+    return { draft, replay };
+  }
+
+  applyImportedCoordinateDraft(json, approval) {
+    const { draft, replay } = this.previewImportedCoordinateDraft(json);
+    const approver = String(approval?.approver ?? '').trim();
+    const reason = String(approval?.reason ?? '').trim();
+    if (!approver || !reason) throw new TypeError('Review and supply a current approver and reason to apply the imported draft.');
+    const candidate = this.prepareCandidate(replay.tables);
+    this.adoptCandidate(candidate);
+    this.coordinateEdits = draft.edits.map((edit) => ({ ...edit }));
+    this.coordinateCursor = draft.edits.length;
+    this.coordinateRevision += 1;
+    this.coordinateApprover = approver;
+    this.coordinateReason = reason;
+    this.coordinateDisclosures = replay.disclosures;
+    this.message = 'Imported source-bound correction applied; fresh diagnostic authority required.';
+    this.render();
+    this.notifyStateChanged();
+    return replay;
   }
 
   invalidatePendingImport() {
@@ -416,6 +745,7 @@ export class LfeaPipelineAccdbInputPanelController {
     this.fileName = null;
     this.tables = null;
     this.effectiveTables = null;
+    this.lastComponentBasisRefresh = null;
     this.sourceBundle = null;
     this.modelHealth = null;
     this.healthView = null;
@@ -424,6 +754,14 @@ export class LfeaPipelineAccdbInputPanelController {
     this.overrideSet = null;
     this.overrideDisclosures = Object.freeze([]);
     this.overrideDrafts.clear();
+    this.sourceBaseIdentity = null;
+    this.originalAccdbByteSha256 = null;
+    this.coordinateEdits = [];
+    this.coordinateCursor = 0;
+    this.coordinateRevision += 1;
+    this.coordinateApprover = '';
+    this.coordinateReason = '';
+    this.coordinateDisclosures = Object.freeze([]);
     this.overrideApprover = '';
     this.overrideReason = '';
     this.reviewerIdentity = '';
@@ -439,7 +777,7 @@ export class LfeaPipelineAccdbInputPanelController {
 
   /** The loaded element table, for diagnostics that read raw geometry. */
   getElementRows() {
-    return this.tables?.INPUT_BASIC_ELEMENT_DATA?.rows ?? null;
+    return this.effectiveTables?.INPUT_BASIC_ELEMENT_DATA?.rows ?? null;
   }
 
   getSnapshot() {
@@ -460,7 +798,14 @@ export class LfeaPipelineAccdbInputPanelController {
       availableCaseIds: this.preFlight?.sourceSummary.availableCaseIds ?? Object.freeze([]),
       preFlightError: this.preFlightError || null,
       preFlightApprover: this.preFlight?.approverIdentity ?? null,
+      // Read-only sealing trace for correction-first regression diagnostics.
+      // Selection values alone do not establish consumed native authority.
+      componentBasisRefresh: this.lastComponentBasisRefresh?.preFlightSemanticHash === this.preFlight?.semanticHash
+        ? this.lastComponentBasisRefresh : null,
       overrideCount: this.overrideSet?.overrides.length ?? 0,
+      coordinateEditCount: this.coordinateCursor,
+      sourceBaseIdentity: this.sourceBaseIdentity,
+      originalAccdbByteSha256: this.originalAccdbByteSha256,
       overrideApprover: this.overrideSet?.approver ?? null,
       engineeringSanityFindingCount: this.engineeringSanity?.summary.findingCount ?? null,
       message: this.message,
@@ -469,6 +814,8 @@ export class LfeaPipelineAccdbInputPanelController {
   }
 
   destroy() {
+    this.unsubscribeComponentBasis?.();
+    this.unsubscribeComponentBasis = null;
     this.elements?.section.remove();
     this.elements = null;
     this.initialized = false;
@@ -501,6 +848,16 @@ export class LfeaPipelineAccdbInputPanelController {
     this.elements.section.dataset.requestedProfile = this.requestedProfileId;
     this.elements.section.dataset.overrideCount = String(this.overrideSet?.overrides.length ?? 0);
   }
+}
+
+
+async function hashOriginalAccdbBytes(bytes) {
+  if (!globalThis.crypto?.subtle) {
+    throw new TypeError('ACCDB correction requires SHA-256 to bind exact original source bytes; secure cryptography is unavailable.');
+  }
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  return 'sha256:' + [...new Uint8Array(digest)]
+    .map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
 function requireProfileId(requestedProfileId) {
@@ -907,7 +1264,7 @@ function renderOverrideSection(doc, root, controller) {
 
   const scope = doc.createElement('p');
   scope.dataset.role = 'accdb-override-scope-disclosure';
-  scope.textContent = 'Overrides replace the raw cell in the file\'s own declared units and re-run the whole import, so inheritance and unit conversion behave exactly as if the file carried the value. Node ids and element geometry are not overridable — geometry and topology stay owned by the file. Every applied override is listed below and carries its approver and reason.';
+  scope.textContent = 'Overrides replace the raw cell in the file\'s own declared units and re-run the whole import, so inheritance and unit conversion behave exactly as if the file carried the value. This element-field override table does not edit node IDs, geometry or topology. Imported ACCDB source-node coordinates can be corrected separately in Error Check → Piping model through previewed, source-bound workspace drafts; no ACCDB binary is rewritten. Every applied override is listed below and carries its approver and reason.';
   root.append(scope);
 
   if (controller.overrideDisclosures.length > 0) {

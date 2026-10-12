@@ -56,6 +56,9 @@ export function advancedShellStyles() {
     .brand-title { font-size: 14px; font-weight: 900; letter-spacing: 0.08em; color: #f8fafc; }
     .brand-subtitle { font-size: 10px; font-weight: 600; color: var(--accent-blue); letter-spacing: 0.05em; }
     .top-bar-meta { gap: 12px; }
+    /* Author display rules must not override the actual hidden state:
+       Workspace benchmark is NOT the LFEA result, and vice versa. */
+    .top-bar-meta [hidden] { display: none !important; }
     .meta-pill {
       gap: 6px;
       padding: 4px 10px;

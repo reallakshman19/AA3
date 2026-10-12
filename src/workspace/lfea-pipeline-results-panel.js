@@ -361,6 +361,15 @@ export class LfeaPipelineResultsPanelController {
     button.type = 'button';
     button.dataset.action = 'lfea-pipeline-results-csv';
     button.textContent = 'Download CSV';
+    if (this.activeView === 'ELEMENT_FORCES') {
+      // No blank or fabricated CSV when sealed end-action custody is absent.
+      try {
+        lfeaElementActionDisplayRows(this.recoveredActionsFor(active.caseId));
+      } catch (_error) {
+        button.disabled = true;
+        button.title = 'Element end-action recovery is unavailable or incomplete; CSV is withheld.';
+      }
+    }
     button.addEventListener('click', () => this.options.onExportCsv?.(this.csvFor(active), csvName(active.caseId, this.activeView)));
     bar.append(button);
     return bar;

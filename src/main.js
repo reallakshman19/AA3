@@ -577,6 +577,12 @@ function runLfeaPipelineAnalysis(caseIds) {
     const state = lfeaAnalysisSurface.analysisController.analyze(preFlight, caseIds);
     lfeaEngineeringSession.bindAnalysisResult(state);
     lfeaAnalysisSurface.resultsPanel.setState(state);
+    // The previous PREFLIGHT_CHANGED message described an earlier invalid
+    // result, not this newly bound authorized execution. Replace only the
+    // toolbar's stale presentation; never change pre-flight/solver authority.
+    lfeaPipelineShell.setAssembleStatus(
+      'Current LFEA linear analysis complete for ' + state.cases.length
+        + ' selected case(s). Output is current; code assessment is separate.', false);
     lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
     lfeaPipelineShell.setStepStatus('RUN', { complete: true });
     lfeaPipelineShell.setActiveStep('OUTPUT');

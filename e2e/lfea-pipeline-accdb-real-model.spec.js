@@ -531,7 +531,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(svg).toHaveAttribute('data-representation', 'ANALYSIS');
     const derived = svg.locator('circle[data-node-id="ACCDB.E33.A2"][role="button"]');
     await expect(derived).toBeVisible();
-    await expect(derived).toHaveAttribute('aria-label', /Inspect derived analysis node ACCDB\\.E33\\.A2.*read-only/u);
+    await expect(derived).toHaveAttribute('aria-label', /Inspect derived analysis node ACCDB\.E33\.A2.*read-only/u);
     await expect(derived).not.toHaveAttribute('aria-label', /Select source node/u);
     await derived.focus();
     await page.keyboard.press('Enter');

@@ -197,7 +197,10 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     if (typeof options.onSelectNode === 'function') {
       marker.setAttribute('tabindex', '0');
       marker.setAttribute('role', 'button');
-      marker.setAttribute('aria-label', 'Select source node ' + node.nodeId
+      const sourceNode = descriptor.representation === 'SOURCE';
+      marker.setAttribute('aria-label', (sourceNode
+        ? 'Select source node ' : 'Inspect derived analysis node ') + node.nodeId
+        + (sourceNode ? '' : ' (read-only; not an editable ACCDB source node)')
         + (hitTarget?.displaced ? ' (offset hit target; geometry unchanged)' : ''));
       marker.addEventListener('click', () => options.onSelectNode(node));
       marker.addEventListener('keydown', (event) => {
@@ -209,8 +212,10 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     }
     if (hitTarget?.displaced) {
       const hint = host.ownerDocument.createElementNS(SVG_NS, 'title');
-      hint.textContent = 'Source node ' + node.nodeId
-        + ': selector offset solely to distinguish overlapping projected nodes; source geometry unchanged.';
+      hint.textContent = (descriptor.representation === 'SOURCE' ? 'Source node ' : 'Derived analysis node ')
+        + node.nodeId
+        + ': selector offset solely to distinguish overlapping projected nodes; geometry unchanged.'
+        + (descriptor.representation === 'SOURCE' ? '' : ' This analysis node is read-only.');
       marker.append(hint);
     }
     svg.append(marker);

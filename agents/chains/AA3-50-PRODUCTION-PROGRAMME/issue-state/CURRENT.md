@@ -15,7 +15,7 @@ COMMON_POLICY_BASIS: d60c36605e988dcc160647421973f170fd87e0eb
 CURRENT_STATE_AUTHORITY: CLEAR_FOR_PROGRAMME_COORDINATION_ONLY
 ISSUE_CURRENT_STATE_ENDPOINT: EP-0002
 STATE_AS_OF: 2026-10-12
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ## Aims
 
@@ -103,10 +103,10 @@ ENGINEERING_SUPPORT_WHOLE: 0/3
 QA_SUPPORT_WHOLE: 0/3
 ANTIGRAVITY_AG01_SUPPORT: 0/1 VERIFY_FIRST
 ENDPOINT_ACCEPTANCE: ACCEPTED
-WRITE_AUTHORITY: READ_ONLY_PENDING_ISSUE_SYNC
-AUTO_STATE: BLOCKED_PENDING_ISSUE_SYNC
+WRITE_AUTHORITY: METADATA_COORDINATION_ONLY
+AUTO_STATE: COORDINATOR_ONLY
 EXACT_NEXT_ACTION: Coordinate #51 bounded UI repair and read-only #52/#53 evidence; P0 and later phase gates remain open.
-HEAD: a6dd6752080c79e2fb0ecccf173f8c6790b7db45
+HEAD: 15df3cbeda0accbdcbcad8f6189d128f77e4896e
 MAIN: a8650bbe825d3fd217bab4974bcb0f0817c26158
 ISSUE_BASIS_FILE: agents/chains/AA3-50-PRODUCTION-PROGRAMME/issue-basis/IB-0002.md
 ISSUE_CURRENT_STATE_AUTHORITY: CLEAR_FOR_PROGRAMME_COORDINATION_ONLY
@@ -117,3 +117,10 @@ POST_BASIS_DRIFT: METADATA_ONLY
 ## Controller acceptance and limits
 
 First canonical acceptance EP-0002 supersedes the unaccepted EP-0001 proposal; its draft remains unchanged. Accepted basis IB-0002 retains every IB-0001 requirement and stable row. Qualification95/100 remains bounded UI competence. Product tree unchanged; no tests rerun, no new product PASS. Historical1/7 applies only to66b6dd; ENG/QA/AG separate. Repair the reproduced node20010 pointer interception and source-span focus loss on PR48; preserve original assertions and report exact candidate for independent consent-free retest.
+ISSUE_CHAIN_ROOT_COMMENT_ID: 6122443899
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 6122443336
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 6122444432
+ISSUE_COMMENT_PROJECTIONS: PUBLISHED_VERIFIED
+HEAD_MEANING: Last observed PR head before synchronization metadata commit; exact product tree remains 0fd66e5fc367b41640d746a1059dd62ae429897a
+COORDINATION_STATE: PARENT_PARTITIONS_VERIFIED
+PRODUCT_WRITE_EFFECTIVE_CONDITION: Issue projections read back and repository sync receipt committed; no protected engineering authority

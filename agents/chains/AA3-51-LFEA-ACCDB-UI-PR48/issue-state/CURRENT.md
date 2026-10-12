@@ -24,11 +24,11 @@ PROJECT_AGENTS_BLOB: 9666e6930492a8afe601ea88470c3f0ec7023985
 ISSUE_CURRENT_STATE_AUTHORITY: CLEAR_FOR_BOUNDED_UI_SCOPE
 CUSTODY_STATE: ACCEPTED
 ENDPOINT_ACCEPTANCE: ACCEPTED
-WRITE_AUTHORITY: READ_ONLY_PENDING_ISSUE_SYNC
-AUTO_STATE: BLOCKED_PENDING_ISSUE_SYNC
+WRITE_AUTHORITY: WRITE_ALLOWED_BOUNDED_SOURCE_SVG_INSPECTOR
+AUTO_STATE: BOUNDED_UI_REPAIR_ONLY
 MERGE_AUTHORITY: OWNER_ONLY
 MERGE_AUTHORIZED: FALSE
-ISSUE_HANDOVER_SYNC_STATUS: NOT_RUN
+ISSUE_HANDOVER_SYNC_STATUS: IN_SYNC
 
 ## Aims (r1, unchanged)
 
@@ -113,7 +113,7 @@ RUN_CURRENT_FOUR_CASES: BLOCKED_UNTIL_FRESH_OWNER_PREPARATION_DECISION
 PARENT_PARTITION_AND_SOURCE_ORACLE: PENDING_CONTROLLER_REVIEW
 EXCLUSIVE_PRODUCT_WRITER_LEASE: NOT_ACTIVATED
 EXACT_NEXT_ACTION: Repair the reproduced node20010 pointer interception and source-span focus loss on PR48; preserve original assertions and report exact candidate for independent consent-free retest.
-HEAD: a6dd6752080c79e2fb0ecccf173f8c6790b7db45
+HEAD: 15df3cbeda0accbdcbcad8f6189d128f77e4896e
 MAIN: a8650bbe825d3fd217bab4974bcb0f0817c26158
 CURRENT_STATE_AUTHORITY: CLEAR_FOR_BOUNDED_UI_SCOPE
 QUALIFICATION_COVERAGE: RETAINED_BOUNDED_UI_ONLY
@@ -122,3 +122,10 @@ POST_BASIS_DRIFT: METADATA_ONLY
 ## Controller acceptance and limits
 
 First canonical acceptance EP-0002 supersedes the unaccepted EP-0001 proposal; its draft remains unchanged. Accepted basis IB-0002 retains every IB-0001 requirement and stable row. Qualification95/100 remains bounded UI competence. Product tree unchanged; no tests rerun, no new product PASS. Historical1/7 applies only to66b6dd; ENG/QA/AG separate. Repair the reproduced node20010 pointer interception and source-span focus loss on PR48; preserve original assertions and report exact candidate for independent consent-free retest.
+ISSUE_CHAIN_ROOT_COMMENT_ID: 6122446108
+ISSUE_ACTIVE_HANDOVER_COMMENT_ID: 6122445671
+ISSUE_LATEST_ENDPOINT_COMMENT_ID: 6122446637
+ISSUE_COMMENT_PROJECTIONS: PUBLISHED_VERIFIED
+HEAD_MEANING: Last observed PR head before synchronization metadata commit; exact product tree remains 0fd66e5fc367b41640d746a1059dd62ae429897a
+COORDINATION_STATE: SOLE_ACTIVE_UI_WRITER_ENG52_QA53_AG_READ_ONLY
+PRODUCT_WRITE_EFFECTIVE_CONDITION: Issue projections read back and repository sync receipt committed; no protected engineering authority

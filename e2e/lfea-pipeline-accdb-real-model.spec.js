@@ -450,6 +450,9 @@ test.describe('LFEA ACCDB real-model import', () => {
       .toBeVisible({ timeout: 180000 });
     await expect(page.locator('[data-role="lfea-pipeline-active-step-context"]'))
       .toHaveAttribute('data-step-id', 'OUTPUT');
+    await expect(page.locator('[data-role="topbar-dataset"]')).toHaveText('BM4_L.ACCDB');
+    await expect(page.locator('[data-role="lfea-topbar-run-status"]'))
+      .toContainText('linear result available');
     const caseTabs = page.locator('[data-role="lfea-pipeline-results-cases"] button');
     const labels = (await caseTabs.allTextContents()).map((label) => label.trim());
     expect(new Set(labels)).toEqual(requested);
@@ -478,6 +481,11 @@ test.describe('LFEA ACCDB real-model import', () => {
       .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
     await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
 
+    await expect(page.locator('[data-role="topbar-dataset-kind"]')).toHaveText('Source:');
+    await expect(page.locator('[data-role="topbar-dataset"]')).toHaveText('BM4_L.ACCDB');
+    await expect(page.locator('[data-role="lfea-topbar-run-status"]'))
+      .toContainText('Run blocked');
+    await expect(page.locator('[data-role="tab-benchmark-status"]')).toBeHidden();
     const workspace = page.locator('[data-role="lfea-accdb-repair-workspace"]');
     const svg = workspace.locator('[data-role="lfea-accdb-repair-svg-host"] svg');
     const inspector = workspace.locator('[data-role="lfea-accdb-repair-inspector"]');

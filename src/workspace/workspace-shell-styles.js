@@ -22,7 +22,9 @@ export function advancedShellStyles() {
     .application-shell {
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       height: 100vh;
+      width: 100%;
       min-width: 0;
       overflow: hidden;
       background: var(--bg-dark);
@@ -68,10 +70,15 @@ export function advancedShellStyles() {
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-green); box-shadow: 0 0 8px var(--status-green); }
     .application-navigation-shell {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
       border-bottom: 1px solid var(--border-color);
       background: var(--bg-panel-strong);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
+    .application-navigation-shell > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
     .navigation-bar-container { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; }
     .application-navigation { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 4px 0; overflow-x: auto; }
     .application-navigation__status { min-height: 20px; padding: 0 12px; color: #fca5a5; font-size: 11px; }

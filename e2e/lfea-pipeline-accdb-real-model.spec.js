@@ -464,6 +464,45 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(pageErrors).toEqual([]);
   });
 
+  test('issue #49: actual pointer and keyboard selection reach the source inspector', async ({ page }) => {
+    test.setTimeout(180000);
+    const pageErrors = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-bend-factor-edition"]').selectOption('B31_3_2022_B31J_2017');
+    await page.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('YES');
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+
+    const workspace = page.locator('[data-role="lfea-accdb-repair-workspace"]');
+    const svg = workspace.locator('[data-role="lfea-accdb-repair-svg-host"] svg');
+    const inspector = workspace.locator('[data-role="lfea-accdb-repair-inspector"]');
+    const node = () => svg.locator('circle[data-node-id="20010"][role="button"]');
+    await expect(node()).toBeVisible();
+    // Playwright's real pointer click must select, not only keyboard Enter:
+    // an SVG-root pointer capture used to swallow this click after pointerdown.
+    await node().click();
+    await expect(inspector.locator('strong')).toContainText('Node 20010');
+    await expect(inspector.locator('[data-role="lfea-repair-coordinate-axis"]')).toBeVisible();
+    await node().focus();
+    await page.keyboard.press('Enter');
+    await expect(inspector.locator('strong')).toContainText('Node 20010');
+
+    // A source segment is selectable by pointer too, with provenance and
+    // whitelisted properties instead of a fabricated derived-record editor.
+    const line = svg.locator('line[data-segment-id][role="button"]').first();
+    const segmentId = await line.getAttribute('data-segment-id');
+    expect(segmentId).toBeTruthy();
+    await line.click();
+    await expect(inspector.locator('strong')).toContainText(segmentId);
+    await expect(inspector.locator('[data-role="lfea-repair-property-field"]')).toBeVisible();
+    expect(pageErrors).toEqual([]);
+  });
+
   test('issue #47 real ACCDB transaction and exact-source locator regression', () => {
     const output = execFileSync(process.execPath, ['scripts/lfea-accdb-repair-transaction-check.mjs'],
       { cwd: process.cwd(), encoding: 'utf8', timeout: 180000 });

@@ -195,6 +195,7 @@ export class LfeaPipelineAccdbInputPanelController {
       this.tables = tables;
       this.sourceBaseIdentity = prepared.preFlight?.intake?.contentSha256 ?? null;
       this.originalAccdbByteSha256 = originalByteSha256;
+      this.lastComponentBasisRefresh = null;
       this.coordinateEdits = [];
       this.coordinateCursor = 0;
       this.coordinateRevision += 1;
@@ -744,6 +745,7 @@ export class LfeaPipelineAccdbInputPanelController {
     this.fileName = null;
     this.tables = null;
     this.effectiveTables = null;
+    this.lastComponentBasisRefresh = null;
     this.sourceBundle = null;
     this.modelHealth = null;
     this.healthView = null;
@@ -798,7 +800,8 @@ export class LfeaPipelineAccdbInputPanelController {
       preFlightApprover: this.preFlight?.approverIdentity ?? null,
       // Read-only sealing trace for correction-first regression diagnostics.
       // Selection values alone do not establish consumed native authority.
-      componentBasisRefresh: this.lastComponentBasisRefresh,
+      componentBasisRefresh: this.lastComponentBasisRefresh?.preFlightSemanticHash === this.preFlight?.semanticHash
+        ? this.lastComponentBasisRefresh : null,
       overrideCount: this.overrideSet?.overrides.length ?? 0,
       coordinateEditCount: this.coordinateCursor,
       sourceBaseIdentity: this.sourceBaseIdentity,

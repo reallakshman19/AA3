@@ -218,7 +218,9 @@ export class LfeaAccdbRepairWorkspaceController {
     this.pendingProperty = null;
     this.axis = 'X';
     this.rawValue = '';
-    this.message = 'Source node ' + node.nodeId + ' selected.';
+    this.message = (this.representation === 'SOURCE'
+      ? 'Source node ' : 'Derived analysis node ') + node.nodeId
+      + (this.representation === 'SOURCE' ? ' selected.' : ' selected for inspection (read-only).');
     this.render();
   }
 
@@ -342,12 +344,16 @@ export class LfeaAccdbRepairWorkspaceController {
 
   async importDraft(file) {
     if (!file || typeof file.text !== 'function') return;
+    // A rejected upload must never leave a prior draft ready to apply.
+    // Preserve the actual failure in this.error until a later import succeeds.
+    this.loadedDraft = null;
     const json = await file.text();
     const active = this.active();
     if (!active) throw new TypeError('Import the original ACCDB before loading a saved draft.');
     const result = active.editor.previewImportedCoordinateDraft(json);
     this.loadedDraft = JSON.stringify(result.draft);
     this.pending = null;
+    this.error = '';
     this.message = 'Saved correction loaded for preview: ' + result.replay.disclosures.length
       + ' coordinate change(s). Review, then Apply with current approver and reason.';
     this.render();
@@ -361,6 +367,7 @@ export class LfeaAccdbRepairWorkspaceController {
     this.loadedDraft = null;
     this.pending = null;
     this.focusedFinding = null;
+    this.error = '';
     this.message = 'Saved correction applied and full preparation regenerated; authorization does not carry forward.';
     this.refresh();
   }

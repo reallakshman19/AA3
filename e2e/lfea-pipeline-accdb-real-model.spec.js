@@ -396,12 +396,17 @@ test.describe('LFEA ACCDB real-model import', () => {
     const savedPath = await download.path();
     expect(savedPath).toBeTruthy();
     const savedDraft = JSON.parse(fs.readFileSync(savedPath, 'utf8'));
-    expect(savedDraft.originalAccdbByteSha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(savedDraft.originalAccdbByteSha256).toMatch(/^sha256:[a-f0-9]{64}$/u);
+    if (fixturePath === committedFixturePath) {
+      expect(savedDraft.originalAccdbByteSha256).toBe(
+        'sha256:64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8',
+      );
+    }
     await workspace.locator('[data-role="lfea-repair-load-file"]').setInputFiles({
       name: 'wrong-accdb-binary.json',
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify({
-        ...savedDraft, originalAccdbByteSha256: '0'.repeat(64),
+        ...savedDraft, originalAccdbByteSha256: 'sha256:' + '0'.repeat(64),
       })),
     });
     const draftStatus = workspace.locator('[data-role="lfea-accdb-repair-status"]');

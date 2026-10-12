@@ -7,7 +7,11 @@ import {
   ACCDB_COORDINATE_DRAFT_SCHEMA,
 } from '../core/linear-piping-analysis-consumer/accdb-coordinate-overrides.js';
 import { authorizeLinearPipingInputXmlPreFlight } from './linear-piping-inputxml-prefea.js';
-import { revealLfeaBendFactorAuthorityControl } from './lfea-bend-factor-authority-control.js';
+import {
+  lfeaBendFactorAuthoritySelection,
+  revealLfeaBendFactorAuthorityControl,
+  subscribeLfeaBendFactorAuthoritySelection,
+} from './lfea-bend-factor-authority-control.js';
 import { lfeaProximityOptions } from './lfea-geometry-allowance.js';
 import {
   plainLanguageForCapability,
@@ -119,6 +123,8 @@ export class LfeaPipelineAccdbInputPanelController {
     this.error = '';
     this.busy = false;
     this.importEpoch = 0;
+    this.unsubscribeComponentBasis = null;
+    this.lastComponentBasisRefresh = null;
   }
 
   init() {
@@ -131,24 +137,12 @@ export class LfeaPipelineAccdbInputPanelController {
     this.elements.profileSelect.addEventListener('change', () => {
       this.setRequestedProfile(this.elements.profileSelect.value);
     });
-    // In particular, correction -> Undo/Redo -> B31/B31J selection must
-    // rebuild from the *current corrected* 11-table intake. Never infer a
-    // basis, and never preserve an earlier preparation's consent.
-    this.onComponentFactorAuthorityRefreshed = () => {
-      if (!this.effectiveTables) return;
-      try {
-        this.extract(this.effectiveTables);
-        this.error = '';
-      } catch (error) {
-        this.preFlight = null;
-        this.preFlightError = errorMessage(error);
-        this.error = this.preFlightError;
-      }
-      this.render();
-      this.notifyStateChanged();
-    };
-    this.documentRef.addEventListener?.('lfea-component-factor-authority-refreshed',
-      this.onComponentFactorAuthorityRefreshed);
+    // A direct subscription, not a synthetic DOM/profile change, rebuilds
+    // *the current effective table intake* even after source-coordinate edits
+    // and Error Check inline control replacement. A detached candidate is
+    // adopted only on successful real preparation; no BLOCK is hidden.
+    this.unsubscribeComponentBasis = subscribeLfeaBendFactorAuthoritySelection(
+      (selection) => this.refreshForComponentFactorAuthority(selection));
     this.initialized = true;
     this.render();
     return this;
@@ -242,6 +236,43 @@ export class LfeaPipelineAccdbInputPanelController {
         if (!this.error && this.fileName === file.name) this.notifyStateChanged();
       }
     }
+  }
+
+  /**
+   * A basis change must consume the same effective ACCDB tables as the latest
+   * successful Apply/Undo/Redo, with the selected explicit authority read by
+   * the native preparation gateway. No editor approval is a run approval.
+   */
+  refreshForComponentFactorAuthority(selection = lfeaBendFactorAuthoritySelection()) {
+    if (!this.effectiveTables || !this.fileName) return;
+    try {
+      const candidate = this.prepareCandidate(this.effectiveTables);
+      this.adoptCandidate(candidate);
+      this.error = '';
+      this.lastComponentBasisRefresh = Object.freeze({
+        editionProfileId: selection.editionProfileId,
+        smooth90FlexibilityCorrection: selection.smooth90FlexibilityCorrection,
+        intakeSemanticHash: this.preFlight?.intake?.semanticHash ?? null,
+        sealedAuthorityHash: this.preFlight?.preparation?.stiffnessPreflight?.bendFactorAuthority?.semanticHash ?? null,
+        preFlightSemanticHash: this.preFlight?.semanticHash ?? null,
+        status: this.preFlight?.status ?? 'UNAVAILABLE',
+      });
+      this.message = 'The current corrected ACCDB was re-prepared for the explicit component basis. '
+        + 'Review the current Error Check; previous diagnostic acceptance does not transfer.';
+    } catch (error) {
+      // Preserve the former BLOCK and surface the actual preparation failure;
+      // a visibly selected basis must not silently promote a failed seal.
+      this.error = errorMessage(error);
+      this.message = 'Component basis selected, but the current ACCDB could not be re-prepared: ' + this.error;
+      this.lastComponentBasisRefresh = Object.freeze({
+        editionProfileId: selection.editionProfileId,
+        smooth90FlexibilityCorrection: selection.smooth90FlexibilityCorrection,
+        status: 'FAILED',
+        error: this.error,
+      });
+    }
+    this.render();
+    this.notifyStateChanged();
   }
 
   /** Build every derived record from one exact table set. */
@@ -765,6 +796,9 @@ export class LfeaPipelineAccdbInputPanelController {
       availableCaseIds: this.preFlight?.sourceSummary.availableCaseIds ?? Object.freeze([]),
       preFlightError: this.preFlightError || null,
       preFlightApprover: this.preFlight?.approverIdentity ?? null,
+      // Read-only sealing trace for correction-first regression diagnostics.
+      // Selection values alone do not establish consumed native authority.
+      componentBasisRefresh: this.lastComponentBasisRefresh,
       overrideCount: this.overrideSet?.overrides.length ?? 0,
       coordinateEditCount: this.coordinateCursor,
       sourceBaseIdentity: this.sourceBaseIdentity,
@@ -777,6 +811,8 @@ export class LfeaPipelineAccdbInputPanelController {
   }
 
   destroy() {
+    this.unsubscribeComponentBasis?.();
+    this.unsubscribeComponentBasis = null;
     this.elements?.section.remove();
     this.elements = null;
     this.initialized = false;

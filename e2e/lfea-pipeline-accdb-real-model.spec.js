@@ -516,6 +516,38 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(pageErrors).toEqual([]);
   });
 
+  test('issue #49: derived analysis node announces read-only identity and exposes no source editor', async ({ page }) => {
+    test.setTimeout(180000);
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    const workspace = page.locator('[data-role="lfea-accdb-repair-workspace"]');
+    await workspace.locator('[data-action="lfea-repair-representation-ANALYSIS"]').click();
+    const svg = workspace.locator('[data-role="lfea-accdb-repair-svg-host"] svg');
+    await expect(svg).toHaveAttribute('data-representation', 'ANALYSIS');
+    const derived = svg.locator('circle[data-node-id="ACCDB.E33.A2"][role="button"]');
+    await expect(derived).toBeVisible();
+    await expect(derived).toHaveAttribute('aria-label', /Inspect derived analysis node ACCDB\\.E33\\.A2.*read-only/u);
+    await expect(derived).not.toHaveAttribute('aria-label', /Select source node/u);
+    await derived.focus();
+    await page.keyboard.press('Enter');
+    const inspector = workspace.locator('[data-role="lfea-accdb-repair-inspector"]');
+    await expect(inspector).toContainText('ACCDB.E33.A2');
+    await expect(inspector).toContainText(/read-only|analysis/u);
+    await expect(inspector.locator('[data-role="lfea-repair-coordinate-axis"]')).toHaveCount(0);
+    await expect(inspector.locator('[data-role="lfea-repair-coordinate-value"]')).toHaveCount(0);
+    await workspace.locator('[data-action="lfea-repair-representation-SOURCE"]').click();
+    const sourceSvg = workspace.locator('[data-role="lfea-accdb-repair-svg-host"] svg');
+    await expect(sourceSvg).toHaveAttribute('data-representation', 'SOURCE');
+    await expect(sourceSvg.locator('line[data-segment-id="ACCDB.E33"]')).toHaveCount(1);
+    // Retained source segment is separately addressable; derived node selection
+    // did not turn any conditioned topology into editable imported ACCDB data.
+  });
+
   test('issue #49: correction before explicit component basis rebuilds current ACCDB without acceptance', async ({ page }) => {
     test.setTimeout(180000);
     await page.goto('/', { timeout: 120000 });

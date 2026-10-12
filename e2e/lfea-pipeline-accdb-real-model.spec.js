@@ -500,6 +500,19 @@ test.describe('LFEA ACCDB real-model import', () => {
     await page.keyboard.press('Enter');
     await expect(inspector.locator('strong')).toContainText('Node 20010');
 
+    // The separate projected node 20020 used to cover 20010's mouse
+    // target on the authentic BM4_L. Click each *real* SVG hit area and
+    // observe the actual source ID; an intended locator is not proof of a
+    // dispatched target.
+    const otherNode = svg.locator('circle[data-node-id="20020"][role="button"]');
+    await expect(otherNode).toBeVisible();
+    await expect(node()).toHaveAttribute('data-hit-target-offset', 'DISPLAY_ONLY');
+    await expect(otherNode).toHaveAttribute('data-hit-target-offset', 'DISPLAY_ONLY');
+    await otherNode.click();
+    await expect(inspector.locator('strong')).toContainText('Node 20020');
+    await node().click();
+    await expect(inspector.locator('strong')).toContainText('Node 20010');
+
     // A source segment is selectable by pointer too, with provenance and
     // whitelisted properties instead of a fabricated derived-record editor.
     const line = svg.locator('line[data-segment-id][role="button"]').first();
@@ -509,6 +522,94 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(inspector.locator('strong')).toContainText(segmentId);
     await expect(inspector.locator('[data-role="lfea-repair-property-field"]')).toBeVisible();
     expect(pageErrors).toEqual([]);
+  });
+
+  test('issue #49: correction before explicit component basis rebuilds current ACCDB without acceptance', async ({ page }) => {
+    test.setTimeout(180000);
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+
+    const errorCheck = page.locator('[data-role="lfea-common-error-check-panel"]');
+    const workspace = errorCheck.locator('[data-role="lfea-accdb-repair-workspace"]');
+    const bendBlock = errorCheck.locator(
+      '[data-role="lfea-common-error-check-finding-group"]'
+        + '[data-group-code="BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED"][data-disposition="BLOCK"]',
+    );
+    await expect(bendBlock).toHaveCount(1);
+    await workspace.locator('[data-role="lfea-repair-object-search"]').fill('20010');
+    await workspace.locator('[data-action="lfea-repair-find"]').click();
+    await expect(workspace.locator('[data-role="lfea-accdb-repair-inspector"] strong'))
+      .toContainText('Node 20010');
+
+    await workspace.locator('[data-role="lfea-repair-approver"]').fill('Regression engineer');
+    await workspace.locator('[data-role="lfea-repair-reason"]')
+      .fill('Source coordinate correction with explicit review, no run acceptance');
+    const current = await workspace.locator('p').filter({ hasText: /Raw source X:/u }).first().textContent();
+    const raw = /Raw source X:\s*([-+]?\d+(?:\.\d+)?(?:e[-+]?\d+)?)/iu.exec(current);
+    expect(raw).toBeTruthy();
+    await workspace.locator('[data-role="lfea-repair-coordinate-value"]').fill(String(Number(raw[1]) + 0.5));
+    await workspace.locator('[data-action="lfea-repair-preview"]').click();
+    await workspace.locator('[data-action="lfea-repair-apply"]').click();
+    await workspace.locator('[data-action="lfea-repair-undo"]').click();
+    await workspace.locator('[data-action="lfea-repair-redo"]').click();
+    await expect(bendBlock).toHaveCount(1);
+
+    const top = page.locator(
+      '[data-role="linear-piping-consumer-root"] > [data-role="lfea-bend-factor-authority-control"]',
+    );
+    await top.locator('[data-role="lfea-bend-factor-edition"]')
+      .selectOption('B31_3_2024_B31J_2023');
+    await expect(bendBlock).toHaveCount(1); // edition alone is insufficient
+    await top.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('NO');
+    await expect(top.locator('[data-role="lfea-bend-factor-edition"]'))
+      .toHaveValue('B31_3_2024_B31J_2023');
+    await expect(top.locator('[data-role="lfea-bend-smooth90-policy"]')).toHaveValue('NO');
+    await expect(bendBlock).toHaveCount(0, { timeout: 60000 });
+    const currentPreflight = await page.evaluate(() => {
+      const p = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight;
+      return { status: p.status, authorized: p.solveAuthorized };
+    });
+    expect(currentPreflight.status).toBe('WARN');
+    expect(currentPreflight.authorized).toBe(false);
+    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'false');
+    // No acceptance or Output execution for the changed preparation.
+  });
+
+  test('issue #49: 390px navigation and authorization remain inside viewport', async ({ page }) => {
+    test.setTimeout(180000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-bend-factor-edition"]').selectOption('B31_3_2024_B31J_2023');
+    await page.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('NO');
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    const authorize = page.locator('[data-action="authorize-lfea-error-check-limitations"]');
+    await expect(authorize).toBeVisible();
+    const boxes = await page.evaluate(() => {
+      const rect = (selector) => {
+        const r = document.querySelector(selector).getBoundingClientRect();
+        return { left: r.left, right: r.right, width: r.width };
+      };
+      return {
+        header: rect('.application-navigation-shell'),
+        navigation: rect('[data-role="application-navigation"]'),
+        authorize: rect('[data-action="authorize-lfea-error-check-limitations"]'),
+      };
+    });
+    for (const [name, rect] of Object.entries(boxes)) {
+      expect(rect.left, name + ' left edge').toBeGreaterThanOrEqual(-1);
+      expect(rect.right, name + ' right edge').toBeLessThanOrEqual(391);
+      expect(rect.width, name + ' width').toBeLessThanOrEqual(391);
+    }
   });
 
   test('issue #47 real ACCDB transaction and exact-source locator regression', () => {

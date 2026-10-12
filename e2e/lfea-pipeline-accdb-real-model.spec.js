@@ -316,6 +316,97 @@ test.describe('LFEA ACCDB real-model import', () => {
     expect(pageErrors).toEqual([]);
   });
 
+  test('issue #49: exact source inspector opens current finding IDs by pointer and Enter; stale and missing identities refuse', async ({ page }) => {
+    test.setTimeout(180000);
+    await page.goto('/', { timeout: 120000 });
+    await page.getByRole('navigation', { name: 'Application views' })
+      .getByRole('button', { name: 'LFEA', exact: true }).click();
+    await page.locator('[data-role="lfea-pipeline-accdb-source-file"]').setInputFiles(fixturePath);
+    await expect(page.locator('[data-role="lfea-pipeline-accdb-status"]'))
+      .toContainText('96 element(s), 97 node(s)', { timeout: 120000 });
+    await page.locator('[data-role="lfea-pipeline-step"][data-step-id="ERROR_CHECK"]').click();
+    const errorCheck = page.locator('[data-role="lfea-common-error-check-panel"]');
+    const workspace = errorCheck.locator('[data-role="lfea-accdb-repair-workspace"]');
+    const prepHash = await page.evaluate(() =>
+      globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight.semanticHash);
+    // Start with a genuine current governed finding that resolves to a
+    // renderable source node/span; do not assume proximity implies custody.
+    const groups = errorCheck.locator('[data-role="lfea-common-error-check-finding-group"]');
+    let found = false;
+    for (let index = 0; index < Math.min(await groups.count(), 22); index += 1) {
+      const group = groups.nth(index);
+      const details = group.locator('details').first();
+      if (!(await details.count())) continue;
+      if (!(await details.evaluate((node) => node.open))) {
+        await group.locator('summary').first().click();
+      }
+      const locators = group.locator('[data-action="lfea-error-check-locate-occurrence"]');
+      if (!(await locators.count())) continue;
+      await locators.first().click();
+      const location = workspace.locator('[data-role="lfea-accdb-finding-location"]');
+      if ((await location.count()) && (await location.textContent()).includes('EXACT')
+        && await workspace.locator('[data-action="lfea-repair-open-related-finding"]').count()) {
+        found = true;
+        break;
+      }
+    }
+    expect(found, 'a true source-bound finding and selectable source object must exist').toBe(true);
+    const inspector = workspace.locator('[data-role="lfea-accdb-repair-inspector"]');
+    const selectedSourceLabel = await inspector.locator('strong').first().textContent();
+    const related = workspace.locator('[data-role="lfea-repair-related-findings"]');
+    await expect(related.locator('li[data-finding-id]')).not.toHaveCount(0);
+    const link = related.locator('[data-action="lfea-repair-open-related-finding"]').first();
+    const id = await link.getAttribute('data-finding-id');
+    expect(id).toBeTruthy();
+    await expect(link).toContainText(id);
+    const reviewCount = await errorCheck.locator('[data-role="lfea-common-error-check-reviewed"]').count();
+    await link.click();
+    const exactRow = errorCheck.locator('[data-role="lfea-error-check-occurrence"][data-finding-id="' + id + '"]');
+    await expect(exactRow).toBeVisible();
+    expect(await exactRow.evaluate((node) => node === document.activeElement)).toBe(true);
+    await expect(inspector.locator('strong').first()).toHaveText(selectedSourceLabel);
+    expect(await errorCheck.locator('[data-role="lfea-common-error-check-reviewed"]').count())
+      .toBe(reviewCount, 'navigation must not silently review a conditional limitation');
+    await link.focus();
+    await page.keyboard.press('Enter');
+    await expect(exactRow).toBeVisible();
+    expect(await exactRow.evaluate((node) => node === document.activeElement)).toBe(true);
+    expect(await page.evaluate(() =>
+      globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight.semanticHash))
+      .toBe(prepHash);
+    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'false');
+
+    // Unknown source identities must neither guess the nearest node nor
+    // silently change the inspector selection.
+    await workspace.locator('[data-role="lfea-repair-object-search"]').fill('NOT-A-SOURCE-IDENTITY');
+    await workspace.locator('[data-action="lfea-repair-find"]').click();
+    await expect(workspace.locator('[data-role="lfea-accdb-repair-status"]'))
+      .toContainText('No exact SOURCE source object found');
+    await expect(inspector.locator('strong').first()).toHaveText(selectedSourceLabel);
+
+    // Save a reference to the old genuine DOM action, then change native
+    // preparation authority. A stale detached action must refuse by hash.
+    await page.evaluate(() => {
+      globalThis.__issue49OldRelatedFinding = document.querySelector(
+        '[data-action="lfea-repair-open-related-finding"]');
+    });
+    const basis = page.locator(
+      '[data-role="linear-piping-consumer-root"] > [data-role="lfea-bend-factor-authority-control"]');
+    await basis.locator('[data-role="lfea-bend-factor-edition"]')
+      .selectOption('B31_3_2024_B31J_2023');
+    await basis.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('NO');
+    expect(await page.evaluate(() =>
+      globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight.semanticHash))
+      .not.toBe(prepHash);
+    await page.evaluate(() => {
+      globalThis.__issue49OldRelatedFinding.click();
+      delete globalThis.__issue49OldRelatedFinding;
+    });
+    await expect(workspace.locator('[data-role="lfea-accdb-repair-status"]'))
+      .toContainText('Stale related finding');
+    await expect(errorCheck).toHaveAttribute('data-solve-authorized', 'false');
+  });
+
   test('issue #47: correction history, saved draft error recovery and blocked exploratory-edit control', async ({ page }) => {
     test.setTimeout(300000);
     const pageErrors = [];

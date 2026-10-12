@@ -38,6 +38,9 @@ export class LfeaCommonErrorCheckPanelController {
     this.acknowledgedGroupIds = new Set();
     this.reviewedGroupIds = new Set();
     this.openGroupIds = new Set();
+    // Inspector-to-finding navigation is inspection, not an engineer's
+    // deliberate review act or current-preparation acceptance.
+    this.navigationOnlyGroupIds = new Set();
     this.limitationsAccepted = false;
     this.preparationIdentity = null;
     this.reviewerIdentity = '';
@@ -67,6 +70,7 @@ export class LfeaCommonErrorCheckPanelController {
       this.acknowledgedGroupIds.clear();
       this.reviewedGroupIds.clear();
       this.openGroupIds.clear();
+      this.navigationOnlyGroupIds.clear();
       this.limitationsAccepted = false;
       this.reviewerIdentity = '';
       this.reviewReason = '';
@@ -89,6 +93,49 @@ export class LfeaCommonErrorCheckPanelController {
     this.activeCategory = token;
     this.render();
     return this.getSnapshot();
+  }
+
+  /**
+   * Reveal a SOURCE-inspector related finding in the current governed
+   * occurrence list. This never relocates the inspector's source selection,
+   * fabricates a locator, or marks a CONDITIONAL finding reviewed.
+   * A stale preparation or unknown finding fails closed.
+   */
+  revealOccurrence(findingId, expectedPreparationHash) {
+    if (!expectedPreparationHash
+      || this.presentation.preparationSemanticHash !== expectedPreparationHash) {
+      throw new TypeError('Stale related finding: the preparation has changed. Inspect current Error Check findings.');
+    }
+    const id = String(findingId ?? '');
+    const matches = this.presentation.rows.filter((row) => row.findingId === id);
+    if (matches.length !== 1) {
+      throw new TypeError('Related finding ID is missing from the current governed preparation; no guessed occurrence was opened.');
+    }
+    const category = this.presentation.sections.find((section) =>
+      section.rows.some((row) => row.findingId === id));
+    const group = category?.groups.find((entry) => entry.findingIds.includes(id));
+    if (!category || !group) {
+      throw new TypeError('Related finding has no unique current Error Check group.');
+    }
+    this.activeCategory = category.categoryId;
+    this.openGroupIds.add(group.groupId);
+    this.navigationOnlyGroupIds.add(group.groupId);
+    this.render();
+    const card = [...this.elements.body.querySelectorAll('[data-role="lfea-common-error-check-finding-group"]')]
+      .find((entry) => entry.dataset.groupCode === group.code
+        && entry.dataset.disposition === group.disposition);
+    if (!card) throw new TypeError('Current related finding group could not be rendered.');
+    const search = card.querySelector('[data-role="lfea-error-check-occurrence-search"]');
+    if (!search) throw new TypeError('Current finding occurrence search is unavailable.');
+    search.value = id;
+    search.dispatchEvent(new this.documentRef.defaultView.Event('input', { bubbles: true }));
+    const target = [...card.querySelectorAll('[data-role="lfea-error-check-occurrence"]')]
+      .find((entry) => entry.dataset.findingId === id);
+    if (!target) throw new TypeError('Related finding occurrence could not be rendered for this exact ID.');
+    target.setAttribute('tabindex', '-1');
+    target.focus();
+    target.scrollIntoView?.({ block: 'nearest' });
+    return true;
   }
 
   /**
@@ -371,11 +418,13 @@ function renderGroup(controller, group) {
   details.addEventListener('toggle', () => {
     if (details.open) {
       controller.openGroupIds.add(group.groupId);
-      if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized) {
+      if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized
+        && !controller.navigationOnlyGroupIds.has(group.groupId)) {
         controller.markLimitationReviewed(group.groupId);
       }
     } else {
       controller.openGroupIds.delete(group.groupId);
+      controller.navigationOnlyGroupIds.delete(group.groupId);
     }
   });
 

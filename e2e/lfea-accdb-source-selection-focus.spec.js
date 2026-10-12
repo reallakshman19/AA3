@@ -53,11 +53,11 @@ test.describe('AA3 #51 authentic SOURCE SVG pointer and focus boundaries', () =>
     await expect(svg.locator('[data-role="lfea-geometry-review-caption"]'))
       .toHaveCSS('pointer-events', 'none');
     await node20010.click();
-    await expect(inspector.locator('strong')).toContainText('Node 20010');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20010');
     await node20020.click();
-    await expect(inspector.locator('strong')).toContainText('Node 20020');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20020');
     await node20010.click();
-    await expect(inspector.locator('strong')).toContainText('Node 20010');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20010');
     expect(errors).toEqual([]);
   });
 
@@ -86,7 +86,7 @@ test.describe('AA3 #51 authentic SOURCE SVG pointer and focus boundaries', () =>
     expect(id).toBe('ACCDB.E1');
     const oldNode = await firstSpan.elementHandle();
     await page.keyboard.press('Enter'); // No target refocus or direct handler invocation.
-    await expect(inspector.locator('strong')).toContainText(id);
+    await expect(inspector.locator(':scope > strong')).toContainText(id);
     await expect(inspector).toContainText('ACCDB ELEMENTID 1');
     await expect(inspector.locator('[data-role="lfea-repair-property-field"]')).toBeVisible();
     const newSpan = svg.locator('line[data-segment-id="ACCDB.E1"][role="button"][tabindex="0"]');

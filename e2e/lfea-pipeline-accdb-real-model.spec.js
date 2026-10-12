@@ -585,7 +585,7 @@ test.describe('LFEA ACCDB real-model import', () => {
         intakeHash: p.intake.semanticHash, preFlightHash: p.semanticHash,
         sealedBasis: basis && {
           edition: basis.editionProfileId, smooth90: basis.smooth90FlexibilityCorrection,
-          sourceRevision: basis.sourceRevision, semanticHash: basis.semanticHash,
+          sourceRevision: basis.sourceEvidence?.sourceRevision, semanticHash: basis.semanticHash,
         },
         sealedBranchEdition: branch?.editionProfileId ?? null,
         blockerCodes: (p.preparation?.findings ?? [])

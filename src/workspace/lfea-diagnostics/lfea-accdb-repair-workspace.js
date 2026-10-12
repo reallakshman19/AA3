@@ -37,6 +37,7 @@ export class LfeaAccdbRepairWorkspaceController {
     this.searchTerm = '';
     this.selection = null;
     this.focusedFinding = null;
+    this.keyboardSelectionFocus = null;
     this.sourceIdentity = null;
     this.pending = null;
     this.pendingProperty = null;
@@ -212,7 +213,25 @@ export class LfeaAccdbRepairWorkspaceController {
     this.render();
   }
 
+  /**
+   * Only an actual focused SVG Enter/Space selector may retain keyboard focus
+   * across the workspace's synchronous DOM rebuild. Pointer clicks, inspector
+   * buttons and finding navigation never acquire synthetic keyboard focus.
+   */
+  restoreSourceSelectorFocus(kind, id) {
+    const svg = this.section?.querySelector('[data-role="lfea-accdb-repair-svg-host"] svg[data-representation="SOURCE"]');
+    if (!svg) return;
+    const tag = kind === 'SEGMENT' ? 'line' : 'circle';
+    const key = kind === 'SEGMENT' ? 'segmentId' : 'nodeId';
+    const mark = [...svg.querySelectorAll(tag + '[role="button"][tabindex="0"]')]
+      .find((element) => element.dataset[key] === id);
+    mark?.focus({ preventScroll: true });
+  }
+
   selectNode(node) {
+    const restoreFocus = this.keyboardSelectionFocus?.kind === 'NODE'
+      && this.keyboardSelectionFocus.id === node.nodeId;
+    this.keyboardSelectionFocus = null;
     this.selection = { kind: 'NODE', id: node.nodeId };
     this.pending = null;
     this.pendingProperty = null;
@@ -222,14 +241,19 @@ export class LfeaAccdbRepairWorkspaceController {
       ? 'Source node ' : 'Derived analysis node ') + node.nodeId
       + (this.representation === 'SOURCE' ? ' selected.' : ' selected for inspection (read-only).');
     this.render();
+    if (restoreFocus) this.restoreSourceSelectorFocus('NODE', node.nodeId);
   }
 
   selectSegment(segment) {
+    const restoreFocus = this.keyboardSelectionFocus?.kind === 'SEGMENT'
+      && this.keyboardSelectionFocus.id === segment.segmentId;
+    this.keyboardSelectionFocus = null;
     this.selection = { kind: 'SEGMENT', id: segment.segmentId };
     this.pending = null;
     this.pendingProperty = null;
     this.message = 'Segment ' + segment.segmentId + ' selected. Choose a source endpoint to edit.';
     this.render();
+    if (restoreFocus) this.restoreSourceSelectorFocus('SEGMENT', segment.segmentId);
   }
 
   previewCoordinate() {
@@ -484,6 +508,23 @@ export class LfeaAccdbRepairWorkspaceController {
       : null;
     const selectedSegmentId = this.selection?.kind === 'SEGMENT' ? this.selection.id : null;
     const selectedNodeId = this.selection?.kind === 'NODE' ? this.selection.id : null;
+    // Capture actual keyboard activation before the renderer's keydown callback
+    // synchronously replaces the old, focused SVG element.
+    svgHost.addEventListener('keydown', (event) => {
+      const target = event.target;
+      if ((event.key !== 'Enter' && event.key !== ' ')
+          || this.representation !== 'SOURCE'
+          || target !== this.doc.activeElement
+          || target?.getAttribute?.('role') !== 'button') return;
+      const name = target.tagName?.toLowerCase();
+      const kind = name === 'line' ? 'SEGMENT' : name === 'circle' ? 'NODE' : null;
+      const id = kind === 'SEGMENT' ? target.dataset.segmentId
+        : kind === 'NODE' ? target.dataset.nodeId : null;
+      if (id) this.keyboardSelectionFocus = { kind, id };
+    }, true);
+    // If a future control consumes the key without selecting, discard its
+    // token rather than allowing a later pointer click to inherit it.
+    svgHost.addEventListener('keydown', () => { this.keyboardSelectionFocus = null; });
     renderLfeaGeometryReviewSvg(svgHost, descriptor, {
       verticalAxis: this.verticalAxis,
       highlightSegmentIds: [...(loc?.segmentIds ?? []), selectedSegmentId].filter(Boolean),

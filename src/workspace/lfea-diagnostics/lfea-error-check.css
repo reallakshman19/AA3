@@ -487,6 +487,9 @@
 .lfea-common-error-check__occurrence button:hover:not(:disabled) { border-color: var(--workspace-accent); }
 .lfea-accdb-repair-workspace__svg { min-width: 0; overflow: hidden; }
 .lfea-accdb-repair-workspace__svg svg { display: block; width: 100%; height: auto; border-radius: 6px; background: var(--workspace-panel-strong); }
+/* The SVG caption is presentational and painted after selectable source nodes.
+   It must not intercept an ordinary pointer hit on a real node/span. */
+.lfea-accdb-repair-workspace__svg [data-role="lfea-geometry-review-caption"] { pointer-events: none; }
 .lfea-accdb-repair-workspace__svg [data-selected="true"][data-segment-id] {
   stroke: #f97316;
   stroke-width: 5;

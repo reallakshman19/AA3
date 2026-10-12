@@ -628,11 +628,7 @@ export class LfeaAccdbRepairWorkspaceController {
         }));
       host.append(preview);
     }
-    const related = findingsForAccdbSelection(active.pre.preparation.findings,
-      active.source, descriptor, this.selection);
-    const note = this.doc.createElement('p');
-    note.textContent = related.length + ' exact-source linked findings for this span. Property edits re-import and re-check; mechanical approximations remain governed separately.';
-    host.append(note);
+    this.renderRelatedSourceFindings(host, active, descriptor);
   }
 
   renderNodeInspector(host, active, descriptor) {
@@ -731,11 +727,58 @@ export class LfeaAccdbRepairWorkspaceController {
       );
       host.append(preview);
     }
+    this.renderRelatedSourceFindings(host, active, descriptor);
+    const note = this.doc.createElement('p');
+    note.textContent = 'Node relocation also moves attached restraints/components; inspect the preview and engineering consequences.';
+    host.append(note);
+  }
+
+  /**
+   * Reverse traceability is derived only from the current sealed finding
+   * rows and the exact source locator. IDs are never synthesized from an
+   * approximate nearest node or an analysis-only segment.
+   */
+  renderRelatedSourceFindings(host, active, descriptor) {
     const related = findingsForAccdbSelection(active.pre.preparation.findings,
       active.source, descriptor, this.selection);
-    const note = this.doc.createElement('p');
-    note.textContent = related.length + ' exactly linked finding(s). Node relocation also moves attached restraints/components; inspect the preview and engineering consequences.';
-    host.append(note);
+    const root = this.doc.createElement('section');
+    root.dataset.role = 'lfea-repair-related-findings';
+    const title = this.doc.createElement('strong');
+    title.textContent = related.length + ' current exact-source finding(s) for this '
+      + (this.selection?.kind === 'NODE' ? 'node' : 'span');
+    root.append(title);
+    if (related.length === 0) {
+      const note = this.doc.createElement('p');
+      note.dataset.role = 'lfea-repair-related-findings-empty';
+      note.textContent = 'No current governed finding has an exact source identity for this selection. No nearby finding has been inferred.';
+      root.append(note);
+      host.append(root);
+      return;
+    }
+    const list = this.doc.createElement('ul');
+    list.setAttribute('aria-label', 'Exact governed findings for selected source object');
+    const preparationHash = active.pre.preparation.semanticHash;
+    for (const finding of related) {
+      const row = this.doc.createElement('li');
+      row.dataset.findingId = finding.findingId;
+      const button = this.button('Open finding ' + finding.findingId + ' · ' + finding.code
+        + ' · ' + finding.disposition,
+      'lfea-repair-open-related-finding', () => {
+        const current = this.active();
+        if (!current || current.pre.preparation.semanticHash !== preparationHash) {
+          throw new TypeError('Stale related finding: the preparation has changed. Inspect current Error Check findings.');
+        }
+        if (typeof this.options.onRevealFinding !== 'function'
+          || this.options.onRevealFinding(finding.findingId, preparationHash) !== true) {
+          throw new TypeError('Current Error Check occurrence is unavailable; no source identity was guessed.');
+        }
+      }, typeof this.options.onRevealFinding !== 'function');
+      button.dataset.findingId = finding.findingId;
+      row.append(button);
+      list.append(row);
+    }
+    root.append(list);
+    host.append(root);
   }
 
   getSnapshot() {

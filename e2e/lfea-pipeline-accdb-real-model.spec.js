@@ -630,11 +630,11 @@ test.describe('LFEA ACCDB real-model import', () => {
     // Playwright's real pointer click must select, not only keyboard Enter:
     // an SVG-root pointer capture used to swallow this click after pointerdown.
     await node().click();
-    await expect(inspector.locator('strong')).toContainText('Node 20010');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20010');
     await expect(inspector.locator('[data-role="lfea-repair-coordinate-axis"]')).toBeVisible();
     await node().focus();
     await page.keyboard.press('Enter');
-    await expect(inspector.locator('strong')).toContainText('Node 20010');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20010');
 
     // The separate projected node 20020 used to cover 20010's mouse
     // target on the authentic BM4_L. Click each *real* SVG hit area and
@@ -645,9 +645,9 @@ test.describe('LFEA ACCDB real-model import', () => {
     await expect(node()).toHaveAttribute('data-hit-target-offset', 'DISPLAY_ONLY');
     await expect(otherNode).toHaveAttribute('data-hit-target-offset', 'DISPLAY_ONLY');
     await otherNode.click();
-    await expect(inspector.locator('strong')).toContainText('Node 20020');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20020');
     await node().click();
-    await expect(inspector.locator('strong')).toContainText('Node 20010');
+    await expect(inspector.locator(':scope > strong')).toContainText('Node 20010');
 
     // A source segment is selectable by pointer too, with provenance and
     // whitelisted properties instead of a fabricated derived-record editor.
@@ -655,7 +655,7 @@ test.describe('LFEA ACCDB real-model import', () => {
     const segmentId = await line.getAttribute('data-segment-id');
     expect(segmentId).toBeTruthy();
     await line.click();
-    await expect(inspector.locator('strong')).toContainText(segmentId);
+    await expect(inspector.locator(':scope > strong')).toContainText(segmentId);
     await expect(inspector.locator('[data-role="lfea-repair-property-field"]')).toBeVisible();
     expect(pageErrors).toEqual([]);
   });

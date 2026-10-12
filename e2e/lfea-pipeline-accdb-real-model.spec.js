@@ -452,9 +452,57 @@ test.describe('LFEA ACCDB real-model import', () => {
       .toHaveCount(0, { timeout: 10000 });
     // Retain real source/gate evidence; do not misclassify missing authority
     // versus a physically invalid edit from the absence of a checkbox.
+    // Differential pre-flight ONLY: no Run or approval. Switch the explicit
+    // factor edition/rule on the SAME +10mm edited tables, then undo to the
+    // authentic original and redo. This separates profile-specific limits,
+    // geometry-dependent qualification and lost authority custody.
+    const topBasis = page.locator(
+      '[data-role="linear-piping-consumer-root"] > [data-role="lfea-bend-factor-authority-control"]',
+    );
+    await topBasis.locator('[data-role="lfea-bend-factor-edition"]')
+      .selectOption('B31_3_2024_B31J_2023');
+    await topBasis.locator('[data-role="lfea-bend-smooth90-policy"]').selectOption('NO');
+    const currentPreflight = () => page.evaluate(() => {
+      const p = globalThis.AnalysisWorkspace.getLfeaEngineeringSessionState().preparation.preFlight;
+      const basis = p.preparation?.stiffnessPreflight?.bendFactorAuthority ?? null;
+      return {
+        status: p.status, authorized: p.solveAuthorized,
+        intakeHash: p.intake.semanticHash, preflightHash: p.semanticHash,
+        basis: basis && {
+          edition: basis.editionProfileId, smooth90: basis.smooth90FlexibilityCorrection,
+          sourceRevision: basis.sourceEvidence?.sourceRevision,
+        },
+        blockers: (p.preparation?.findings ?? [])
+          .filter((f) => f.disposition === 'BLOCK').map((f) => f.code),
+      };
+    });
+    const edited2024 = await currentPreflight();
+    expect(edited2024.intakeHash).toBe(control.intakeHash,
+      'switching the edition must not silently reimport or discard the +10mm input');
+    expect(edited2024.authorized).toBe(false);
+    await workspace.locator('[data-action="lfea-repair-undo"]').click();
+    const original2024 = await currentPreflight();
+    expect(original2024.status).toBe('WARN',
+      'the authentic unedited source with explicit 2024/NO must regain its governed WARN');
+    expect(original2024.authorized).toBe(false);
+    expect(original2024.intakeHash).not.toBe(edited2024.intakeHash);
+    expect(original2024.basis).toMatchObject({
+      edition: 'B31_3_2024_B31J_2023', smooth90: false,
+      sourceRevision: 'INTAKE-' + original2024.intakeHash,
+    });
+    await workspace.locator('[data-action="lfea-repair-redo"]').click();
+    const reedited2024 = await currentPreflight();
+    expect(reedited2024).toEqual(edited2024,
+      'redo must recreate the same edited intake and factor-basis verdict deterministically');
+    const classification = edited2024.status === 'WARN'
+      ? '2022/YES-BLOCK-2024/NO-WARN-ON-SAME-EDIT'
+      : edited2024.status === 'BLOCK'
+        ? 'EDIT-SPECIFIC-BLOCK-WITH-ORIGINAL-WARN'
+        : 'OTHER-STATUS-REQUIRES-INVESTIGATION';
     test.info().annotations.push({
       type: 'exploratory-edit-negative-control',
-      description: JSON.stringify(control),
+      description: JSON.stringify({ original2022YesEdited: control,
+        edited2024, original2024, reedited2024, classification }),
     });
     expect(pageErrors).toEqual([]);
   });

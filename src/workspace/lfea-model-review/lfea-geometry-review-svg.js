@@ -198,7 +198,14 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
   const densityNote = density.segmentLabelsVisible
     ? ''
     : ` · inline span labels hidden above ${density.segmentLabelLimit} spans (hover for type); all spans/nodes retained`;
-  caption.textContent = `${descriptor.label} · ${descriptor.nodes.length} nodes · ${descriptor.segments.length} spans · read-only isometric display · vertical axis ${verticalAxis}${densityNote}`;
+  const interactive = typeof options.onSelectNode === 'function'
+    || typeof options.onSelectSegment === 'function';
+  const interactionScope = interactive
+    ? (descriptor.representation === 'SOURCE'
+      ? 'selectable view-only geometry; supported source fields are edited in the inspector (no drag editing)'
+      : 'selectable, read-only conditioned analysis geometry')
+    : 'read-only isometric display';
+  caption.textContent = `${descriptor.label} · ${descriptor.nodes.length} nodes · ${descriptor.segments.length} spans · ${interactionScope} · vertical axis ${verticalAxis}${densityNote}`;
   svg.append(caption);
   host.append(svg);
   attachLfeaGeometryViewportInteractions(svg, options.viewBox ?? LFEA_GEOMETRY_DEFAULT_VIEW_BOX, options.onViewBoxChange);
@@ -231,6 +238,9 @@ function attachLfeaGeometryViewportInteractions(svg, initialViewBox, onViewBoxCh
 
   svg.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
+    // A root-level pointer capture retargets the subsequent click to the SVG,
+    // swallowing selectable node/span clicks. Pan only from non-control regions.
+    if (event.target?.closest?.('[role="button"]')) return;
     drag = { startX: event.clientX, startY: event.clientY, origin: { ...viewBox } };
     svg.setPointerCapture(event.pointerId);
     svg.style.cursor = 'grabbing';

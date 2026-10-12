@@ -47,33 +47,33 @@ const SUGGESTED_ACTION = Object.freeze({
   TOPOLOGY_PROXIMITY_PAIR_DEGENERATE: 'Nothing to do unless this very short run is unintended.',
   TOPOLOGY_NODE_ID_INVALID: 'A node number could not be read. Check this node in the source model.',
 
-  // --- Simplifications: acceptable, but each one changes the answer somewhere ---
-  MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE: 'Expect movement near bends to read low and support loads to read high. Fine for a first pass or a layout check; for a final flexibility or nozzle-load check use a solver with proper bend flexibility factors.',
-  MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE: 'Accept unless the branch connection is your critical point — local tee flexibility mainly affects branch loads and stresses at the junction itself.',
-  MODEL_REDUCER_EXACT_MECHANICS_UNAVAILABLE: 'Normally safe to accept. It matters only where a reducer sits at a highly stressed or highly flexible point.',
-  MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED: 'Fine to accept when you only need a code stress check. If the line is thin-wall, high pressure, or contains expansion joints, pressure stiffening and end thrust are real effects and this run will miss them.',
-  MODEL_RESTRAINT_FRICTION_UNSUPPORTED: 'Without friction the pipe slides freely, so thermal movement reads high and support loads read low. Accept for a movement check; do not use these support loads for sizing without allowing for friction.',
-  ACCDB_RESTRAINT_FRICTION_NOT_MODELED: 'Without friction the pipe slides freely, so thermal movement reads high and support loads read low. Accept for a movement check; do not use these support loads for sizing without allowing for friction.',
-  MODEL_RESTRAINT_GAP_UNSUPPORTED: 'The support acts from the start instead of after the gap closes, so it picks up load earlier than the real one would. Matters most where the gap is large compared with the movement at that point.',
-  ACCDB_RESTRAINT_GAP_NOT_MODELED: 'The support acts from the start instead of after the gap closes, so it picks up load earlier than the real one would. Matters most where the gap is large compared with the movement at that point.',
-  MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED: 'Check the results at this support: if it comes out in tension, the real one would have lifted off and the answer there is not trustworthy. If it stays in compression, the simplification cost you nothing.',
-  MODEL_SIF_TYPE_UNSUPPORTED: 'Identify the fitting type in the source model, or leave this point out of code checking. Do not rely on a code stress result here as it stands.',
-  ACCDB_SIF_TYPE_UNCLASSIFIED: 'Nothing is blocked. If you need a code stress check at this fitting, identify its type in the source model first.',
-  MODEL_FEATURE_LIMITATION: 'Read the stated simplification and decide whether it affects the result you care about.',
+  // --- Governed limitations: no statement here qualifies an engineering use or grants acceptance ---
+  MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE: 'Exact bend mechanics are unavailable for this declared feature/profile. Review the retained source bend and the current governed capability finding; obtain a qualified bend-mechanics analysis where the requested use requires it. No direction or magnitude of error is established here.',
+  MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE: 'Exact tee/branch mechanics are unavailable in this preparation. Inspect the source junction and the current capability/profile limitation; use a separately qualified method when tee response is required. This note does not establish suitability or approve the simplification.',
+  MODEL_REDUCER_EXACT_MECHANICS_UNAVAILABLE: 'Exact tapered-reducer mechanics are not provided by the active capability profile. Identify the source reducer and review its disclosed approximation; qualified tapered stiffness, weight and pressure response are separate engineering authorities. Do not infer acceptability from this UI.',
+  MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED: 'Declared pressure inputs do not establish pressure stiffening, end thrust or Bourdon response in this solver profile. A supported PRESSURE1 raw-field correction changes input only. Review the actual case and use a qualified structural-pressure analysis if these effects are required; code-stress assessment is not performed here.',
+  MODEL_RESTRAINT_FRICTION_UNSUPPORTED: 'Nonlinear support friction is not represented by this linear preparation. Inspect the declared source support and its governed limitation; no direction or bound on movements or reactions is qualified. Source-coordinate edits do not implement friction.',
+  ACCDB_RESTRAINT_FRICTION_NOT_MODELED: 'ACCDB support friction is retained as source evidence but not compiled as exact contact/friction mechanics. Inspect the actual support and choose a qualified analysis route where this behavior matters; reviewing this note does not repair or qualify it.',
+  MODEL_RESTRAINT_GAP_UNSUPPORTED: 'Gap/contact activation is not solved by the current linear support model. Inspect the source restraint and governed approximation; do not infer the sign or size of resulting load/displacement error.',
+  ACCDB_RESTRAINT_GAP_NOT_MODELED: 'The declared ACCDB support gap is not implemented as nonlinear contact activation here. Inspect the source restraint and current capability finding; no supported in-workspace edit supplies exact gap mechanics.',
+  MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED: 'One-way support/contact conditions require the governed active-set capability. Inspect lift-off disclosures and source restraint sense; a compressive linear reaction alone does not qualify exact unilateral behavior or engineering suitability.',
+  MODEL_SIF_TYPE_UNSUPPORTED: 'The declared fitting/SIF type is not qualified for the requested code assessment. Verify the source fitting and use a separately authorized code-stress path; this linear Output does not perform code compliance.',
+  ACCDB_SIF_TYPE_UNCLASSIFIED: 'The ACCDB source fitting/SIF type remains unclassified for code assessment. Verify it using source authority; this finding alone neither establishes run readiness nor qualifies code-stress compliance.',
+  MODEL_FEATURE_LIMITATION: 'Inspect the source feature, the exact retained capability/disposition and the current requested profile. Only the existing governed approval process can record a decision; no engineering suitability is asserted by this suggestion.',
   ACCDB_RESTRAINT_NODE_UNRESOLVED: 'This support is attached to a node no pipe uses, so it holds nothing. Check the node number in the source model.',
 
   // --- Notes: nothing to do ---
   ACCDB_BEND_ARC_GEOMETRY_RESOLVED: 'Nothing to do — the bend geometry was read successfully from the file.',
   ACCDB_FIELD_OVERRIDDEN_BY_ENGINEER: 'Nothing to do — this records a value you changed by hand.',
-  ACCDB_FORCES_MOMENTS_PRESENT_NOT_COMPILED: 'If these applied forces matter for your case, add them in the Load case step. As it stands they are recorded but not applied.',
+  ACCDB_FORCES_MOMENTS_PRESENT_NOT_COMPILED: 'ACCDB force/moment records are retained but not compiled into active linear load cases through this source path. The Load case step does not automatically restore those source loads; use a separately supported governed load-authoring route or report the missing capability.',
   ALGEBRAIC_RESIDUAL_NORMALIZED: 'Nothing to do — the solve is far more precise than pipe stress work requires.',
 
   // --- Stages performed elsewhere in the workflow ---
-  CODE_STRESS_PROFILE_PREPARATION_REQUIRED: 'Nothing to do here — code stress checking is set up in a later step.',
+  CODE_STRESS_PROFILE_PREPARATION_REQUIRED: 'Code-stress evaluation is NOT_PERFORMED in this linear workflow. The input inventory is not a compliance assessment; a separately qualified code-stress process is required.',
   THERMAL_PROFILE_PREPARATION_REQUIRED: 'Nothing to do here — the thermal case is set up in the Load case step.',
   SUSTAINED_PROFILE_PREPARATION_REQUIRED: 'Nothing to do here — the sustained case is set up in the Load case step.',
   OPERATING_PROFILE_PREPARATION_REQUIRED: 'Nothing to do here — the operating case is set up in the Load case step.',
-  CAPABILITY_REQUIRES_CONDITIONAL_AUTHORIZATION: 'Accept the simplifications listed above to continue. Each one states what it changes in the result.',
+  CAPABILITY_REQUIRES_CONDITIONAL_AUTHORIZATION: 'Review every current-preparation conditional limitation and its disclosed capability effects before making an explicit engineering decision. Neither this note nor opening a finding automatically authorizes the run.',
 });
 
 /** The suggested action for a finding code, or null when none is recorded. */

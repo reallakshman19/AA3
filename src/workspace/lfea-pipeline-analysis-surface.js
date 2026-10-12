@@ -60,6 +60,8 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
     getAccdbController: options.getAccdbRepairController,
+    onRevealFinding: (findingId, preparationHash) =>
+      errorCheckPanel.revealOccurrence(findingId, preparationHash),
   });
 
   return Object.freeze({

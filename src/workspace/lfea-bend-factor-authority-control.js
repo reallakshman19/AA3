@@ -53,7 +53,17 @@ export function setLfeaBendFactorAuthoritySelection(selection, doc) {
   const docRef = doc
     ?? [...mountedControls].find((control) => control.root.isConnected)?.root?.ownerDocument
     ?? (typeof document !== 'undefined' ? document : null);
-  if (docRef) regenerateNativePreFlights(docRef);
+  if (docRef) {
+    regenerateNativePreFlights(docRef);
+    // A corrected ACCDB is a distinct detached intake. Profile-select
+    // events refresh ordinary native preparations; also notify the active
+    // source adapter to rebuild from its current corrected tables, rather
+    // than relying on an earlier import's source bundle.
+    const EventCtor = docRef.defaultView?.Event ?? globalThis.Event;
+    if (typeof docRef.dispatchEvent === 'function' && typeof EventCtor === 'function') {
+      docRef.dispatchEvent(new EventCtor('lfea-component-factor-authority-refreshed'));
+    }
+  }
   return currentSelection;
 }
 

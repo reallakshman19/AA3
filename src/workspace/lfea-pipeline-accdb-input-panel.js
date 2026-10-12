@@ -1207,7 +1207,7 @@ function renderOverrideSection(doc, root, controller) {
 
   const scope = doc.createElement('p');
   scope.dataset.role = 'accdb-override-scope-disclosure';
-  scope.textContent = 'Overrides replace the raw cell in the file\'s own declared units and re-run the whole import, so inheritance and unit conversion behave exactly as if the file carried the value. Node ids and element geometry are not overridable — geometry and topology stay owned by the file. Every applied override is listed below and carries its approver and reason.';
+  scope.textContent = 'Overrides replace the raw cell in the file\'s own declared units and re-run the whole import, so inheritance and unit conversion behave exactly as if the file carried the value. This element-field override table does not edit node IDs, geometry or topology. Imported ACCDB source-node coordinates can be corrected separately in Error Check → Piping model through previewed, source-bound workspace drafts; no ACCDB binary is rewritten. Every applied override is listed below and carries its approver and reason.';
   root.append(scope);
 
   if (controller.overrideDisclosures.length > 0) {

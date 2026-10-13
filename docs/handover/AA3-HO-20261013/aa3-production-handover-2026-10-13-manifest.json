@@ -1,0 +1,988 @@
+{
+  "format": "AA3-HANDOVER-EVIDENCE-v1",
+  "prepared_date_gst": "2026-10-13",
+  "created_at_utc": "2026-10-13T02:37:09.985480+00:00",
+  "candidate": "f26689a22598bc2c374c335a821d87d83493a02d",
+  "transfer_activated": false,
+  "scheduler": "DELETED_BY_OWNER",
+  "files": [
+    {
+      "path": "candidate/benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB",
+      "bytes": 5136384,
+      "sha256": "64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\aa3-retest-4f72\\benchmarks\\LFEA\\BM4\\BM4_L\\BM4_L.ACCDB"
+    },
+    {
+      "path": "outputs/aa3-0fd-local-pointer-test.md",
+      "bytes": 1545,
+      "sha256": "918707b5b8035ebeacba79782ee46430984200621097fafb60b91ca4a34c354b",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-0fd-local-pointer-test.md"
+    },
+    {
+      "path": "outputs/aa3-28ef9f8-retest.md",
+      "bytes": 3794,
+      "sha256": "3ee8c30319d4d9fba3b6e065ce11d159f6bd895fefffbd6c03315e4603dd5d75",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-28ef9f8-retest.md"
+    },
+    {
+      "path": "outputs/aa3-9b1429b-retest.md",
+      "bytes": 3690,
+      "sha256": "c57a1c6df590c08a99083939584d7a8c2bf57574903a6a89cee42cf5120bf180",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-9b1429b-retest.md"
+    },
+    {
+      "path": "outputs/aa3-antigravity-review.md",
+      "bytes": 3086,
+      "sha256": "ecdff9eebb8d09ba532c8bcab55fa452b43076139bd34610cc653bdf1fa70d24",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-antigravity-review.md"
+    },
+    {
+      "path": "outputs/aa3-antigravity-status/status.html",
+      "bytes": 15354,
+      "sha256": "ec6449a1db1417cf92d0551fd5910867777ede0e47a75fff65d21d41d186c1e1",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-antigravity-status\\status.html"
+    },
+    {
+      "path": "outputs/aa3-antigravity-status/status.md",
+      "bytes": 506,
+      "sha256": "7b82635c23df9f8776f6a560a5f42f815db3a11ee3cb3364702eaeda203a3afc",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-antigravity-status\\status.md"
+    },
+    {
+      "path": "outputs/aa3-custody1016-review.md",
+      "bytes": 1836,
+      "sha256": "090e1d7828d27f21361add9f1de47d1bbc1008530c0f704cfb6f1eddf48cb6a1",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-custody1016-review.md"
+    },
+    {
+      "path": "outputs/aa3-engineering-status/status.html",
+      "bytes": 30824,
+      "sha256": "8649ed7e5d52ac212d7bca78df740eeb97109c2d604af7675f29616c2ce8a648",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-engineering-status\\status.html"
+    },
+    {
+      "path": "outputs/aa3-engineering-status/status.md",
+      "bytes": 1328,
+      "sha256": "c01ebd148ddc4b122318c7a96ff6f4d301417858bc884ebbee9a3dd154fd38ac",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-engineering-status\\status.md"
+    },
+    {
+      "path": "outputs/aa3-f266-source-span-pointer-failure.png",
+      "bytes": 99740,
+      "sha256": "f8f58c7ab0b5d1763a8abda7ada6e216adea4395880f400729e835dc76c734ec",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-f266-source-span-pointer-failure.png"
+    },
+    {
+      "path": "outputs/aa3-f26689a-retest.md",
+      "bytes": 4301,
+      "sha256": "c8965b7ccc8d52e6386be5a17464cfe7d6e3dafe9d04b37d7561d6f33ab04d15",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-f26689a-retest.md"
+    },
+    {
+      "path": "outputs/aa3-implementation-status/status.html",
+      "bytes": 182663,
+      "sha256": "c62c796ee9a166c381695238a6d63d3cfdffa1e726807020b959cb89b5144c35",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-implementation-status\\status.html"
+    },
+    {
+      "path": "outputs/aa3-implementation-status/status.md",
+      "bytes": 5892,
+      "sha256": "440821d527fc883b4cf1ee5fc20dfc665c33770148c5ffa7f4d46c4519736c9e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-implementation-status\\status.md"
+    },
+    {
+      "path": "outputs/aa3-keyboard-identity-receipt.md",
+      "bytes": 1895,
+      "sha256": "b4ad04eef32a9e8768ffbfe1cbbe412b8af363a9f61dd1c6819f20aad3a16fc6",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-keyboard-identity-receipt.md"
+    },
+    {
+      "path": "outputs/aa3-original-identity-selector-proposal.patch",
+      "bytes": 2148,
+      "sha256": "009b9dd44706acbad8cfe29547899cbfe2b3bb81dc24f9a068eba3a8f1c3b00f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-original-identity-selector-proposal.patch"
+    },
+    {
+      "path": "outputs/aa3-production-handover-2026-10-13.html",
+      "bytes": 103544,
+      "sha256": "7767e778521e334094b67ebb99079a4b430efe87f047f634eee65b60d36da301",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-production-handover-2026-10-13.html"
+    },
+    {
+      "path": "outputs/aa3-production-handover-2026-10-13.md",
+      "bytes": 87954,
+      "sha256": "880f9a953cc059723f182c1ca101cdd2216cc3ff19139454f5919576add88cf1",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-production-handover-2026-10-13.md"
+    },
+    {
+      "path": "outputs/aa3-production-status/index.html",
+      "bytes": 8429,
+      "sha256": "1344f53c74fafec7cabbff30263087fbd52d10292cb648be2451efa8482a73e0",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-production-status\\index.html"
+    },
+    {
+      "path": "outputs/aa3-production-status/status.md",
+      "bytes": 682,
+      "sha256": "33e41d89ad2ac1f92023e7af4834f824e8380022ccb91322b85ece1f7cea5201",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-production-status\\status.md"
+    },
+    {
+      "path": "outputs/aa3-q4-qualification-pass.md",
+      "bytes": 3755,
+      "sha256": "bb2c4bb505ad4db637755ef95b965b4966c1301715112a0679ec0d05dc0e19ff",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-q4-qualification-pass.md"
+    },
+    {
+      "path": "outputs/aa3-tab-enter0923-receipt.md",
+      "bytes": 2437,
+      "sha256": "80f8a8b95571a0587e5d9f1c6f38605745538a91402aab7cd8292a928282b8aa",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-tab-enter0923-receipt.md"
+    },
+    {
+      "path": "outputs/aa3-testing-status/status.html",
+      "bytes": 50701,
+      "sha256": "03b6e0d8dc6d371650219e83ff82e49ceeaa07476191d0efee5e5896159f2248",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-testing-status\\status.html"
+    },
+    {
+      "path": "outputs/aa3-testing-status/status.md",
+      "bytes": 1294,
+      "sha256": "02a84c7675c60f40f9b5356122a526718e14a5e109cd3c195c8e506db7cf325b",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\outputs\\aa3-testing-status\\status.md"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1434-local-result.json",
+      "bytes": 1342,
+      "sha256": "bd10b847f6ff2eedefcf59f0f75aef3bcaf876cd73fb264fcc2b959962825d5c",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1434-local-result.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1519-local-result.json",
+      "bytes": 751,
+      "sha256": "0789006a48a239c784a36a49a743f8ccff062d81dd0dc46df1f1eba0b7e76eca",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1519-local-result.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1519-reconciliation.json",
+      "bytes": 1453,
+      "sha256": "bf2b2c74f16aee6083b71d7edcf65bd14157de55f559a1a9d857a3b728b14b88",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1519-reconciliation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-ci.json",
+      "bytes": 1901,
+      "sha256": "9ca38cf3495826ddad1efc1012408b86a6f3278e76ac8366788c05f13c952184",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-ci.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-focused.log",
+      "bytes": 12669,
+      "sha256": "7fa2e759dabf16464ae83290317ac129b43d24c912b75a66d61ec6355c5b3b95",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-focused.log"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-issue-receipt.md",
+      "bytes": 4301,
+      "sha256": "c8965b7ccc8d52e6386be5a17464cfe7d6e3dafe9d04b37d7561d6f33ab04d15",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-issue-receipt.md"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-local-result.json",
+      "bytes": 741,
+      "sha256": "53fd44c7a0eb4a1b499a2a62d3b7d1db9a6facc3e056f0f65f8dbadb1981180a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-local-result.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-outcomes.json",
+      "bytes": 3005,
+      "sha256": "13a25f3b9949863d133352279f99a336306f7bc96727154fb158bae6a6bcae01",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-outcomes.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-published-readback.json",
+      "bytes": 4473,
+      "sha256": "b965582aa86a7391c7912ffb27cd474b7cf398114a604ad2b37853db8103f359",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-published-readback.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-reconciliation.json",
+      "bytes": 1504,
+      "sha256": "a3dbe4a8a98fbbfe2daef92bdb67fddeee689ad52aa96ee1a0ab9888eab15cef",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-reconciliation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-shortcut-current.json",
+      "bytes": 191,
+      "sha256": "73c31866d7978363225c608d4ddc16c184813d74f3da059150038902ba44fa30",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-shortcut-current.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-test-results/.last-run.json",
+      "bytes": 96,
+      "sha256": "a62d393a35591cfb6f817c43e17a17e8f7df346900fb509d9d97ba9e31aaddbe",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-test-results\\.last-run.json"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-test-results/lfea-accdb-source-selectio-1f349-ct-SOURCE-span-and-next-Tab-chromium/trace.zip",
+      "bytes": 1620385,
+      "sha256": "e59458348e557d71f0dd0c67bc1c37e4c2389153fdfe1ccc3441306a4d3cb38d",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-test-results\\lfea-accdb-source-selectio-1f349-ct-SOURCE-span-and-next-Tab-chromium\\trace.zip"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-test-results/lfea-accdb-source-selectio-d58cb-ccept-ordinary-pointer-hits-chromium/trace.zip",
+      "bytes": 1057404,
+      "sha256": "18627d4eda937b3a52f3ac89417a0cdca8b86f06841a16dd191d925e615b3cdb",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-test-results\\lfea-accdb-source-selectio-d58cb-ccept-ordinary-pointer-hits-chromium\\trace.zip"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-test-results/lfea-pipeline-accdb-real-m-92e57--reach-the-source-inspector-chromium/error-context.md",
+      "bytes": 71128,
+      "sha256": "007bc2c29fe68b8964c4ed60ad997a3bc3fbdb4062d4eff901d03f7112fe3548",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-test-results\\lfea-pipeline-accdb-real-m-92e57--reach-the-source-inspector-chromium\\error-context.md"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-test-results/lfea-pipeline-accdb-real-m-92e57--reach-the-source-inspector-chromium/test-failed-1.png",
+      "bytes": 99740,
+      "sha256": "f8f58c7ab0b5d1763a8abda7ada6e216adea4395880f400729e835dc76c734ec",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-test-results\\lfea-pipeline-accdb-real-m-92e57--reach-the-source-inspector-chromium\\test-failed-1.png"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-test-results/lfea-pipeline-accdb-real-m-92e57--reach-the-source-inspector-chromium/trace.zip",
+      "bytes": 135689866,
+      "sha256": "76b548961eb8ebcf64facead49e7b083f62c23943ce0eb3ccc5796e5f7f9976f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-test-results\\lfea-pipeline-accdb-real-m-92e57--reach-the-source-inspector-chromium\\trace.zip"
+    },
+    {
+      "path": "work/coordinator-aa3/candidate1537-trace-tail.json",
+      "bytes": 4621,
+      "sha256": "ac9f9bb8decedc50bb58af4a3d80e70cd06486f12ec827d45433056c40b4b4fa",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\candidate1537-trace-tail.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-engineering.json",
+      "bytes": 6427,
+      "sha256": "d554c706062b802cb09bac031d72cb51c4b1f284fc6e9b5970b7ae8a2a2bda45",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-engineering.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-forcmnt-boundary.json",
+      "bytes": 1280,
+      "sha256": "925aca7679249d0bbfc51cc6733ee7f9b92006ab467459dc622378e1df749015",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-forcmnt-boundary.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-implementation.json",
+      "bytes": 8730,
+      "sha256": "2e24cbcbaeac700040396803133581f5f1d26211f56231358ec7a2fb29f43d42",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-implementation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-ack-MA-AA3-1.json",
+      "bytes": 519,
+      "sha256": "a66e9d8b3fca99922d66428031933429387d932fca99149e9256367988cd9324",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-ack-MA-AA3-1.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-ack-TA-AA3-E2E-1.json",
+      "bytes": 531,
+      "sha256": "c20acb77f71882e223256d8944ab3f14291fac7045062957edad9be3930ecda2",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-ack-TA-AA3-E2E-1.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-adoption-MA-AA3-1.json",
+      "bytes": 827,
+      "sha256": "b7756ea7d8b8a3af40a6864f6502eaf8abe1a038013b3bfc06d2a6d239f198c1",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-adoption-MA-AA3-1.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-adoption-TA-AA3-E2E-1.json",
+      "bytes": 867,
+      "sha256": "c30145dce0b098572725c20e1be056ee065560605dd80ec016a614fafbc6e690",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-adoption-TA-AA3-E2E-1.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-MA-AA3-1-AA3-49-T01.json",
+      "bytes": 1197,
+      "sha256": "3dc563d1d670bd1baca73873bf660a17912f6f7431010176a1b566a3c18c3d47",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-MA-AA3-1-AA3-49-T01.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-MA-AA3-1-AA3-49-T02.json",
+      "bytes": 1217,
+      "sha256": "da548360a81a07949549fe65d1974af5774854cc928621f20a5de9707670cec8",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-MA-AA3-1-AA3-49-T02.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-MA-AA3-1-AA3-49-T04.json",
+      "bytes": 1147,
+      "sha256": "a20eb432afde72a8bcf3f609a012e48e2619f7d91b285218b63f3dd43cc74bfb",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-MA-AA3-1-AA3-49-T04.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-MA-AA3-1-AA3-49-T05.json",
+      "bytes": 1320,
+      "sha256": "e309a1677eea687834680f891cd0492b51755e29641db21c091b04b822b49d18",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-MA-AA3-1-AA3-49-T05.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-MA-AA3-1-AA3-49-T06.json",
+      "bytes": 1104,
+      "sha256": "eb3fe4a26643e116601f9185e60adf01d48d65154ff1384db4e0b142f249c557",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-MA-AA3-1-AA3-49-T06.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-MA-AA3-1-AA3-49-T07.json",
+      "bytes": 1240,
+      "sha256": "414cc944f53ac39fdc82c3185e014f32bc30b08b42c8c5e14117abee1d39d7c4",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-MA-AA3-1-AA3-49-T07.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T01.json",
+      "bytes": 1205,
+      "sha256": "664808eacb4aa33210ef4ef816cb90331b389b77efea77e2dc82165755e73d22",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T01.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T02.json",
+      "bytes": 1225,
+      "sha256": "94fab494e0975535742ac83c0cfc59ca5f654162b7b1e8fbbef53d9c56550530",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T02.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T04.json",
+      "bytes": 1155,
+      "sha256": "31303e7398d2582dd12ac04d9ae0bebc40bffa062697648f3a66fa24684f6221",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T04.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T05.json",
+      "bytes": 1328,
+      "sha256": "0eb87d6794f436fa2bee1b40f8e2819345eb5908aa81cd5295b679e3626216dd",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T05.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T06.json",
+      "bytes": 1112,
+      "sha256": "bb661c754d7f56cbd1971a5fd8414cbc7fac754995cf9be88c4a3ef5548041d7",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T06.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T07.json",
+      "bytes": 1248,
+      "sha256": "32334a742be5098daeea52ffcc8c21de4ffae1e1b2c4ee1eb42ac6c2ff96f8db",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-plan-TA-AA3-E2E-1-AA3-49-T07.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-incoming-roi.json",
+      "bytes": 1074,
+      "sha256": "5712fc356abddb9169561123f53b3b6c8df81782b380d2a5a0d997bd768e04d2",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-incoming-roi.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-local-pointer-assess-implementation.json",
+      "bytes": 398,
+      "sha256": "129f9da139886a65e20e342906870c3a8fbc42bb328ce563c095db7077ae5ea1",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-local-pointer-assess-implementation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-local-pointer-assess-testing.json",
+      "bytes": 378,
+      "sha256": "282d2305ea7fd19893ba4efd1112625c1e10aab5f70a03be6eee57b320b7754d",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-local-pointer-assess-testing.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-local-pointer-implementation.json",
+      "bytes": 2091,
+      "sha256": "39138698657b94b8b2c6625ca5e5f92c9160ced7af14a1c6d29b1b8781c1adfa",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-local-pointer-implementation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-local-pointer-testing.json",
+      "bytes": 2081,
+      "sha256": "f610ea3288dd0202f9033ad832a738fdda8925157e64a0fef2186b2db3029f61",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-local-pointer-testing.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-old-latest.json",
+      "bytes": 23533,
+      "sha256": "d6cff4c5e8778572b7f481d2d3fd2d375506cebeca473a7a1c091b4083fc60dd",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-old-latest.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-old.json",
+      "bytes": 26438,
+      "sha256": "0753604ba17594ce02bd9921a0d8ef2dc0f157f9503fb0b116531ba476399954",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-old.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-outgoing-drift.json",
+      "bytes": 1093,
+      "sha256": "93c91d23ee4b154cefb5582fcfcd545cb9a6b062f1710c5524fc59be25abb6e3",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-outgoing-drift.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-probes.json",
+      "bytes": 2444,
+      "sha256": "3bb49fe2c9b947fee73e1f250ea8d87542003b029e2cdfb39d846a859211b26e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-probes.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-response2-input.json",
+      "bytes": 446,
+      "sha256": "7f7b5a5d35fd79b0a5aa1271d51c92f59d51ad59eb4a3683dc771ecf4cd2070a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-response2-input.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-response2-reconcile.json",
+      "bytes": 482,
+      "sha256": "4b7fa69e080742315f8a1fb191bcb92684bbe8309c5b1a5e421230c3b9546605",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-response2-reconcile.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-review-1b.json",
+      "bytes": 1065,
+      "sha256": "210f13c083892496d487eab47c9797931957966cb6891f238c1f5f9bc741194a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-review-1b.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-review-engineering-pack2.json",
+      "bytes": 1689,
+      "sha256": "2240c86043979518105c2759946e0400603cfbc2199af63330736e47ae0f25a5",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-review-engineering-pack2.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-review-final-implementation.json",
+      "bytes": 1507,
+      "sha256": "adbc6f28fc2b3b8c4668bf0185ea5b8a20f123dd96ab2b9a2ef4273e70c71a82",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-review-final-implementation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-review-final-testing.json",
+      "bytes": 1502,
+      "sha256": "b89461d2f1d80389b291d85de51788f5907cd373c622ba0f86129b92b8e48b50",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-review-final-testing.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-review-response2.json",
+      "bytes": 1085,
+      "sha256": "fccc8d155f8a4e054e5b39b9521162b144cad2e8f0843a98a5c6c33844c62856",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-review-response2.json"
+    },
+    {
+      "path": "work/coordinator-aa3/cycle0501-testing.json",
+      "bytes": 5968,
+      "sha256": "929e5f49538d15047bd24c8556d44f251bdc5756a1d818112d5a948682aeda41",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\cycle0501-testing.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/aim-register-export.json",
+      "bytes": 286951,
+      "sha256": "eed4c5b0d207a9f1eb3335e3e4c3d9d71aed37136691b1a3fda119275398f92c",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\aim-register-export.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/AGENTS.md",
+      "bytes": 5693,
+      "sha256": "e2004decea807e21e0aef34d8225d34126d7035f124300232cb2cd7d9532c6c6",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\AGENTS.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/ACTIVE.md",
+      "bytes": 3854,
+      "sha256": "349313fd111ba753f6d4bf150429b5a71b4de92f4b012009f668f2dca68bb6de",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\ACTIVE.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/endpoints/EP-0001.md",
+      "bytes": 2535,
+      "sha256": "46f41979fea2cb159a48f2f05d2bcc251b3aa011ae7fc04bb816cc8d7604ecc5",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\endpoints\\EP-0001.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/endpoints/EP-0002.md",
+      "bytes": 3624,
+      "sha256": "91bfb0a82c49b8721357e59861c34fa94e02362fa803d5c0ca5cfc98805d3830",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\endpoints\\EP-0002.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/issue-basis/IB-0001.md",
+      "bytes": 52311,
+      "sha256": "f4ede77a98be5fef45c61bec36141cb3920ccb4c2c5516da98e5976fff81795a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\issue-basis\\IB-0001.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/issue-basis/IB-0002.md",
+      "bytes": 53087,
+      "sha256": "58c99d35f49fbaa51302042fae86eb0467b0434c6e9063891971787c22e3ecc4",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\issue-basis\\IB-0002.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/issue-state/CURRENT.md",
+      "bytes": 10289,
+      "sha256": "dc6549e598de29d4a138419fc07800f8b7c0d881fe6391a16e9beb52016a27c5",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\issue-state\\CURRENT.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-50-PRODUCTION-PROGRAMME/receipts/EP-0002-issue-sync.md",
+      "bytes": 1420,
+      "sha256": "6d8b50c4b5ff6dc7d1ce03c76bba4f531cbc30dd173e6cc3160b640c792adc54",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-50-PRODUCTION-PROGRAMME\\receipts\\EP-0002-issue-sync.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/ACTIVE.md",
+      "bytes": 4728,
+      "sha256": "fb46ade4374e94592925ac6d681add39f0f382f7087ba4e17fd64d4297121e9c",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\ACTIVE.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/endpoints/EP-0001.md",
+      "bytes": 3521,
+      "sha256": "a4317c1845774ed21f1d0a4266e8007b247674391a8d87af00ccff6a8821fef5",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\endpoints\\EP-0001.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/endpoints/EP-0002.md",
+      "bytes": 4055,
+      "sha256": "efdca20a7d062c3dd0102f88a06f42c296640e94b207f947dcb2a462ef770f7b",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\endpoints\\EP-0002.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/issue-basis/IB-0001.md",
+      "bytes": 21825,
+      "sha256": "9fd62525062ff3acff09c6cf4cad8781fa9093f756f668bef490e1e79f12b31a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\issue-basis\\IB-0001.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/issue-basis/IB-0002.md",
+      "bytes": 22616,
+      "sha256": "165c754ce80c0c09925be7ee628e36a37f86aee60eaca2183cb93801f75eee0e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\issue-basis\\IB-0002.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/issue-state/CURRENT.md",
+      "bytes": 12195,
+      "sha256": "5b1883adfb40bc8528f79567d3515b1200d462422315dfac89b45cc165b19e31",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\issue-state\\CURRENT.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/agents/chains/AA3-51-LFEA-ACCDB-UI-PR48/receipts/EP-0002-issue-sync.md",
+      "bytes": 1436,
+      "sha256": "654011f7b548d7d22d6e2d26fa16d7cafd40c4ca43cd4ec49f74e89905162d65",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\agents\\chains\\AA3-51-LFEA-ACCDB-UI-PR48\\receipts\\EP-0002-issue-sync.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/docs/OWNER_ROADMAP.md",
+      "bytes": 125993,
+      "sha256": "170d88a8d46cf0afbec1c60f077bdb74c6b0273c75897b6eaaef990e16743e07",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\docs\\OWNER_ROADMAP.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/e2e/lfea-accdb-source-selection-focus.spec.js",
+      "bytes": 6898,
+      "sha256": "383e02201b5ea375ff139caaf1869c297583bb03f0c4c5af97f017b89508a2bc",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\e2e\\lfea-accdb-source-selection-focus.spec.js"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/e2e/lfea-pipeline-accdb-real-model.spec.js",
+      "bytes": 53055,
+      "sha256": "a127ca70ce886b71fdb4437ac7f487e1a8bcd7c3cad5b6c54a5140a92d404452",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\e2e\\lfea-pipeline-accdb-real-model.spec.js"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/package-lock.json",
+      "bytes": 125276,
+      "sha256": "f87b4d6f7134babc4b4710eae400d11c9bbe0f0acbfdc2ad8e56c971354ab02b",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\package-lock.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/package.json",
+      "bytes": 24854,
+      "sha256": "8d1e3f076eb9e2793e7edf5ac0d9b840e55d4df87416212a1fb2a558c8b02470",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\package.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/src/workspace/lfea-diagnostics/lfea-accdb-repair-workspace.js",
+      "bytes": 39743,
+      "sha256": "3436c89e50592f08c4135779ca986f6aa2705d83c0a0902a5d4734e25d7afad4",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\src\\workspace\\lfea-diagnostics\\lfea-accdb-repair-workspace.js"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/src/workspace/lfea-diagnostics/lfea-error-check.css",
+      "bytes": 19596,
+      "sha256": "1d1a07c39bc96025298261c67b03c649a56a9a1ca6f5eb399b61ad47cf397563",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\src\\workspace\\lfea-diagnostics\\lfea-error-check.css"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/src/workspace/lfea-model-review/lfea-geometry-review-svg.js",
+      "bytes": 28277,
+      "sha256": "fc983417a886e978bf8177faeaf377a4becca1eecae1901bea0d2384c672dd15",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\src\\workspace\\lfea-model-review\\lfea-geometry-review-svg.js"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/candidate-source-context/src/workspace/lfea-model-review/lfea-model-review.css",
+      "bytes": 4411,
+      "sha256": "9df10831a17313a8de9902a1132579a1750f5edb44964606adfc3eec9823ff8f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\candidate-source-context\\src\\workspace\\lfea-model-review\\lfea-model-review.css"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/comments-50.json",
+      "bytes": 34149,
+      "sha256": "a62f5b46fb515459544de755bfa76e8286cd845ddd550a05d31193735e955af6",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\comments-50.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/comments-51.json",
+      "bytes": 338193,
+      "sha256": "8618ce568a84fd6fb449802cb0d711c4c37a739a4e9670b13a179397c99f6dff",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\comments-51.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/comments-52.json",
+      "bytes": 99988,
+      "sha256": "26cfd993d131bcd727eb77f72543e035beadde2c4c62a5b8da7808a25924b3a7",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\comments-52.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/comments-53.json",
+      "bytes": 151831,
+      "sha256": "35b0e8e8a1adf2402f6c1b658c9589d074a69d88e160452498719a9a1ac88f30",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\comments-53.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/aims.sqlite",
+      "bytes": 335872,
+      "sha256": "1c1e89b8c363f428b1128964ee3f40c3565a4b84d504996196d5b760f5259107",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\aims.sqlite"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/antigravity-testing.json",
+      "bytes": 2710,
+      "sha256": "dba6af45afc8a6b58a7f42d9c408ec9ed1e24ce3459fbc81244a103c0492a372",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\antigravity-testing.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/custody1016-independent-review.json",
+      "bytes": 1452,
+      "sha256": "24a105421765fdf8cc53fc2f82c0c82671a024d8f2a07b84bbdad9ba420c6125",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\custody1016-independent-review.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/cycle-brief.py",
+      "bytes": 3811,
+      "sha256": "e7ca5646655105ba83df509028c1c70c7c5fa3b0a3235c8970e6d545db42af9a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\cycle-brief.py"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/engineering-actual-plan.md",
+      "bytes": 22790,
+      "sha256": "85ece9af4be7b0f2fe7021bfbab06cc0ba3cfbd18c99e8d8e4310ba148944244",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\engineering-actual-plan.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/heartbeat-before-token-optimization.txt",
+      "bytes": 8553,
+      "sha256": "b195a6a0bf56dc1a5621a80a8cd95d464e3ba7dc34ceb0b978c6eaeefd22d237",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\heartbeat-before-token-optimization.txt"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/issue49-agent-plan.md",
+      "bytes": 6658,
+      "sha256": "0e65d1135abe8d233df44252d4bea17bbe14fd32767d41afd5bfa4779a2da057",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\issue49-agent-plan.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/issue49-checkpoint.json",
+      "bytes": 8542,
+      "sha256": "a350f9ff2c4dd94d5ff8bce3398b8614656fe2e7f3e1ab70fe0990748edb2192",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\issue49-checkpoint.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/programme50-checkpoint.json",
+      "bytes": 58425,
+      "sha256": "eb216a1b303535121dd492ce08bdcb06714a55126606fcd912719448a9b7b020",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\programme50-checkpoint.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/scope-decisions.jsonl",
+      "bytes": 1443,
+      "sha256": "6680062ac92c953a13799509d6e77117c0c5aaad87a76c620f04fed169046352",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\scope-decisions.jsonl"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/state.json",
+      "bytes": 26445,
+      "sha256": "51e480c8abfc0645cc2e12a12cdcea62a65ada175cdc868cf2e3c0233d380a13",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\state.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/sync1016-receipts.json",
+      "bytes": 1577,
+      "sha256": "503632ac97bbed46755251724489b4157a01309d46759a8592d274243fe74588",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\sync1016-receipts.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/testing-actual-plan.md",
+      "bytes": 18647,
+      "sha256": "d950ef3f683a72748c0bfa232053779257ec04820fb280c735caff8dee36cf3c",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\testing-actual-plan.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/three-dispatch-receipts.json",
+      "bytes": 2360,
+      "sha256": "94e8a86ced927279925c8dc74319e66456a8f51b33fc59f163dad7d3267f3bb5",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\three-dispatch-receipts.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/coordinator-snapshot/three-lanes.json",
+      "bytes": 14400,
+      "sha256": "55f0bcb36798ae7e168f5cb2d25e7a669ad016a872de385f3001fe82a4b29ca3",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\coordinator-snapshot\\three-lanes.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/handover20261013-review-proposal-result.json",
+      "bytes": 8396,
+      "sha256": "c1758bb621d206bc52145d32449d23d045b71fb343b00a64eda2e0d634aa5c1f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\handover20261013-review-proposal-result.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/handover20261013-review-qa-result.json",
+      "bytes": 3290,
+      "sha256": "981c353eaf926cf6fe1bcae04f7a2246d771c72675db9b6889791d8333b73941",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\handover20261013-review-qa-result.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/implementation-proposal-6127880371.md",
+      "bytes": 23359,
+      "sha256": "a668d7af27e3b46c7cbdf42e8dd3beefd7807de1dcf39ae80e589bdcf811af9e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\implementation-proposal-6127880371.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/implementation-proposal.md",
+      "bytes": 23359,
+      "sha256": "a668d7af27e3b46c7cbdf42e8dd3beefd7807de1dcf39ae80e589bdcf811af9e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\implementation-proposal.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-43.json",
+      "bytes": 7109,
+      "sha256": "59a5eb7718c6bd2eb4dc35a2e93532e2a4db2d5682f15e6f79e812ca14fd2cc7",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-43.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-46.json",
+      "bytes": 8897,
+      "sha256": "dde4c27fbf53597c8a9523f3712e20e11158f5ad73579a786bb52ceb7147f4a5",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-46.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-47.json",
+      "bytes": 15035,
+      "sha256": "7ed694289c1abcb151a52bee5af23fa5f3b447f58b22fe409be7ec4c7e5317e2",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-47.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-49.json",
+      "bytes": 11651,
+      "sha256": "5d7130074996f0e3665af141670e91eb78c373bed301bd390f41b4c5c731fc16",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-49.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-50-original-spec.md",
+      "bytes": 61834,
+      "sha256": "f3e02af8ce02a4a239a996b8682a227d571d550fedd510701f8a25b8219bd1b6",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-50-original-spec.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-50.json",
+      "bytes": 64267,
+      "sha256": "251d4337a0d73d8e86ac5a8402db09b9407749c83a0ce6901ca7b5161e937045",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-50.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-51.json",
+      "bytes": 5780,
+      "sha256": "1a22af75eec3bdc9ae3b635a7e31b5ba014132c671d5f652ef5d6b350c4e3a51",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-51.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-52.json",
+      "bytes": 6492,
+      "sha256": "9729e0f3b2793a5649c6867bad83e70c957f270e51dd63d8ff533aca0a725766",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-52.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-53.json",
+      "bytes": 6660,
+      "sha256": "3d21ab3d9a6c8d95e0bb32c31a9eb872a73ac63d06dd383e52267936f0b16c8f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-53.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/issue-7.json",
+      "bytes": 6623,
+      "sha256": "1175e8d685dffcafdeaed5c2f61bcc7b17e2956a5240023dc1452addc7ea6860",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\issue-7.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/main-ref.json",
+      "bytes": 334,
+      "sha256": "5c547294aca9712e7fba82d0cb7382d0f26844f424dd4ddd0983dcff40fc421a",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\main-ref.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/manifest.json",
+      "bytes": 17085,
+      "sha256": "886fb65df378b01a208e65afa7d564cc087a7ab35d8accb13dacc70cef6ee74f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\manifest.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/open-prs.json",
+      "bytes": 33558,
+      "sha256": "c12ff221d317d5be13b6986b74a87d0ad4dc61ca40005b7c1132b96622e3ed6c",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\open-prs.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/pr-48.json",
+      "bytes": 18022,
+      "sha256": "b2f824fbe86bc8b09e470521704da2bbc36eb99dc24b3b2bec146a9144267fe8",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\pr-48.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/published-receipt-verification.json",
+      "bytes": 214,
+      "sha256": "5ae32b30d5ee5c129b400a7def6e07979ead446afe9cb574a4ed02bfef01b7c9",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\published-receipt-verification.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/qa-classification.md",
+      "bytes": 8895,
+      "sha256": "216b16816b94a77b66edd01ff96e3edc61239be9031c2c2f0e9b495d814358dd",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\qa-classification.md"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/shortcut-38271936864.json",
+      "bytes": 13220,
+      "sha256": "53559436d44d44fee65a0a54a1f4f6b20f64b32cc11f35239f01128f7878f83b",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\shortcut-38271936864.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover-20261013-sources/shortcut-failure.log",
+      "bytes": 423470,
+      "sha256": "272f8b0fff118971270cd5d06314209137ea3fa3b99c6e41b0bbf5acc25a0384",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover-20261013-sources\\shortcut-failure.log"
+    },
+    {
+      "path": "work/coordinator-aa3/handover20261013-outgoing-drift.json",
+      "bytes": 1420,
+      "sha256": "baaad1227d07ca461610c4d56da05c98327ad653b43c48fff5e8283440cff31f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover20261013-outgoing-drift.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover20261013-proposal-roi.json",
+      "bytes": 1170,
+      "sha256": "76e5d5cb617dad6f9f9e12ab903df8ad21ae703126d577765f7f30ad3b5215c2",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover20261013-proposal-roi.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover20261013-reconciliation.json",
+      "bytes": 750,
+      "sha256": "c28713612260b6e9b52c0973e35b2404b505a4b9ac7f5cffc07dabcebb1ad34f",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover20261013-reconciliation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover20261013-review-proposal.json",
+      "bytes": 2211,
+      "sha256": "9f9fb83d57c8d4bf66e507056d7096dbde55a9100be3e7658d0c43326e456a9e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover20261013-review-proposal.json"
+    },
+    {
+      "path": "work/coordinator-aa3/handover20261013-review-qa.json",
+      "bytes": 1677,
+      "sha256": "471fc3a45e747a758577efcdfd16241d38131d07e393dc4e62866ade45981bee",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\handover20261013-review-qa.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1537-disposition.json",
+      "bytes": 1686,
+      "sha256": "acf833bcc79b40c9b251a514751188d7fc74d0b0b6b902e13e029a9080e07d30",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1537-disposition.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1537-live-user.json",
+      "bytes": 2075,
+      "sha256": "22cfb675b3bbdb6f683621c90f8ffb885f74e1f185d644ce3c490865c147e833",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1537-live-user.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1537-resolution.json",
+      "bytes": 48,
+      "sha256": "626d029e5c40e9bf1abab630cb5a804f3c4dba138602281c09d001a7ba3cb4f4",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1537-resolution.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1537-text-variance.json",
+      "bytes": 451,
+      "sha256": "2bbe26b41ef6f1b63846b6d785e9440daf46faf71b9acf30af453b335ca2cd55",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1537-text-variance.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1549-after.json",
+      "bytes": 690,
+      "sha256": "ce32a90d4e951463c4b8cedf5fa4edf6ba27b5371c6fdc00b7faf11dbaad035b",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1549-after.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1549-probe.json",
+      "bytes": 2317,
+      "sha256": "efb1adac5da264d5e13f626269bca4ceb61285545d3e77a911f24543c4bc6633",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1549-probe.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1549-reservation.json",
+      "bytes": 68,
+      "sha256": "ccf3524814c831d39ae910842424c77d7a0df47305dc6e921c121faa063c36f2",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1549-reservation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/incoming1549-verify.json",
+      "bytes": 118,
+      "sha256": "66324775ff8df4a885541a33d78505dc92f094e6970205a05273d20ecb5d8eca",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\incoming1549-verify.json"
+    },
+    {
+      "path": "work/coordinator-aa3/original-selector-exception-proposal.json",
+      "bytes": 1511,
+      "sha256": "ff83a750f6f0d81db45d4959aa6adcc481b67911a5e48021f655f4a80d9724bf",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\original-selector-exception-proposal.json"
+    },
+    {
+      "path": "work/coordinator-aa3/qa1549-after.json",
+      "bytes": 861,
+      "sha256": "d3de651241bfbd5232d458899ca6baba325c2006f21683bd845a863c48e5a204",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\qa1549-after.json"
+    },
+    {
+      "path": "work/coordinator-aa3/qa1549-probe.json",
+      "bytes": 2131,
+      "sha256": "9d87cb1d6116bd1b3cafce9d5fe06a315c637be47b0e7a6882d4dcddbcb8a6a8",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\qa1549-probe.json"
+    },
+    {
+      "path": "work/coordinator-aa3/qa1549-reservation.json",
+      "bytes": 68,
+      "sha256": "f1397e7cf9c28969eb17806186ec0c86ee58843fac885bc156148e314e7d521e",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\qa1549-reservation.json"
+    },
+    {
+      "path": "work/coordinator-aa3/qa1549-verify.json",
+      "bytes": 118,
+      "sha256": "46b5d613e4ce61824a476da9c5e42da5bd169c974d67c66aedb80fc512f827f4",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\qa1549-verify.json"
+    },
+    {
+      "path": "work/coordinator-aa3/qa1553-report.txt",
+      "bytes": 1565,
+      "sha256": "61639f0b0fc86c1b380301047e8212b147dfae251aec5cc1d1544de225626e3d",
+      "original_location": "C:\\Users\\reall\\Documents\\Codex\\2026-10-11\\an\\work\\coordinator-aa3\\qa1553-report.txt"
+    }
+  ]
+}

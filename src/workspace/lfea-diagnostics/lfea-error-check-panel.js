@@ -316,12 +316,18 @@ function createElements(doc) {
   content.className = 'lfea-common-error-check__content';
   content.append(body, authorization);
 
+  // Side-by-side: model canvas on the left, grouped findings on the right.
+  const main = doc.createElement('div');
+  main.className = 'lfea-common-error-check__main';
+  main.dataset.role = 'lfea-common-error-check-main';
+  main.append(workspaceHost, content);
+
   const evidence = doc.createElement('details');
   evidence.className = 'lfea-common-error-check__evidence';
   evidence.dataset.role = 'lfea-common-error-check-evidence';
 
-  section.append(header, filters, workspaceHost, content, evidence);
-  return { section, summary, status, filters, workspaceHost, body, authorization, evidence };
+  section.append(header, filters, main, evidence);
+  return { section, summary, status, filters, main, workspaceHost, body, authorization, evidence };
 }
 
 function renderFilters(controller, root) {
@@ -417,7 +423,16 @@ function renderGroup(controller, group) {
   details.open = controller.openGroupIds.has(group.groupId);
   details.addEventListener('toggle', () => {
     if (details.open) {
+      // Re-renders re-create open <details> and re-fire this event; only a
+      // genuine state change (or the explicit header button) locates the group
+      // in the model canvas. Groups opened programmatically by
+      // revealOccurrence stay navigation-only.
+      const alreadyOpen = controller.openGroupIds.has(group.groupId);
       controller.openGroupIds.add(group.groupId);
+      if (!alreadyOpen && typeof controller.options.onLocateGroup === 'function'
+        && !controller.navigationOnlyGroupIds.has(group.groupId)) {
+        controller.options.onLocateGroup(group);
+      }
       if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized
         && !controller.navigationOnlyGroupIds.has(group.groupId)) {
         controller.markLimitationReviewed(group.groupId);
@@ -441,6 +456,21 @@ function renderGroup(controller, group) {
   disposition.dataset.disposition = group.disposition;
   disposition.textContent = group.disposition === 'PASS' ? 'PASS · INFO' : group.disposition;
   summary.append(badge, text, disposition);
+  if (typeof controller.options.onLocateGroup === 'function' && group.rows.length > 0) {
+    // Clicking a group shows every occurrence's exact source element in the
+    // model canvas; preventDefault keeps the click from also toggling the
+    // <details> open state (collapse never relocates the canvas).
+    const locate = actionButton(doc, 'Show all in model', 'icon-step-input');
+    locate.classList.add('lfea-common-error-check__locate-group');
+    locate.dataset.action = 'lfea-error-check-locate-group';
+    locate.dataset.groupId = group.groupId;
+    locate.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      controller.options.onLocateGroup(group);
+    });
+    summary.append(locate);
+  }
   if (group.disposition === 'CONDITIONAL') {
     const kind = doc.createElement('span');
     kind.className = 'lfea-common-error-check__limitation-kind';

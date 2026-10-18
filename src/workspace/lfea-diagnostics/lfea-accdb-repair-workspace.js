@@ -37,6 +37,7 @@ export class LfeaAccdbRepairWorkspaceController {
     this.searchTerm = '';
     this.selection = null;
     this.focusedFinding = null;
+    this.highlight = null;
     this.keyboardSelectionFocus = null;
     this.sourceIdentity = null;
     this.pending = null;
@@ -80,6 +81,7 @@ export class LfeaAccdbRepairWorkspaceController {
       this.sourceIdentity = identity;
       this.selection = null;
       this.focusedFinding = null;
+      this.highlight = null;
       this.pending = null;
       this.pendingProperty = null;
       this.loadedDraft = null;
@@ -99,6 +101,7 @@ export class LfeaAccdbRepairWorkspaceController {
     const descriptor = this.geometry(active.pre).selected;
     const targets = resolveLfeaAccdbFindingTargets(finding, active.source, descriptor);
     this.focusedFinding = finding;
+    this.highlight = null;
     this.pending = null;
     this.error = '';
     this.selection = targets.nodeIds.length
@@ -116,6 +119,49 @@ export class LfeaAccdbRepairWorkspaceController {
     if (this.selection) this.focusCurrentSelection();
     this.section.scrollIntoView?.({ block: 'nearest' });
     return targets.visibleTargetCount > 0;
+  }
+
+  /**
+   * Group-level locate: highlight every occurrence's exact source element in
+   * the canvas, framed by a bounds fit, with the first resolved element
+   * selected so the inspector's inspect/edit flow is immediately available.
+   * Resolution stays exact-ID only (see lfea-accdb-finding-locator); nothing
+   * is inferred from proximity.
+   */
+  locateFindingGroup(group) {
+    const active = this.active();
+    if (!active) return false;
+    this.representation = 'SOURCE';
+    const descriptor = this.geometry(active.pre).selected;
+    const rows = Array.isArray(group?.rows) ? group.rows : [];
+    const segmentIds = [];
+    const nodeIds = [];
+    let resolved = 0;
+    for (const row of rows) {
+      const targets = resolveLfeaAccdbFindingTargets(row, active.source, descriptor);
+      if (targets.visibleTargetCount > 0) resolved += 1;
+      for (const id of targets.segmentIds) if (!segmentIds.includes(id)) segmentIds.push(id);
+      for (const id of targets.nodeIds) if (!nodeIds.includes(id)) nodeIds.push(id);
+    }
+    this.highlight = { segmentIds, nodeIds };
+    this.focusedFinding = null;
+    this.pending = null;
+    this.error = '';
+    this.selection = nodeIds.length
+      ? { kind: 'NODE', id: nodeIds[0] }
+      : segmentIds.length
+        ? { kind: 'SEGMENT', id: segmentIds[0] }
+        : null;
+    const label = group?.presentationLabel ?? group?.code ?? 'finding group';
+    this.message = (segmentIds.length + nodeIds.length)
+      ? 'Located ' + resolved + ' of ' + rows.length + ' occurrences (' + label
+        + ') in source geometry · ' + nodeIds.length + ' nodes, ' + segmentIds.length
+        + ' spans highlighted.'
+      : 'Group (' + label + '): no exact renderable source identity. No inferred node is editable.';
+    this.render();
+    if (this.selection) this.focusHighlightedBounds();
+    this.section.scrollIntoView?.({ block: 'nearest' });
+    return (segmentIds.length + nodeIds.length) > 0;
   }
 
   geometry(pre) {
@@ -149,6 +195,48 @@ export class LfeaAccdbRepairWorkspaceController {
     const narrowed = { x: x - width * 0.3 / 2, y: y - height * 0.3 / 2,
       width: width * 0.3, height: height * 0.3 };
     this.viewBoxByMode.set(this.viewKey(), narrowed);
+    this.render();
+  }
+
+  /**
+   * Bounds fit over every currently highlighted element (a located group
+   * highlights all of its resolved occurrences at once). Single-target
+   * groups fall back to the single-element zoom of focusCurrentSelection.
+   */
+  focusHighlightedBounds() {
+    const svg = this.section?.querySelector('[data-role="lfea-accdb-repair-svg-host"] svg');
+    if (!svg) return;
+    const marks = [...svg.querySelectorAll('[data-selected="true"]')]
+      .filter((el) => el.tagName.toLowerCase() === 'circle' || el.tagName.toLowerCase() === 'line');
+    if (!marks.length) return;
+    if (marks.length === 1) { this.focusCurrentSelection(); return; }
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    for (const mark of marks) {
+      const coords = mark.tagName.toLowerCase() === 'circle'
+        ? [[Number(mark.getAttribute('cx')), Number(mark.getAttribute('cy'))]]
+        : [[Number(mark.getAttribute('x1')), Number(mark.getAttribute('y1'))],
+           [Number(mark.getAttribute('x2')), Number(mark.getAttribute('y2'))]];
+      for (const [x, y] of coords) {
+        if (![x, y].every(Number.isFinite)) continue;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+    }
+    if (![minX, minY, maxX, maxY].every(Number.isFinite)) {
+      this.focusCurrentSelection();
+      return;
+    }
+    const { width, height } = LFEA_GEOMETRY_DEFAULT_VIEW_BOX;
+    const spanX = Math.max(maxX - minX, width * 0.3);
+    const spanY = Math.max(maxY - minY, height * 0.3);
+    const padX = spanX * 0.25;
+    const padY = spanY * 0.25;
+    this.viewBoxByMode.set(this.viewKey(), {
+      x: minX - padX,
+      y: minY - padY,
+      width: spanX + padX * 2,
+      height: spanY + padY * 2,
+    });
     this.render();
   }
 
@@ -527,8 +615,10 @@ export class LfeaAccdbRepairWorkspaceController {
     svgHost.addEventListener('keydown', () => { this.keyboardSelectionFocus = null; });
     renderLfeaGeometryReviewSvg(svgHost, descriptor, {
       verticalAxis: this.verticalAxis,
-      highlightSegmentIds: [...(loc?.segmentIds ?? []), selectedSegmentId].filter(Boolean),
-      highlightNodeIds: [...(loc?.nodeIds ?? []), selectedNodeId].filter(Boolean),
+      highlightSegmentIds: [...(loc?.segmentIds ?? []), ...(this.highlight?.segmentIds ?? []),
+        selectedSegmentId].filter(Boolean),
+      highlightNodeIds: [...(loc?.nodeIds ?? []), ...(this.highlight?.nodeIds ?? []),
+        selectedNodeId].filter(Boolean),
       onSelectSegment: (segment) => this.selectSegment(segment),
       onSelectNode: (node) => this.selectNode(node),
       viewBox: this.currentViewBox(),

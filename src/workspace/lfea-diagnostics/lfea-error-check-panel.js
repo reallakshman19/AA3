@@ -210,6 +210,7 @@ export class LfeaCommonErrorCheckPanelController {
 
   render() {
     if (!this.elements) return this;
+    this.elements.section.dataset.solveAuthorized = String(Boolean(this.presentation?.solveAuthorized));
     const { summary, status, filters, body, evidence } = this.elements;
     this.inlineComponentBasisControlRendered = false;
     if (this.workbench) {

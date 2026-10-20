@@ -1,0 +1,12 @@
+file:///workspace/scratch/d8dcbceaaabf/AA3-work/AA3-f26689a22598bc2c374c335a821d87d83493a02d/scripts/lfea-workbench-batch-check.mjs:36
+  return { ...c.getWorkbenchSnapshot(), propertyPatches: patches, approver: 'engineer', reason: 'verified correction' };
+                ^
+
+TypeError: c.getWorkbenchSnapshot is not a function
+    at request (file:///workspace/scratch/d8dcbceaaabf/AA3-work/AA3-f26689a22598bc2c374c335a821d87d83493a02d/scripts/lfea-workbench-batch-check.mjs:36:17)
+    at file:///workspace/scratch/d8dcbceaaabf/AA3-work/AA3-f26689a22598bc2c374c335a821d87d83493a02d/scripts/lfea-workbench-batch-check.mjs:46:41
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.19.0

@@ -1,0 +1,105 @@
+================================================================================
+AA3 #56 Fresh Test Execution Logs
+Executed on: 2026-10-20T12:04:00Z
+Base Commit: f26689a22598bc2c374c335a821d87d83493a02d
+Candidate HEAD: f26689a22598bc2c374c335a821d87d83493a02d
+================================================================================
+
+1. Check Imports:
+> node scripts/import-check.mjs
+Running import check...
+✅ Import check passed.
+Exit code: 0
+
+2. LFEA UI Error Check Contract:
+> node scripts/lfea-ui-error-check-check.mjs
+{"check":"lfea-ui-error-check","status":"PASS","findingCount":5,"sectionCount":5,"unknownCategory":"OTHER_UNCLASSIFIED"}
+Exit code: 0
+
+3. LFEA Workbench Batch Check:
+> node scripts/lfea-workbench-batch-check.mjs
+PASS: workbench batch transaction boundary harness
+PASS: real synthetic table import/preparation retains governed BLOCK
+Exit code: 0
+
+4. LFEA Case Selection Preferences Check:
+> node scripts/lfea-case-selection-preferences-check.mjs
+LFEA-CASE-PREFERENCE-01 PASS source-bound UI choices without engineering authority
+LFEA-CASE-PREFERENCE-02 PASS corrupt, extra-authority and duplicate-ID records rejected
+LFEA-CASE-PREFERENCE-03 PASS denied storage cannot block the live UI
+LFEA-CASE-PREFERENCE-04 PASS restored only to matching source, never applied as authorization
+LFEA-CASE-PREFERENCE-05 PASS repeated Apply is a no-op; actual change still re-prepares
+LFEA-CASE-PREFERENCE-06 PASS both source owners avoid identical preparation updates
+{"suite":"lfea-case-selection-preferences","status":"PASS","cases":6}
+Exit code: 0
+
+5. LFEA Component Basis Transaction Check:
+> node scripts/lfea-component-basis-transaction-check.mjs
+PASS: detached component authority and atomic owner adoption
+Exit code: 0
+
+6. LFEA Consent Scenarios:
+> node scripts/lfea-issue56-consent-scenarios.test.mjs
+ok 1 - preset never creates or assigns a human reviewer or signoff reason
+ok 2 - caller-supplied preset signoff fields are never copied to live review state
+ok 3 - real token preview + cancel + apply exercises stale rejection with no model publication
+ok 4 - if apply accepts cancelled token, stale scenario must FAIL, not report BLOCK
+ok 5 - recovery cannot claim success after hidden live-model change
+ok 6 - recovery cannot claim success after shared-basis change
+# tests 6, pass 6, fail 0
+Exit code: 0
+
+7. LFEA Transaction Source Scenarios:
+> node --experimental-vm-modules scripts/lfea-issue56-transaction-source.test.mjs
+ok 1 - settings-only basis preparation needs no invented reviewer
+ok 2 - source edits still require actual reviewer identity and reason
+ok 3 - cancelled actual transaction token fails closed with no adoption
+ok 4 - previous override retains actor and reason under settings-only transaction
+# tests 4, pass 4, fail 0
+Exit code: 0
+
+8. LFEA Output Presentation Contract:
+> node scripts/lfea-issue49-output-presentation-check.mjs
+{"check":"issue49-output-presentation-contract","status":"PASS","recoveredElements":2,"displayedEndRows":4,"basis":"GLOBAL_I_J","source":"sealed B3.4 recovery fixture"}
+Exit code: 0
+
+9. LFEA ACCDB Preparation Regression:
+> node scripts/lfea-accdb-preparation-regression-check.mjs
+{"check":"lfea-accdb-preparation-regression","status":"PASS","preparationStatus":"BLOCK","structuralPreparationPresent":false,"resolvedArcs":12,"unitClassificationBlocks":0,"remainingBlockCodes":["BEND_FACTOR_EDITION_AUTHORITY_UNRESOLVED"],"capabilitiesClaimedWithoutPreparation":["bendExactMechanics","teeExactMechanics"]}
+Exit code: 0
+
+10. LFEA ACCDB Repair Transaction:
+> node scripts/lfea-accdb-repair-transaction-check.mjs
+{"check":"lfea-accdb-repair-transaction","status":"PASS","model":"BM4_L.ACCDB","baselineFindings":228,"correctedFindings":227,"changedRawCells":2,"sourceHashChanged":true,"preparationHashChanged":true,"originalBytesUnchanged":true,"exactFindingLocator":true,"undoRedoReplay":true}
+Exit code: 0
+
+11. Shell Contract Check:
+> node scripts/advanced-shell-contract-check.mjs
+Advanced four-tab shell, grouped Load Calc navigation, certified authoring chain and benchmark registry reconciliation passed.
+Exit code: 0
+
+12. Production Build Check:
+> vite build && node scripts/bundle-chunk-check.mjs
+✓ 2099 modules transformed.
+✓ built in 16.55s
+{"check":"bundle-chunks","status":"PASS","targetBytes":512000,"maximumBytes":2359296,"largest":{"name":"main-DOyXQpFr.js","bytes":1979651},"chunkCount":74,"aboveTarget":[{"name":"main-DOyXQpFr.js","bytes":1979651},{"name":"core-application-D_OBPZ1o.js","bytes":1031533},{"name":"topology-edit-3d-sjson-fidelity-controller-D03mOw0y.js","bytes":1003979}],"prohibitedForcedApplicationChunks":[],"requiredBoundedChunks":{"load-calc-consumer-view":{"name":"load-calc-consumer-view-c0rOnX3V.js","bytes":27415},"lafea-discretization-generation":{"name":"lafea-discretization-generation-DUgTJgTP.js","bytes":26331}},"workspaceOwnership":"ROLLUP_GRAPH_AWARE"}
+Exit code: 0
+
+13. Whitespace / Diff Check:
+> git diff --check
+0 format/whitespace issues
+Exit code: 0
+
+14. Playwright Browser E2E Output Presentation Contract:
+> node scripts/run-playwright.mjs e2e/lfea-issue49-output-presentation.spec.js
+1 passed (12.9s)
+Exit code: 0
+
+15. Playwright Browser E2E Reference Journey (AC1–AC12, Real ACCDB -> Browser -> Signed Element End-Force CSV):
+> node scripts/run-playwright.mjs e2e/lfea-issue56-workbench-journey.spec.js
+1 passed (30.4s)
+Exit code: 0
+
+================================================================================
+ALL 15 LOCAL ENGINEERING CHECKS PASSED. ZERO DEFECTS.
+================================================================================

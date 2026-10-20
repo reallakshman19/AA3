@@ -165,13 +165,16 @@ test.describe('Issue #56: LFEA Error Check Action Workbench and Prototype Run', 
     const caseId = await selectedCase.getAttribute('data-case-id');
     expect(caseId).toBeTruthy();
     const forcesView = page.locator('[data-role="lfea-pipeline-results-views"] [data-view="ELEMENT_FORCES"]');
-    await forcesView.click(); // Output inspection, outside 7 primary preparation clicks
+    await forcesView.click();
+    logAction('click', 'view-ELEMENT_FORCES', 'Switch to Element forces view');
     await expect(forcesView).toHaveAttribute('data-active', 'true');
     await expect(page.locator('[data-role="lfea-pipeline-element-actions-basis"]'))
       .toContainText('signed joint-on-element I/J end actions');
     const outputRows = page.locator('[data-role="lfea-pipeline-results-table"] tr');
     await expect(outputRows.nth(1)).toBeVisible();
     const firstDisplayed = await outputRows.nth(1).locator('td').allTextContents();
+
+    // Save Output screenshot
     await page.screenshot({ path: 'evidence/aa3-56/output-screenshot.png' });
 
     // AC8: Export selected case/view exactly as shown on Output.
@@ -181,6 +184,8 @@ test.describe('Issue #56: LFEA Error Check Action Workbench and Prototype Run', 
 
     const exportPanel = page.locator('[data-role="lfea-pipeline-export-panel"]');
     await expect(exportPanel).toBeVisible();
+    await expect(page.locator('[data-role="lfea-pipeline-export-summary"]')).toContainText('Element forces');
+
     const csvBtn = exportPanel.locator('[data-action="lfea-pipeline-results-csv"]');
     await expect(csvBtn).toBeEnabled();
 
@@ -188,7 +193,7 @@ test.describe('Issue #56: LFEA Error Check Action Workbench and Prototype Run', 
       page.waitForEvent('download'),
       csvBtn.click(),
     ]);
-    expect(download.suggestedFilename()).toMatch(/\.csv$/i);
+    expect(download.suggestedFilename()).toBe(`${caseId}-element_forces.csv`);
 
     const stream = await download.createReadStream();
     const chunks = [];
@@ -201,27 +206,33 @@ test.describe('Issue #56: LFEA Error Check Action Workbench and Prototype Run', 
     fs.writeFileSync('evidence/aa3-56/downloaded-results.csv', csvBuffer);
     fs.writeFileSync('evidence/aa3-56/action-ledger.json', JSON.stringify(actionLedger, null, 2));
 
-    // No substitution of a solved-displacements file for required signed end forces.
-    expect(download.suggestedFilename()).toBe(`${caseId}-element_forces.csv`);
+    // Numerical, format and coordinate frame assertions on downloaded CSV
+    expect(csvText).toContain('Element,End,FX_N,FY_N,FZ_N,MX_Nm,MY_Nm,MZ_Nm');
     const lines = csvText.trim().split(/\r?\n/);
-    expect(lines[0]).toBe('Element,End,FX_N,FY_N,FZ_N,MX_Nm,MY_Nm,MZ_Nm');
-    expect(lines.length).toBeGreaterThan(10);
+    expect(lines.length).toBe(337); // 1 header + 168 elements x 2 ends (I/J)
     const seen = new Map();
     for (const line of lines.slice(1)) {
       const [element, end, ...signed] = line.split(',');
       expect(element.trim()).not.toBe('');
       expect(['I', 'J']).toContain(end);
       expect(signed).toHaveLength(6);
-      for (const value of signed) {
-        expect(value.trim()).not.toBe('');
-        expect(Number.isFinite(Number(value))).toBe(true);
-      }
+      for (const val of signed) expect(Number.isFinite(Number(val))).toBe(true);
       seen.set(element, new Set([...(seen.get(element) ?? []), end]));
     }
     for (const ends of seen.values()) expect([...ends].sort()).toEqual(['I', 'J']);
     const firstCsv = lines[1].split(',');
     expect(firstCsv.slice(0, 2)).toEqual(firstDisplayed.slice(0, 2));
     expect(firstCsv.slice(2).map(Number)).toEqual(firstDisplayed.slice(2).map(Number));
+    // Numerical oracle check for element IXP.E10
+    const rowE10I = lines.find((l) => l.startsWith('IXP.E10,I,'));
+    expect(rowE10I).toBeDefined();
+    const partsE10I = rowE10I.split(',').map((s) => s.trim());
+    expect(partsE10I).toEqual(['IXP.E10', 'I', '-129.940', '2873.514', '-3.482e-9', '2711.784', '200.238', '-82.357']);
+    const rowE10J = lines.find((l) => l.startsWith('IXP.E10,J,'));
+    expect(rowE10J).toBeDefined();
+    const partsE10J = rowE10J.split(',').map((s) => s.trim());
+    expect(partsE10J).toEqual(['IXP.E10', 'J', '129.940', '-1330.947', '3.482e-9', '-487.624', '-62.761', '82.364']);
+    expect(Math.abs(Number(partsE10I[2]) + Number(partsE10J[2]))).toBeLessThan(1e-3);
 
     // AC10: Test Scenarios demonstration on isolated disposable candidate (Claim 3)
     await errorCheckStep.click();

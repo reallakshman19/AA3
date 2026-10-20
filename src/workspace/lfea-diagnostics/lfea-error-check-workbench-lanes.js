@@ -57,11 +57,15 @@ export function renderResolveSettingsLane(doc, controller, body, _groups) {
 
   const status = doc.createElement('div');
   status.className = 'lfea-workbench-settings-status';
+  const tag = doc.createElement('span');
   if (basis.complete) {
-    status.innerHTML = `<span class="lfea-workbench-tag lfea-workbench-tag--success">Component basis resolved (${basis.editionProfileId})</span>`;
+    tag.className = 'lfea-workbench-tag lfea-workbench-tag--success';
+    tag.textContent = `Component basis resolved (${basis.editionProfileId})`;
   } else {
-    status.innerHTML = '<span class="lfea-workbench-tag lfea-workbench-tag--warn">Authority unresolved — select edition profile</span>';
+    tag.className = 'lfea-workbench-tag lfea-workbench-tag--warn';
+    tag.textContent = 'Authority unresolved — select edition profile';
   }
+  status.append(tag);
 
   const quickAction = doc.createElement('button');
   quickAction.type = 'button';
@@ -102,7 +106,9 @@ export function renderPrototypeAssumptionsLane(doc, controller, body, groups) {
   list.className = 'lfea-workbench-findings-list';
   for (const group of groups.slice(0, 5)) {
     const li = doc.createElement('li');
-    li.innerHTML = `<strong>${group.code}</strong>: ${group.plainMessage} (${group.occurrences} occurrences)`;
+    const strong = doc.createElement('strong');
+    strong.textContent = group.code;
+    li.append(strong, doc.createTextNode(`: ${group.plainMessage} (${group.occurrences} occurrences)`));
     list.append(li);
   }
   if (groups.length > 5) {

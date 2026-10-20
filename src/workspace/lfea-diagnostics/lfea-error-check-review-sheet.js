@@ -30,29 +30,39 @@ export function renderReviewSheet(doc, controller, root, presentation) {
 
   const table = doc.createElement('table');
   table.className = 'lfea-workbench-review-table';
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Code / Finding</th>
-        <th>Consequence</th>
-        <th>Plain Guidance</th>
-        <th>Occurrences</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${condGroups
-        .map(
-          (g) => `
-        <tr>
-          <td><strong>${g.code}</strong></td>
-          <td><span class="lfea-workbench-tag lfea-workbench-tag--${g.limitationKind === 'PROCESS_NOTE' ? 'info' : 'warn'}">${g.limitationKind === 'PROCESS_NOTE' ? 'About this pass' : 'Affects the result'}</span></td>
-          <td>${g.plainMessage}</td>
-          <td>${g.occurrences}</td>
-        </tr>`,
-        )
-        .join('')}
-    </tbody>
-  `;
+  const thead = doc.createElement('thead');
+  const headRow = doc.createElement('tr');
+  for (const title of ['Code / Finding', 'Consequence', 'Plain Guidance', 'Occurrences']) {
+    const th = doc.createElement('th');
+    th.textContent = title;
+    headRow.append(th);
+  }
+  thead.append(headRow);
+
+  const tbody = doc.createElement('tbody');
+  for (const g of condGroups) {
+    const tr = doc.createElement('tr');
+    const tdCode = doc.createElement('td');
+    const strong = doc.createElement('strong');
+    strong.textContent = g.code;
+    tdCode.append(strong);
+
+    const tdKind = doc.createElement('td');
+    const tag = doc.createElement('span');
+    tag.className = `lfea-workbench-tag lfea-workbench-tag--${g.limitationKind === 'PROCESS_NOTE' ? 'info' : 'warn'}`;
+    tag.textContent = g.limitationKind === 'PROCESS_NOTE' ? 'About this pass' : 'Affects the result';
+    tdKind.append(tag);
+
+    const tdMsg = doc.createElement('td');
+    tdMsg.textContent = g.plainMessage;
+
+    const tdOcc = doc.createElement('td');
+    tdOcc.textContent = String(g.occurrences);
+
+    tr.append(tdCode, tdKind, tdMsg, tdOcc);
+    tbody.append(tr);
+  }
+  table.append(thead, tbody);
 
   const signoffBar = doc.createElement('div');
   signoffBar.className = 'lfea-workbench-signoff-bar';

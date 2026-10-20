@@ -6,6 +6,7 @@ export function createErrorCheckElements(doc) {
   const section = doc.createElement('section');
   section.className = 'lfea-common-error-check';
   section.dataset.role = 'lfea-common-error-check-panel';
+  section.dataset.solveAuthorized = 'false';
 
   const header = doc.createElement('header');
   header.className = 'lfea-common-error-check__header';

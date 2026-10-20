@@ -39,14 +39,26 @@ export function renderBulkEditor(doc, controller, root) {
   fieldLabel.textContent = 'Property to edit: ';
   const fieldSelect = doc.createElement('select');
   fieldSelect.dataset.role = 'lfea-workbench-bulk-field';
-  fieldSelect.innerHTML = '<option value="DIAMETER">Outside diameter (DIAMETER)</option><option value="WALL_THICK">Wall thickness (WALL_THICK)</option>';
+  const optDiam = doc.createElement('option');
+  optDiam.value = 'DIAMETER';
+  optDiam.textContent = 'Outside diameter (DIAMETER)';
+  const optWall = doc.createElement('option');
+  optWall.value = 'WALL_THICK';
+  optWall.textContent = 'Wall thickness (WALL_THICK)';
+  fieldSelect.append(optDiam, optWall);
   fieldLabel.append(fieldSelect);
 
   const scopeLabel = doc.createElement('label');
   scopeLabel.textContent = 'Scope: ';
   const scopeSelect = doc.createElement('select');
   scopeSelect.dataset.role = 'lfea-workbench-bulk-scope';
-  scopeSelect.innerHTML = `<option value="ALL">All elements (${elementCount})</option><option value="SELECTED">Selected fixable elements (${selectedCount})</option>`;
+  const optAll = doc.createElement('option');
+  optAll.value = 'ALL';
+  optAll.textContent = `All elements (${elementCount})`;
+  const optSel = doc.createElement('option');
+  optSel.value = 'SELECTED';
+  optSel.textContent = `Selected fixable elements (${selectedCount})`;
+  scopeSelect.append(optAll, optSel);
   if (selectedCount > 0) {
     scopeSelect.value = 'SELECTED';
   }

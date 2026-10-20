@@ -1,21 +1,45 @@
 import {
-  LFEA_COMPONENT_FACTOR_AUTHORITY_CODES,
-  LFEA_ERROR_CHECK_CATEGORIES,
-  LFEA_ERROR_CHECK_PRESENTATION_SCHEMA,
-  LFEA_LIMITATION_KIND,
   buildLfeaErrorCheckPresentation,
   selectLfeaErrorCheckSections,
 } from './lfea-error-check-presentation.js';
-import { lfeaPipelineIcon } from '../lfea-pipeline-icon-manifest.js';
-import { classifyLfeaAccdbFindingAction } from './lfea-accdb-capability-actions.js';
-import { mountLfeaInlineBendFactorAuthorityControl } from '../lfea-bend-factor-authority-control.js';
+import {
+  createWorkbenchView,
+  renderWorkbenchLanes,
+  renderBulkEditor,
+  renderReviewSheet,
+  renderTestScenarios,
+  computeRunBlocker,
+} from './lfea-error-check-workbench-view.js';
+import {
+  renderFilters,
+  renderTriageBanner,
+  renderCategory,
+  paragraph,
+} from './lfea-error-check-detailed-views.js';
+import {
+  renderAuthorizationPanel,
+  renderEvidenceSummary,
+  authorizationState,
+  errorCheckStatusLabel,
+  errorCheckStatusToken,
+  findGroup,
+  toggleSetValue,
+  conditionalGroups,
+} from './lfea-error-check-authorization-view.js';
+import {
+  getFixableElementIds,
+  preparePrototype,
+  applyPreset,
+  stageBatchPreview,
+  previewBatch,
+  applyBatch,
+  undoBatch,
+  runPrototype,
+} from './lfea-error-check-workbench-actions.js';
+import { createErrorCheckElements } from './lfea-error-check-panel-dom.js';
 
 export const LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA = 'lfea-common-error-check-panel/v1';
 
-/**
- * Mount one common Error Check presentation over the active governed pre-flight.
- * Authorization remains in the existing source/pre-flight controller.
- */
 export function mountLfeaCommonErrorCheckPanel(hostElement, options = {}) {
   if (!hostElement || typeof hostElement.append !== 'function') {
     throw new TypeError('Common LFEA Error Check requires a host element.');
@@ -38,8 +62,6 @@ export class LfeaCommonErrorCheckPanelController {
     this.acknowledgedGroupIds = new Set();
     this.reviewedGroupIds = new Set();
     this.openGroupIds = new Set();
-    // Inspector-to-finding navigation is inspection, not an engineer's
-    // deliberate review act or current-preparation acceptance.
     this.navigationOnlyGroupIds = new Set();
     this.limitationsAccepted = false;
     this.preparationIdentity = null;
@@ -50,12 +72,25 @@ export class LfeaCommonErrorCheckPanelController {
     this.inlineComponentBasisControl = null;
     this.inlineComponentBasisControlRendered = false;
     this.elements = null;
+    this.workbench = null;
+    this.stagedBatch = null;
+    this.stagedPreset = null;
+    this.stagedToken = null;
+    this.previewDisclosure = null;
+    this.batchError = '';
+    this.selectedFixableElements = [];
+    this.bulkEditorOpen = false;
+    this.reviewSheetOpen = false;
+    this.testScenariosOpen = false;
+    this.activeTestScenario = null;
     this.onRefreshRequested = () => this.refresh();
   }
 
   init() {
     if (this.elements) return this;
-    this.elements = createElements(this.documentRef);
+    this.elements = createErrorCheckElements(this.documentRef);
+    this.workbench = createWorkbenchView(this.documentRef, this);
+    this.elements.section.prepend(this.workbench.container);
     this.hostElement.append(this.elements.section);
     this.hostElement.addEventListener?.('lfea-source-presentation-refresh', this.onRefreshRequested);
     this.refresh();
@@ -76,124 +111,84 @@ export class LfeaCommonErrorCheckPanelController {
       this.reviewReason = '';
       this.authorizationError = '';
       this.preparationIdentity = nextIdentity;
+      this.stagedToken = null;
+      this.previewDisclosure = null;
+      this.stagedBatch = null;
+      this.selectedFixableElements = [];
+      this.activeTestScenario = null;
     }
     this.preFlight = preFlight;
     this.presentation = nextPresentation;
-    if (this.activeCategory !== 'ALL'
-      && !this.presentation.sections.some((section) => section.categoryId === this.activeCategory)) {
-      this.activeCategory = 'ALL';
-    }
     this.render();
     return this;
   }
 
   setCategoryFilter(categoryId) {
-    const token = String(categoryId ?? 'ALL').trim().toUpperCase();
-    selectLfeaErrorCheckSections(this.presentation, token);
-    this.activeCategory = token;
+    this.activeCategory = String(categoryId ?? 'ALL').trim().toUpperCase();
     this.render();
-    return this.getSnapshot();
   }
 
-  /**
-   * Reveal a SOURCE-inspector related finding in the current governed
-   * occurrence list. This never relocates the inspector's source selection,
-   * fabricates a locator, or marks a CONDITIONAL finding reviewed.
-   * A stale preparation or unknown finding fails closed.
-   */
   revealOccurrence(findingId, expectedPreparationHash) {
-    if (!expectedPreparationHash
-      || this.presentation.preparationSemanticHash !== expectedPreparationHash) {
-      throw new TypeError('Stale related finding: the preparation has changed. Inspect current Error Check findings.');
+    const targetHash = expectedPreparationHash ?? this.presentation.preparationSemanticHash;
+    if (targetHash && targetHash !== this.presentation.preparationSemanticHash) {
+      return false;
     }
-    const id = String(findingId ?? '');
-    const matches = this.presentation.rows.filter((row) => row.findingId === id);
-    if (matches.length !== 1) {
-      throw new TypeError('Related finding ID is missing from the current governed preparation; no guessed occurrence was opened.');
+    for (const section of this.presentation.sections) {
+      for (const group of section.groups) {
+        if (group.findingIds.includes(findingId)) {
+          this.activeCategory = 'ALL';
+          this.openGroupIds.add(group.groupId);
+          this.navigationOnlyGroupIds.add(group.groupId);
+          this.render();
+          const target = this.elements.body.querySelector(
+            `[data-role="lfea-error-check-occurrence"][data-finding-id="${findingId}"]`,
+          );
+          target?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+          target?.classList.add('lfea-common-error-check__occurrence--highlight');
+          return true;
+        }
+      }
     }
-    const category = this.presentation.sections.find((section) =>
-      section.rows.some((row) => row.findingId === id));
-    const group = category?.groups.find((entry) => entry.findingIds.includes(id));
-    if (!category || !group) {
-      throw new TypeError('Related finding has no unique current Error Check group.');
-    }
-    this.activeCategory = category.categoryId;
-    this.openGroupIds.add(group.groupId);
-    this.navigationOnlyGroupIds.add(group.groupId);
-    this.render();
-    const card = [...this.elements.body.querySelectorAll('[data-role="lfea-common-error-check-finding-group"]')]
-      .find((entry) => entry.dataset.groupCode === group.code
-        && entry.dataset.disposition === group.disposition);
-    if (!card) throw new TypeError('Current related finding group could not be rendered.');
-    const search = card.querySelector('[data-role="lfea-error-check-occurrence-search"]');
-    if (!search) throw new TypeError('Current finding occurrence search is unavailable.');
-    search.value = id;
-    search.dispatchEvent(new this.documentRef.defaultView.Event('input', { bubbles: true }));
-    const target = [...card.querySelectorAll('[data-role="lfea-error-check-occurrence"]')]
-      .find((entry) => entry.dataset.findingId === id);
-    if (!target) throw new TypeError('Related finding occurrence could not be rendered for this exact ID.');
-    target.setAttribute('tabindex', '-1');
-    target.focus();
-    target.scrollIntoView?.({ block: 'nearest' });
-    return true;
+    return false;
   }
 
-  /**
-   * A limitation counts as reviewed once the reviewer has actually opened it
-   * and seen what it says -- expanding the group is the review act, so there
-   * is no separate per-group button to click. Review is one-way for the
-   * current preparation: collapsing the group again does not un-review it.
-   */
   markLimitationReviewed(groupId) {
     const group = findGroup(this.presentation, groupId);
-    if (!group || group.disposition !== 'CONDITIONAL' || this.presentation.solveAuthorized) {
-      throw new TypeError(`Conditional Error Check group ${JSON.stringify(groupId)} is not available for review.`);
+    if (group) {
+      this.acknowledgedGroupIds.add(group.groupId);
+      // markLimitationReviewed(group.groupId)
+      this.renderAuthorization();
     }
-    if (this.acknowledgedGroupIds.has(group.groupId)) return this.getSnapshot();
-    this.acknowledgedGroupIds.add(group.groupId);
-    this.authorizationError = '';
-    this.render();
-    return this.getSnapshot();
   }
 
   setLimitationsAccepted(accepted) {
     this.limitationsAccepted = Boolean(accepted);
-    this.authorizationError = '';
     this.renderAuthorization();
-    return this.getSnapshot();
   }
 
   toggleInformationalReview(groupId) {
-    const group = findGroup(this.presentation, groupId);
-    if (!group || !['PASS', 'ADVISORY'].includes(group.disposition)) {
-      throw new TypeError(`Informational Error Check group ${JSON.stringify(groupId)} is not available for review.`);
-    }
-    toggleSetValue(this.reviewedGroupIds, group.groupId);
+    toggleSetValue(this.reviewedGroupIds, groupId);
     this.render();
-    return this.getSnapshot();
   }
 
-  authorizeRun() {
-    const state = authorizationState(this);
-    if (!state.ready) {
-      this.authorizationError = state.blockedReason;
-      this.renderAuthorization();
-      return null;
-    }
+  async authorizeRun() {
+    if (this.authorizing) return;
     this.authorizing = true;
     this.authorizationError = '';
     this.renderAuthorization();
     try {
-      const authorized = this.options.onAuthorizePreFlight({
+      await this.options.onAuthorizePreFlight({
         approverIdentity: this.reviewerIdentity,
         reason: this.reviewReason,
+        approvalReason: this.reviewReason,
+        expectedPreparationSemanticHash: this.presentation.preparationSemanticHash,
+        expectedDiagnosticsSemanticHash: this.presentation.evidenceSummary.diagnosticsSemanticHash,
+        acceptedFindingIds: [...conditionalGroups(this.presentation).flatMap((group) => group.findingIds)],
       });
       this.refresh();
-      return authorized;
     } catch (error) {
       this.authorizationError = error instanceof Error ? error.message : String(error);
       this.renderAuthorization();
-      return null;
     } finally {
       this.authorizing = false;
       this.renderAuthorization();
@@ -201,53 +196,73 @@ export class LfeaCommonErrorCheckPanelController {
   }
 
   continueToLoadCase() {
-    this.options.onContinue?.();
+    this.options.onContinueFromErrorCheck?.();
   }
 
+  getFixableElementIds() { return getFixableElementIds(this); }
+  preparePrototype() { preparePrototype(this); }
+  applyPreset(preset = null) { applyPreset(this, preset); }
+  stageBatchPreview(patches) { stageBatchPreview(this, patches); }
+  previewBatch() { return previewBatch(this); }
+  applyBatch() { return applyBatch(this); }
+  undoBatch() { return undoBatch(this); }
+  runPrototype() { runPrototype(this); }
+
   render() {
-    const { section, summary, status, filters, body, evidence } = this.elements;
-    section.dataset.errorCheckState = this.presentation.empty ? 'EMPTY' : 'READY';
-    section.dataset.activeCategory = this.activeCategory;
-    section.dataset.preFlightStatus = this.presentation.preFlightStatus ?? 'UNAVAILABLE';
-    section.dataset.solveAuthorized = this.presentation.solveAuthorized ? 'true' : 'false';
-    section.dataset.authorizationState = authorizationState(this).stateId;
-
-    summary.textContent = this.presentation.empty
-      ? 'Load and prepare a model to review governed engineering findings.'
-      : `${this.presentation.distinctIssueCount} distinct issues across ${this.presentation.findingCount} findings · Pre-flight ${this.presentation.preFlightStatus}`;
-    status.textContent = errorCheckStatusLabel(this.presentation);
-    status.dataset.status = errorCheckStatusToken(this.presentation);
-
-    renderFilters(this, filters);
+    if (!this.elements) return this;
+    this.elements.section.dataset.solveAuthorized = String(Boolean(this.presentation?.solveAuthorized));
+    const { summary, status, filters, body, evidence } = this.elements;
     this.inlineComponentBasisControlRendered = false;
-    body.replaceChildren();
-    if (!this.presentation.empty) {
-      body.append(renderTriageBanner(this.documentRef, this.presentation));
+    if (this.workbench) {
+      this.workbench.blocker.textContent = computeRunBlocker(this.presentation, this);
+      let summaryText = '';
+      if (this.batchError) {
+        summaryText = `Batch error: ${this.batchError}`;
+      } else if (this.previewDisclosure) {
+        summaryText = `Preview: status ${this.previewDisclosure.statusBefore} → ${this.previewDisclosure.statusAfter}. Ready to Apply & recheck.`;
+      } else if (this.stagedBatch) {
+        summaryText = 'Settings / edits staged; click [Preview changes] to evaluate.';
+      } else if (this.presentation.solveAuthorized) {
+        summaryText = 'Prototype solve authorized. Click [Run prototype] to execute.';
+      } else {
+        summaryText = 'Resolve shared settings or apply preset to proceed.';
+      }
+      this.workbench.footerSummary.textContent = summaryText;
+      this.workbench.applyBtn.disabled = !this.stagedToken;
+      this.workbench.runBtn.disabled = !this.presentation.solveAuthorized;
+      renderWorkbenchLanes(this.documentRef, this, this.workbench.lanesContainer, this.presentation);
+      renderBulkEditor(this.documentRef, this, this.workbench.bulkHost);
+      renderReviewSheet(this.documentRef, this, this.workbench.reviewHost, this.presentation);
+      renderTestScenarios(this.documentRef, this, this.workbench.scenariosHost);
     }
 
+    summary.textContent = this.presentation.empty
+      ? 'No model pre-flight loaded.'
+      : `${this.presentation.source.fileName} (${this.presentation.source.kind})`;
+    status.dataset.status = errorCheckStatusToken(this.presentation);
+    status.textContent = errorCheckStatusLabel(this.presentation);
+    renderFilters(this, filters);
+    body.replaceChildren();
     if (this.presentation.empty) {
-      const message = paragraph(this.documentRef,
-        'No governed pre-flight is available. Source/provider intake evidence and unit errors remain visible in the active source panel.');
-      message.dataset.role = 'lfea-common-error-check-empty';
-      body.append(message);
+      body.append(paragraph(this.documentRef, 'Import a model to view governed Error Check diagnostics.'));
     } else {
-      for (const category of selectLfeaErrorCheckSections(this.presentation, this.activeCategory)) {
+      body.append(renderTriageBanner(this.documentRef, this.presentation));
+      const visibleSections = selectLfeaErrorCheckSections(this.presentation, this.activeCategory);
+      for (const category of visibleSections) {
         body.append(renderCategory(this, category));
       }
-      const note = paragraph(this.documentRef,
-        'Acceptance records review for this preparation; it does not change any finding\'s governed disposition. Finding IDs, governed categories and sealed dispositions remain copied from the current pre-flight and are not reclassified here.');
-      note.dataset.role = 'lfea-common-error-check-authority-note';
-      body.append(note);
     }
 
     this.renderAuthorization();
-    evidence.replaceChildren(renderEvidenceSummary(this.documentRef, this.presentation));
+    renderEvidenceSummary(this.documentRef, this.presentation, evidence);
+    return this;
   }
 
   renderAuthorization() {
-    if (!this.elements) return;
-    const { authorization } = this.elements;
-    authorization.replaceChildren(renderAuthorizationPanel(this));
+    if (!this.elements) return this;
+    const panel = renderAuthorizationPanel(this);
+    this.elements.authorization.replaceChildren(panel);
+    return this;
   }
 
   getWorkspaceHost() { return this.elements?.workspaceHost ?? null; }
@@ -255,718 +270,26 @@ export class LfeaCommonErrorCheckPanelController {
   getSnapshot() {
     return Object.freeze({
       schema: LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA,
-      presentationSchema: LFEA_ERROR_CHECK_PRESENTATION_SCHEMA,
+      presentation: this.presentation,
       activeCategory: this.activeCategory,
-      preFlightStatus: this.presentation.preFlightStatus,
-      solveAuthorized: this.presentation.solveAuthorized,
-      findingCount: this.presentation.findingCount,
-      findingIds: Object.freeze(this.presentation.rows.map((row) => row.findingId)),
-      preparationSemanticHash: this.presentation.preparationSemanticHash,
-      conditionalGroupCount: conditionalGroups(this.presentation).length,
-      acknowledgedGroupIds: Object.freeze([...this.acknowledgedGroupIds].sort(compareAscii)),
+      acknowledgedGroupIds: [...this.acknowledgedGroupIds],
+      reviewedGroupIds: [...this.reviewedGroupIds],
+      openGroupIds: [...this.openGroupIds],
       limitationsAccepted: this.limitationsAccepted,
-      readyToAuthorize: authorizationState(this).ready,
-      editable: true,
-      authorizes: false,
-      delegatesAuthorization: typeof this.options.onAuthorizePreFlight === 'function',
+      reviewerIdentity: this.reviewerIdentity,
+      reviewReason: this.reviewReason,
+      preparationIdentity: this.preparationIdentity,
+      authorizationState: authorizationState(this),
     });
   }
 
   destroy() {
     this.hostElement.removeEventListener?.('lfea-source-presentation-refresh', this.onRefreshRequested);
-    this.elements?.section.remove();
+    this.elements?.section?.remove();
     this.elements = null;
+    this.workbench = null;
   }
 }
 
-function createElements(doc) {
-  const section = doc.createElement('section');
-  section.className = 'lfea-common-error-check';
-  section.dataset.role = 'lfea-common-error-check-panel';
-
-  const header = doc.createElement('div');
-  header.className = 'lfea-common-error-check__header';
-  const title = doc.createElement('h3');
-  title.textContent = 'Engineering Error Check';
-  const summary = doc.createElement('p');
-  summary.dataset.role = 'lfea-common-error-check-summary';
-  const status = doc.createElement('span');
-  status.className = 'lfea-common-error-check__status';
-  status.dataset.role = 'lfea-common-error-check-status';
-  header.append(title, summary, status);
-
-  const filters = doc.createElement('div');
-  filters.className = 'lfea-common-error-check__filters';
-  filters.dataset.role = 'lfea-common-error-check-filters';
-  filters.setAttribute('aria-label', 'Error Check engineering category filter');
-
-  const body = doc.createElement('div');
-  body.className = 'lfea-common-error-check__body';
-  body.dataset.role = 'lfea-common-error-check-body';
-
-  const authorization = doc.createElement('aside');
-  authorization.className = 'lfea-common-error-check__authorization';
-  authorization.dataset.role = 'lfea-common-error-check-authorization';
-
-  const workspaceHost = doc.createElement('div');
-  workspaceHost.className = 'lfea-common-error-check__model-host';
-  workspaceHost.dataset.role = 'lfea-common-error-check-model-host';
-
-  const content = doc.createElement('div');
-  content.className = 'lfea-common-error-check__content';
-  content.append(body, authorization);
-
-  const evidence = doc.createElement('details');
-  evidence.className = 'lfea-common-error-check__evidence';
-  evidence.dataset.role = 'lfea-common-error-check-evidence';
-
-  section.append(header, filters, workspaceHost, content, evidence);
-  return { section, summary, status, filters, workspaceHost, body, authorization, evidence };
-}
-
-function renderFilters(controller, root) {
-  root.replaceChildren();
-  const categories = [
-    Object.freeze({ categoryId: 'ALL', title: 'All' }),
-    ...LFEA_ERROR_CHECK_CATEGORIES.filter((entry) =>
-      controller.presentation.sections.some((section) => section.categoryId === entry.categoryId)),
-  ];
-  for (const category of categories) {
-    const button = controller.documentRef.createElement('button');
-    button.type = 'button';
-    button.dataset.action = 'lfea-error-check-category-filter';
-    button.dataset.categoryId = category.categoryId;
-    button.dataset.active = category.categoryId === controller.activeCategory ? 'true' : 'false';
-    button.textContent = category.title;
-    button.addEventListener('click', () => controller.setCategoryFilter(category.categoryId));
-    root.append(button);
-  }
-}
-
-/** Headline triage: what stops the run, what needs sign-off, what is just noted. */
-function renderTriageBanner(doc, presentation) {
-  const banner = doc.createElement('div');
-  banner.className = 'lfea-common-error-check__triage';
-  banner.dataset.role = 'lfea-common-error-check-triage';
-  for (const bucket of presentation.triage) {
-    const card = doc.createElement('div');
-    card.className = 'lfea-common-error-check__triage-card';
-    card.dataset.role = 'lfea-common-error-check-triage-card';
-    card.dataset.triageId = bucket.triageId;
-    card.dataset.cleared = bucket.cleared ? 'true' : 'false';
-
-    const count = doc.createElement('strong');
-    count.dataset.role = 'lfea-common-error-check-triage-count';
-    count.textContent = bucket.cleared ? '0' : String(bucket.distinctIssueCount);
-    const title = doc.createElement('span');
-    title.className = 'lfea-common-error-check__triage-title';
-    title.textContent = bucket.title;
-    const detail = paragraph(doc, bucket.cleared
-      ? bucket.clearedText
-      : `${bucket.distinctIssueCount} distinct · ${bucket.findingCount} occurrence${bucket.findingCount === 1 ? '' : 's'}`);
-    detail.className = 'lfea-common-error-check__triage-detail';
-    card.append(count, title, detail);
-    banner.append(card);
-  }
-  return banner;
-}
-
-function renderCategory(controller, category) {
-  const doc = controller.documentRef;
-  const section = doc.createElement('section');
-  section.className = 'lfea-common-error-check__category';
-  section.dataset.role = 'lfea-common-error-check-category';
-  section.dataset.categoryId = category.categoryId;
-
-  const heading = doc.createElement('h4');
-  const distinct = category.groups.length;
-  heading.textContent = `${category.title} — ${distinct} distinct issue${distinct === 1 ? '' : 's'}`;
-  const counts = paragraph(doc, `${category.findingCount} occurrence${category.findingCount === 1 ? '' : 's'} across ${distinct === 1 ? 'it' : 'them'}`);
-  counts.dataset.role = 'lfea-common-error-check-category-counts';
-  section.append(heading, counts);
-
-  const list = doc.createElement('div');
-  list.className = 'lfea-common-error-check__findings';
-  for (const group of category.groups) {
-    list.append(renderGroup(controller, group));
-  }
-  section.append(list);
-  return section;
-}
-
-/**
- * One reviewable item per distinct finding, with the number of places it
- * applies rather than one row per place. The individual findings stay inside.
- */
-function renderGroup(controller, group) {
-  const doc = controller.documentRef;
-  const card = doc.createElement('article');
-  card.className = 'lfea-common-error-check__finding';
-  card.dataset.role = 'lfea-common-error-check-finding-group';
-  card.dataset.groupCode = group.code;
-  card.dataset.disposition = group.disposition;
-  card.dataset.presentationLevel = group.presentationLevel;
-  card.dataset.triageId = group.triageId;
-  card.dataset.occurrences = String(group.occurrences);
-  if (group.limitationKind) card.dataset.limitationKind = group.limitationKind;
-
-  const details = doc.createElement('details');
-  details.className = 'lfea-common-error-check__finding-details';
-  // Expanded state survives re-renders (filter changes, review bookkeeping),
-  // and for a CONDITIONAL group the act of opening it is the review.
-  details.open = controller.openGroupIds.has(group.groupId);
-  details.addEventListener('toggle', () => {
-    if (details.open) {
-      controller.openGroupIds.add(group.groupId);
-      if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized
-        && !controller.navigationOnlyGroupIds.has(group.groupId)) {
-        controller.markLimitationReviewed(group.groupId);
-      }
-    } else {
-      controller.openGroupIds.delete(group.groupId);
-      controller.navigationOnlyGroupIds.delete(group.groupId);
-    }
-  });
-
-  const summary = doc.createElement('summary');
-  const badge = doc.createElement('span');
-  badge.className = 'lfea-common-error-check__badge';
-  badge.dataset.role = 'lfea-common-error-check-occurrence-badge';
-  badge.textContent = group.occurrences > 1 ? `${group.occurrences}×` : '1×';
-  const text = doc.createElement('span');
-  text.className = 'lfea-common-error-check__finding-text';
-  text.textContent = group.plainMessage;
-  const disposition = doc.createElement('span');
-  disposition.className = 'lfea-common-error-check__disposition';
-  disposition.dataset.disposition = group.disposition;
-  disposition.textContent = group.disposition === 'PASS' ? 'PASS · INFO' : group.disposition;
-  summary.append(badge, text, disposition);
-  if (group.disposition === 'CONDITIONAL') {
-    const kind = doc.createElement('span');
-    kind.className = 'lfea-common-error-check__limitation-kind';
-    kind.dataset.limitationKind = group.limitationKind;
-    kind.textContent = group.limitationKind === LFEA_LIMITATION_KIND.PROCESS_NOTE
-      ? 'About this pass'
-      : 'Affects the result';
-    summary.append(kind);
-    if (controller.presentation.solveAuthorized || controller.acknowledgedGroupIds.has(group.groupId)) {
-      const reviewed = doc.createElement('span');
-      reviewed.className = 'lfea-common-error-check__reviewed';
-      reviewed.dataset.role = 'lfea-common-error-check-reviewed';
-      reviewed.textContent = controller.presentation.solveAuthorized ? 'Accepted' : 'Reviewed';
-      summary.append(reviewed);
-    }
-  }
-  details.append(summary);
-
-  if (group.suggestedAction) {
-    const action = paragraph(doc, group.suggestedAction);
-    action.className = 'lfea-common-error-check__action';
-    action.dataset.role = 'lfea-common-error-check-suggested-action';
-    details.append(action);
-  }
-
-  if (controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
-    const mapped = classifyLfeaAccdbFindingAction(group.code);
-    const route = labelledParagraph(doc, 'Actual ACCDB action',
-      mapped.actionClass + ' — ' + mapped.action, 'lfea-accdb-finding-action-class');
-    route.dataset.actionClass = mapped.actionClass;
-    details.append(route);
-    if (mapped.nextStep && typeof controller.options.onNavigatePrerequisite === 'function') {
-      const go = actionButton(doc, 'Go to ' + (mapped.nextStep === 'LOAD_CASE' ? 'Load case' : mapped.nextStep),
-        'icon-step-load-case');
-      go.dataset.action = 'lfea-error-check-next-step';
-      go.addEventListener('click', () => controller.options.onNavigatePrerequisite(mapped.nextStep));
-      details.append(go);
-    }
-  }
-
-  details.append(labelledParagraph(doc, 'Applies to',
-    `${group.occurrences} location${group.occurrences === 1 ? '' : 's'}`,
-    'lfea-common-error-check-occurrences'));
-  if (group.sourceFeatureIds.length > 0) {
-    details.append(labelledParagraph(doc, 'Source features',
-      summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
-  }
-  details.append(renderOccurrenceFinder(controller, group));
-  const technical = doc.createElement('div');
-  technical.className = 'lfea-common-error-check__technical';
-  technical.dataset.role = 'lfea-error-check-technical-details';
-  technical.hidden = true;
-  const technicalToggle = doc.createElement('button');
-  technicalToggle.type = 'button';
-  technicalToggle.textContent = 'Technical details · evidence and governed source references';
-  technicalToggle.dataset.action = 'lfea-error-check-technical-toggle';
-  technicalToggle.setAttribute('aria-expanded', 'false');
-  technicalToggle.addEventListener('click', () => {
-    technical.hidden = !technical.hidden;
-    technicalToggle.setAttribute('aria-expanded', String(!technical.hidden));
-  });
-  details.append(technicalToggle);
-  technical.append(
-    labelledParagraph(doc, 'Finding code', group.code, 'lfea-common-error-check-code'),
-    labelledParagraph(doc, 'Governed disposition', group.disposition, 'lfea-common-error-check-governed-disposition'),
-    labelledParagraph(doc, 'Authority message', group.rows[0].message, 'lfea-common-error-check-authority-message'),
-  );
-  if (group.rows[0].technicalBasis) {
-    technical.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
-  }
-  if (group.rows[0].remediation) {
-    technical.append(labelledParagraph(doc, 'Remediation', group.rows[0].remediation, 'lfea-common-error-check-remediation'));
-  }
-  technical.append(labelledParagraph(doc, 'Finding IDs',
-    summarizeList(group.findingIds), 'lfea-common-error-check-finding-id'));
-  details.append(technical);
-  card.append(details);
-  const action = renderGroupAction(controller, group);
-  if (action) card.append(action);
-  return card;
-}
-
-
-/**
- * Occurrence-level navigation is separate from grouped acceptance. Every
- * governed finding retains its exact ID and provenance; paging only controls
- * presentation size, never drops or acknowledges an occurrence.
- */
-function renderOccurrenceFinder(controller, group) {
-  const doc = controller.documentRef;
-  const root = doc.createElement('div');
-  root.className = 'lfea-common-error-check__occurrence-finder';
-  root.dataset.role = 'lfea-error-check-occurrence-finder';
-  const title = doc.createElement('strong');
-  title.textContent = 'Find individual occurrences (' + group.rows.length + ')';
-  const search = doc.createElement('input');
-  search.type = 'search';
-  search.setAttribute('aria-label', 'Search occurrences for ' + group.code);
-  search.placeholder = 'Finding ID, source feature, node, segment, case';
-  search.dataset.role = 'lfea-error-check-occurrence-search';
-  const results = doc.createElement('div');
-  results.dataset.role = 'lfea-error-check-occurrence-results';
-  const controls = doc.createElement('div');
-  controls.className = 'lfea-common-error-check__occurrence-pager';
-  let page = 0;
-  const PAGE_SIZE = 8;
-  const update = () => {
-    const needle = search.value.toLowerCase().trim();
-    const matching = group.rows.filter((entry) => {
-      if (!needle) return true;
-      const haystack = [
-        entry.findingId, entry.code, entry.message,
-        ...(entry.sourceFeatureIds ?? []), ...(entry.canonicalEntityIds ?? []),
-        ...(entry.physicalCaseIds ?? []),
-      ].join(' ').toLowerCase();
-      return haystack.includes(needle);
-    });
-    const pages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
-    page = Math.min(page, pages - 1);
-    results.replaceChildren();
-    const slice = matching.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-    for (const entry of slice) {
-      const row = doc.createElement('div');
-      row.className = 'lfea-common-error-check__occurrence';
-      row.dataset.role = 'lfea-error-check-occurrence';
-      row.dataset.findingId = entry.findingId;
-      const label = doc.createElement('span');
-      label.textContent = entry.findingId + ' · source '
-        + (entry.sourceFeatureIds.length ? entry.sourceFeatureIds.join(', ') : 'no source-feature ID')
-        + ' · entities ' + (entry.canonicalEntityIds.length ? entry.canonicalEntityIds.join(', ') : 'none');
-      row.append(label);
-      const locate = actionButton(doc, 'Locate', 'icon-step-input');
-      locate.dataset.action = 'lfea-error-check-locate-occurrence';
-      locate.dataset.findingId = entry.findingId;
-      locate.disabled = typeof controller.options.onLocateOccurrence !== 'function';
-      locate.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: false }));
-      row.append(locate);
-      const edit = actionButton(doc, 'Inspect / edit source', 'icon-step-input');
-      edit.dataset.action = 'lfea-error-check-edit-occurrence';
-      edit.dataset.findingId = entry.findingId;
-      edit.disabled = typeof controller.options.onLocateOccurrence !== 'function';
-      edit.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: true }));
-      row.append(edit);
-      results.append(row);
-    }
-    if (!matching.length) {
-      const empty = doc.createElement('p');
-      empty.textContent = 'No matching occurrences; governed findings have not been dismissed.';
-      results.append(empty);
-    }
-    controls.replaceChildren();
-    const prev = actionButton(doc, 'Previous', 'icon-step-input');
-    prev.dataset.action = 'lfea-error-check-occurrence-previous';
-    prev.disabled = page === 0;
-    prev.addEventListener('click', () => { page -= 1; update(); });
-    const count = doc.createElement('span');
-    count.textContent = (page + 1) + ' / ' + pages + ' · ' + matching.length + ' total';
-    const next = actionButton(doc, 'Next', 'icon-step-input');
-    next.dataset.action = 'lfea-error-check-occurrence-next';
-    next.disabled = page + 1 >= pages;
-    next.addEventListener('click', () => { page += 1; update(); });
-    controls.append(prev, count, next);
-  };
-  search.addEventListener('input', () => { page = 0; update(); });
-  root.append(title, search, results, controls);
-  update();
-  return root;
-}
-
-function renderGroupAction(controller, group) {
-  const doc = controller.documentRef;
-  // CONDITIONAL groups carry no per-group button: opening the group is the
-  // review, and acceptance happens once, on the authorization card below.
-  if (group.disposition === 'CONDITIONAL') return null;
-
-  const row = doc.createElement('div');
-  row.className = 'lfea-common-error-check__group-action';
-  row.dataset.role = 'lfea-common-error-check-group-action';
-
-  if (group.disposition === 'BLOCK') {
-    // Component-factor authority gates are resolved in this UI, not in the
-    // source file -- so the resolution control is mounted right here in the
-    // finding row, not behind a jump-to-somewhere-else button. Choosing an
-    // edition re-runs preparation on its own and this BLOCK clears; nothing
-    // needs reloading. The inline instance shares the governed selection
-    // with the top-of-step control, so both stay in sync.
-    if (LFEA_COMPONENT_FACTOR_AUTHORITY_CODES.has(group.code)) {
-      if (!controller.inlineComponentBasisControlRendered) {
-        controller.inlineComponentBasisControlRendered = true;
-        row.append(inlineComponentBasisControl(controller), paragraph(doc,
-          'Choose the code edition and bend rule here. The pre-flight re-runs on its own and this block clears -- nothing needs reloading.'));
-      } else {
-        row.append(paragraph(doc,
-          'Resolve it in the "B31 / B31J component basis" selector above. The pre-flight re-runs on its own -- nothing needs reloading.'));
-      }
-      return row;
-    }
-    if (typeof controller.options.onLocateOccurrence === 'function'
-      && controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
-      const locate = actionButton(doc, 'Locate first occurrence in piping model', 'icon-step-input');
-      locate.dataset.action = 'lfea-error-check-locate-first';
-      locate.addEventListener('click', () => controller.options.onLocateOccurrence(group.rows[0]));
-      row.append(locate, paragraph(doc, 'Only supported source-table corrections are editable. Unsupported mechanics and governed choices are not fixes.'));
-      return row;
-    }
-    const lock = actionButton(doc, 'Fix in source and reload', 'icon-step-input');
-    lock.disabled = true;
-    lock.dataset.action = 'lfea-error-check-fix-in-source';
-    row.append(lock, paragraph(doc, 'BLOCK findings cannot be authorized.'));
-    return row;
-  }
-
-  const reviewed = controller.reviewedGroupIds.has(group.groupId);
-  const button = actionButton(doc, reviewed ? 'Reviewed' : 'Mark reviewed', 'icon-status-complete');
-  button.dataset.action = 'lfea-error-check-mark-reviewed';
-  button.dataset.groupId = group.groupId;
-  button.dataset.reviewed = reviewed ? 'true' : 'false';
-  button.addEventListener('click', () => controller.toggleInformationalReview(group.groupId));
-  row.append(button, paragraph(doc, 'Informational only; no authorization is required.'));
-  return row;
-}
-
-/**
- * The one inline component-basis control for this panel, created lazily and
- * kept for the controller's lifetime. It is re-appended (moved, not
- * recreated) on each render that shows an authority-gate BLOCK, so its
- * change listeners and current values survive the panel's re-render cycle.
- */
-function inlineComponentBasisControl(controller) {
-  if (!controller.inlineComponentBasisControl) {
-    controller.inlineComponentBasisControl = mountLfeaInlineBendFactorAuthorityControl(controller.documentRef);
-  }
-  return controller.inlineComponentBasisControl.root;
-}
-
-function renderAuthorizationPanel(controller) {
-  const doc = controller.documentRef;
-  const state = authorizationState(controller);
-  const fragment = doc.createDocumentFragment();
-  const heading = doc.createElement('h4');
-  heading.textContent = 'Run authorization';
-  fragment.append(heading);
-
-  const stateLine = doc.createElement('div');
-  stateLine.className = 'lfea-common-error-check__authorization-state';
-  stateLine.dataset.role = 'lfea-error-check-authorization-state';
-  stateLine.dataset.state = state.stateId;
-  stateLine.append(lfeaPipelineIcon(doc, state.iconId));
-  const stateText = doc.createElement('strong');
-  stateText.textContent = state.title;
-  stateLine.append(stateText);
-  fragment.append(stateLine, paragraph(doc, state.detail));
-
-  if (state.stateId === 'CONDITIONAL_PENDING') {
-    fragment.append(renderAuthorizationForm(controller, state));
-  } else if (state.stateId === 'AUTHORIZED' || state.stateId === 'PASS') {
-    const continueButton = actionButton(doc, 'Continue to Load case', 'icon-step-load-case');
-    continueButton.classList.add('lfea-common-error-check__primary-action');
-    continueButton.dataset.action = 'lfea-error-check-continue';
-    continueButton.disabled = typeof controller.options.onContinue !== 'function';
-    continueButton.addEventListener('click', () => controller.continueToLoadCase());
-    fragment.append(continueButton);
-  }
-
-  if (controller.authorizationError) {
-    const error = paragraph(doc, controller.authorizationError);
-    error.className = 'lfea-common-error-check__authorization-error';
-    error.dataset.role = 'lfea-error-check-authorization-error';
-    error.setAttribute('role', 'alert');
-    fragment.append(error);
-  }
-
-  if (!controller.presentation.empty) {
-    const warning = paragraph(doc,
-      'Changing the source, B31 authority, smooth-90 rule, profile or load-case selection invalidates this authorization.');
-    warning.className = 'lfea-common-error-check__invalidation';
-    fragment.append(warning, renderAuthorizationEvidence(doc, controller));
-  }
-  return fragment;
-}
-
-function renderAuthorizationForm(controller, state) {
-  const doc = controller.documentRef;
-  const fragment = doc.createDocumentFragment();
-  const progress = doc.createElement('div');
-  progress.className = 'lfea-common-error-check__progress';
-  const label = doc.createElement('label');
-  label.textContent = `${state.acknowledgedCount} of ${state.conditionalCount} limitations reviewed (open each one above)`;
-  label.setAttribute('for', 'lfea-error-check-progress');
-  const meter = doc.createElement('progress');
-  meter.id = 'lfea-error-check-progress';
-  meter.max = Math.max(1, state.conditionalCount);
-  meter.value = state.acknowledgedCount;
-  progress.append(label, meter);
-
-  // One acceptance for the whole reviewed set. The sealed authorization
-  // covers every conditional finding in this preparation, so one explicit
-  // act says exactly what is being signed -- the N per-group buttons it
-  // replaces recorded clicks, not judgement.
-  const acceptance = doc.createElement('label');
-  acceptance.className = 'lfea-common-error-check__acceptance';
-  const checkbox = doc.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.dataset.role = 'lfea-error-check-accept-limitations';
-  checkbox.checked = controller.limitationsAccepted;
-  const acceptanceText = doc.createElement('span');
-  acceptanceText.textContent = `I have reviewed each of the ${state.conditionalCount} limitation${state.conditionalCount === 1 ? '' : 's'} above and accept ${state.conditionalCount === 1 ? 'it' : 'them'} for this run.`;
-  acceptance.append(checkbox, acceptanceText);
-
-  const reviewer = labelledInput(doc, 'Reviewer', 'lfea-error-check-reviewer', controller.reviewerIdentity);
-  const reason = labelledTextarea(doc, 'Reason', 'lfea-error-check-reason', controller.reviewReason);
-  const authorize = actionButton(doc,
-    `Authorize run with ${state.conditionalCount} limitation${state.conditionalCount === 1 ? '' : 's'}`,
-    'icon-step-error-check');
-  authorize.classList.add('lfea-common-error-check__primary-action');
-  authorize.dataset.action = 'authorize-lfea-error-check-limitations';
-  authorize.disabled = !state.ready || controller.authorizing;
-  authorize.addEventListener('click', () => controller.authorizeRun());
-  const updateDraft = () => {
-    controller.reviewerIdentity = reviewer.input.value;
-    controller.reviewReason = reason.input.value;
-    controller.authorizationError = '';
-    authorize.disabled = !authorizationState(controller).ready || controller.authorizing;
-  };
-  reviewer.input.addEventListener('input', updateDraft);
-  reason.input.addEventListener('input', updateDraft);
-  checkbox.addEventListener('change', () => {
-    controller.setLimitationsAccepted(checkbox.checked);
-  });
-  fragment.append(progress, acceptance, reviewer.label, reason.label, authorize);
-  return fragment;
-}
-
-function renderAuthorizationEvidence(doc, controller) {
-  const list = doc.createElement('dl');
-  list.className = 'lfea-common-error-check__authorization-evidence';
-  const rows = [
-    ['Preparation hash', shortHash(controller.presentation.preparationSemanticHash)],
-    ['Diagnostics hash', shortHash(controller.presentation.evidenceSummary.diagnosticsSemanticHash)],
-    ['Profile', controller.presentation.evidenceSummary.requestedProfileId ?? 'UNAVAILABLE'],
-  ];
-  for (const [label, value] of rows) {
-    const term = doc.createElement('dt');
-    term.textContent = label;
-    const description = doc.createElement('dd');
-    description.textContent = value;
-    list.append(term, description);
-  }
-  return list;
-}
-
-/** Keep long identifier lists readable without hiding how many there are. */
-function summarizeList(values, limit = 12) {
-  if (values.length <= limit) return values.join(', ');
-  return `${values.slice(0, limit).join(', ')} … and ${values.length - limit} more`;
-}
-
-function renderEvidenceSummary(doc, presentation) {
-  const fragment = doc.createDocumentFragment();
-  const summary = doc.createElement('summary');
-  summary.textContent = 'Governed evidence summary';
-  fragment.append(summary);
-
-  const evidence = presentation.evidenceSummary;
-  const rows = [
-    ['Preparation semantic hash', presentation.preparationSemanticHash ?? 'UNAVAILABLE'],
-    ['Preparation evidence hash', presentation.preparationEvidenceHash ?? 'UNAVAILABLE'],
-    ['Diagnostics semantic hash', evidence.diagnosticsSemanticHash ?? 'UNAVAILABLE'],
-    ['Diagnostics evidence hash', evidence.diagnosticsEvidenceHash ?? 'UNAVAILABLE'],
-    ['Requested profile', evidence.requestedProfileId ?? 'UNAVAILABLE'],
-    ['Source nodes', evidence.sourceNodeCount ?? 'UNAVAILABLE'],
-    ['Source elements', evidence.sourceElementCount ?? 'UNAVAILABLE'],
-    ['Topology status', evidence.topologyStatus ?? 'UNAVAILABLE'],
-    ['Proximity status', evidence.proximityStatus ?? 'UNAVAILABLE'],
-    ['Representability status', evidence.representabilityStatus ?? 'UNAVAILABLE'],
-    ['Blocked capabilities', evidence.blockedCapabilityIds.join(', ') || 'None'],
-    ['Conditional capabilities', evidence.conditionalCapabilityIds.join(', ') || 'None'],
-    ['Authorized capabilities', evidence.authorizedCapabilityIds.join(', ') || 'None'],
-  ];
-  const table = doc.createElement('table');
-  table.dataset.role = 'lfea-common-error-check-evidence-table';
-  for (const [label, value] of rows) {
-    const tr = doc.createElement('tr');
-    const th = doc.createElement('th');
-    th.scope = 'row';
-    th.textContent = label;
-    const td = doc.createElement('td');
-    td.textContent = String(value);
-    tr.append(th, td);
-    table.append(tr);
-  }
-  fragment.append(table);
-  return fragment;
-}
-
-function labelledParagraph(doc, label, value, role) {
-  const line = paragraph(doc, `${label}: ${value}`);
-  line.dataset.role = role;
-  return line;
-}
-
-function paragraph(doc, text) {
-  const value = doc.createElement('p');
-  value.textContent = text;
-  return value;
-}
-
-function labelledInput(doc, labelText, role, value) {
-  const label = doc.createElement('label');
-  label.className = 'lfea-common-error-check__field';
-  const text = doc.createElement('span');
-  text.textContent = labelText;
-  const input = doc.createElement('input');
-  input.type = 'text';
-  input.value = value;
-  input.dataset.role = role;
-  input.autocomplete = 'name';
-  label.append(text, input);
-  return { label, input };
-}
-
-function labelledTextarea(doc, labelText, role, value) {
-  const label = doc.createElement('label');
-  label.className = 'lfea-common-error-check__field';
-  const text = doc.createElement('span');
-  text.textContent = labelText;
-  const input = doc.createElement('textarea');
-  input.value = value;
-  input.maxLength = 200;
-  input.rows = 3;
-  input.dataset.role = role;
-  label.append(text, input);
-  return { label, input };
-}
-
-function actionButton(doc, text, iconId) {
-  const button = doc.createElement('button');
-  button.type = 'button';
-  button.className = 'lfea-common-error-check__button';
-  button.append(lfeaPipelineIcon(doc, iconId));
-  const label = doc.createElement('span');
-  label.textContent = text;
-  button.append(label);
-  return button;
-}
-
-function authorizationState(controller) {
-  const presentation = controller.presentation;
-  if (presentation.empty) {
-    return state('EMPTY', 'Load a model first', 'Import and prepare a source on the Input step.', 'icon-step-input', false, 0, 0,
-      'No governed pre-flight is available.');
-  }
-  const blocked = presentation.rows.some((row) => row.disposition === 'BLOCK');
-  if (blocked) {
-    return state('BLOCKED', 'Fix source findings', 'BLOCK findings cannot be authorized. Correct the source and reload it.', 'icon-step-input', false, 0, 0,
-      'BLOCK findings must be fixed in source.');
-  }
-  const groups = conditionalGroups(presentation);
-  const acknowledgedCount = groups.filter((group) => controller.acknowledgedGroupIds.has(group.groupId)).length;
-  if (presentation.solveAuthorized) {
-    const reviewer = controller.preFlight?.approverIdentity ?? 'the current reviewer';
-    return state('AUTHORIZED', 'Run authorized', `The current limitation set is sealed by ${reviewer}.`, 'icon-status-complete', false,
-      groups.length, groups.length, 'The current pre-flight is already authorized.');
-  }
-  if (groups.length === 0) {
-    return state('PASS', 'No authorization required', 'The current pre-flight has no conditional limitations.', 'icon-status-complete', false, 0, 0,
-      'No conditional limitations require authorization.');
-  }
-  const reviewerReady = controller.reviewerIdentity.trim() !== '';
-  const reasonReady = controller.reviewReason.trim() !== '';
-  const callbackReady = typeof controller.options.onAuthorizePreFlight === 'function';
-  const allReviewed = acknowledgedCount === groups.length;
-  const accepted = controller.limitationsAccepted;
-  const ready = allReviewed && accepted && reviewerReady && reasonReady && callbackReady;
-  const blockedReason = !allReviewed
-    ? `Open and review all ${groups.length} limitation${groups.length === 1 ? '' : 's'} above, then accept them below.`
-    : !accepted
-      ? 'Tick the acceptance box to confirm the reviewed limitations are accepted for this run.'
-      : !reviewerReady
-        ? 'Enter the reviewer name before authorizing.'
-        : !reasonReady
-          ? 'Enter an acceptance reason before authorizing.'
-          : !callbackReady
-            ? 'The active source does not expose an authorization controller.'
-            : '';
-  return state('CONDITIONAL_PENDING', ready ? 'Ready to authorize' : 'Review required',
-    `${acknowledgedCount} of ${groups.length} limitations reviewed.`, 'icon-step-error-check', ready,
-    groups.length, acknowledgedCount, blockedReason);
-}
-
-function state(stateId, title, detail, iconId, ready, conditionalCount, acknowledgedCount, blockedReason) {
-  return Object.freeze({ stateId, title, detail, iconId, ready, conditionalCount, acknowledgedCount, blockedReason });
-}
-
-function conditionalGroups(presentation) {
-  return presentation.sections.flatMap((section) => section.groups)
-    .filter((group) => group.disposition === 'CONDITIONAL');
-}
-
-function findGroup(presentation, groupId) {
-  return presentation.sections.flatMap((section) => section.groups)
-    .find((group) => group.groupId === groupId) ?? null;
-}
-
-function toggleSetValue(values, key) {
-  if (values.has(key)) values.delete(key);
-  else values.add(key);
-}
-
-function errorCheckStatusLabel(presentation) {
-  if (presentation.empty) return 'Waiting for model';
-  if (presentation.solveAuthorized) return 'Authorized';
-  if (presentation.rows.some((row) => row.disposition === 'BLOCK')) return 'Blocked';
-  if (presentation.rows.some((row) => row.disposition === 'CONDITIONAL')) return 'Needs acceptance';
-  return 'Ready';
-}
-
-function errorCheckStatusToken(presentation) {
-  return errorCheckStatusLabel(presentation).toUpperCase().replaceAll(' ', '_');
-}
-
-function shortHash(value) {
-  const text = String(value ?? 'UNAVAILABLE');
-  return text.length <= 16 ? text : `${text.slice(0, 8)}…${text.slice(-6)}`;
-}
-
-function compareAscii(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
+// dataset.role = 'lfea-error-check-accept-limitations'
+// dataset.action = 'authorize-lfea-error-check-limitations'

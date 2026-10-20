@@ -63,7 +63,13 @@ export function requireAccdbFieldOverrideSet(value) {
       throw new TypeError(`ACCDB element ${accdbElementId} declares ${field} more than once; resolve the intent before applying.`);
     }
     seen.add(key);
-    return Object.freeze({ accdbElementId, field, rawValue: requireRawValue(entry.rawValue, spec, accdbElementId) });
+    return Object.freeze({
+      accdbElementId,
+      field,
+      rawValue: requireRawValue(entry.rawValue, spec, accdbElementId),
+      approver: entry.approver ? requireText(entry.approver, 'approver') : undefined,
+      reason: entry.reason ? requireText(entry.reason, 'reason') : undefined,
+    });
   });
   return Object.freeze({
     schema: ACCDB_FIELD_OVERRIDE_SET_SCHEMA,
@@ -98,17 +104,19 @@ export function applyAccdbFieldOverrides(tables, overrideSet) {
     }
     const originalRawValue = rows[index][override.field] ?? null;
     rows[index][override.field] = override.rawValue;
+    const itemApprover = override.approver || accepted.approver;
+    const itemReason = override.reason || accepted.reason;
     disclosures.push(Object.freeze({
       severity: 'info',
       code: 'ACCDB_FIELD_OVERRIDDEN_BY_ENGINEER',
-      message: `Element ${override.accdbElementId} field ${override.field} was overridden from ${String(originalRawValue)} to ${String(override.rawValue)} by ${accepted.approver}.`,
+      message: `Element ${override.accdbElementId} field ${override.field} was overridden from ${String(originalRawValue)} to ${String(override.rawValue)} by ${itemApprover}.`,
       data: Object.freeze({
         accdbElementId: override.accdbElementId,
         field: override.field,
         originalRawValue,
         overrideRawValue: override.rawValue,
-        approver: accepted.approver,
-        reason: accepted.reason,
+        approver: itemApprover,
+        reason: itemReason,
       }),
     }));
   }

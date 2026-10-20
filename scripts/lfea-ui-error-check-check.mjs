@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { readAccdbOwnerSource } from './lfea-accdb-owner-source.mjs';
 import fs from 'node:fs';
 import {
   buildLfeaErrorCheckPresentation,
@@ -120,10 +121,7 @@ const acquisitionCss = fs.readFileSync(
   'utf8',
 );
 const mainSource = fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-const accdbPanelSource = fs.readFileSync(
-  new URL('../src/workspace/lfea-pipeline-accdb-input-panel.js', import.meta.url),
-  'utf8',
-);
+const accdbPanelSource = readAccdbOwnerSource();
 
 assert.match(presentationSource, /buildLfeaDiagnosticPresentation\(preFlight, options\)/u);
 assert.doesNotMatch(presentationSource, /capabilityEffects|message\.includes|severity\s*===/u);

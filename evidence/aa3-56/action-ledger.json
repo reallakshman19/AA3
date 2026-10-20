@@ -1,0 +1,68 @@
+[
+  {
+    "action": "click",
+    "target": "button[data-application-nav=\"LFEA\"]",
+    "detail": "Switch to LFEA",
+    "time": "2026-10-20T12:27:51.183Z"
+  },
+  {
+    "action": "click",
+    "target": "ref-bm4l",
+    "detail": "Load BM4_L reference",
+    "time": "2026-10-20T12:27:51.268Z"
+  },
+  {
+    "action": "click",
+    "target": "step-ERROR_CHECK",
+    "detail": "Navigate to Error Check",
+    "time": "2026-10-20T12:27:53.635Z"
+  },
+  {
+    "action": "click",
+    "target": "prepare-prototype",
+    "detail": "Click 1/7",
+    "time": "2026-10-20T12:27:55.856Z"
+  },
+  {
+    "action": "click",
+    "target": "use-preset",
+    "detail": "Click 2/7",
+    "time": "2026-10-20T12:27:55.918Z"
+  },
+  {
+    "action": "click",
+    "target": "preview-changes",
+    "detail": "Click 3/7",
+    "time": "2026-10-20T12:27:58.673Z"
+  },
+  {
+    "action": "click",
+    "target": "apply-and-recheck",
+    "detail": "Click 4/7",
+    "time": "2026-10-20T12:28:01.433Z"
+  },
+  {
+    "action": "click",
+    "target": "review-together",
+    "detail": "Click 5/7",
+    "time": "2026-10-20T12:28:01.502Z"
+  },
+  {
+    "action": "click",
+    "target": "accept-limitations",
+    "detail": "Click 6/7 (with confirmed reviewer and reason)",
+    "time": "2026-10-20T12:28:02.326Z"
+  },
+  {
+    "action": "click",
+    "target": "run-prototype",
+    "detail": "Click 7/7: Solves exact requested cases",
+    "time": "2026-10-20T12:28:03.869Z"
+  },
+  {
+    "action": "click",
+    "target": "view-ELEMENT_FORCES",
+    "detail": "Switch to Element forces view",
+    "time": "2026-10-20T12:28:04.061Z"
+  }
+]

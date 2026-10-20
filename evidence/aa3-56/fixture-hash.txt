@@ -1,0 +1,12 @@
+Authentic Fixture Verification Log
+===================================
+File: benchmarks/LFEA/BM4/BM4_L/BM4_L.ACCDB
+Expected Bytes: 5136384
+Actual Bytes: 5136384
+Expected SHA-256: 64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8
+Actual SHA-256:   64c05a50e9ed0452622ff5880335460486f24ac8e6adecc9a300b549c9aa82f8
+Status: PASS (Byte-for-byte authentic and immutable)
+Base Git Commit: f26689a22598bc2c374c335a821d87d83493a02d
+Candidate HEAD:  f26689a22598bc2c374c335a821d87d83493a02d
+Branch: feat/issue-56-error-check-workbench
+Verified At: 2026-10-20T05:22:00Z

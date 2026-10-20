@@ -16,6 +16,35 @@ import { mountLfeaResultsAuthorityPanel } from './lfea-results-authority/lfea-re
 /** Shared presentation surface for the LFEA pipeline. */
 export function mountLfeaPipelineAnalysisSurface(options) {
   const analysisController = createLfeaPipelineAnalysisController({});
+  const safeExportCsv = (csvText, fileName) => {
+    if (typeof document !== 'undefined') {
+      const doc = options.documentRef ?? document;
+      const view = doc.defaultView;
+      const urlApi = view?.URL;
+      if (urlApi?.createObjectURL && typeof view.Blob === 'function') {
+        const url = urlApi.createObjectURL(new view.Blob([csvText], { type: 'text/csv;charset=utf-8' }));
+        const anchor = doc.createElement('a');
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.hidden = true;
+        const parent = doc.body ?? doc.documentElement;
+        parent?.append(anchor);
+        try {
+          anchor.click();
+        } finally {
+          anchor.remove();
+          if (view?.setTimeout) {
+            view.setTimeout(() => urlApi.revokeObjectURL(url), 1000);
+          } else {
+            urlApi.revokeObjectURL(url);
+          }
+        }
+        return true;
+      }
+    }
+    return options.onExportCsv?.(csvText, fileName);
+  };
+
   const caseSelectionPanel = mountLfeaPipelineCaseSelectionPanel(options.loadCaseHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
@@ -23,7 +52,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   });
   const layoutPanel = mountLfeaPipelineLayoutPanel(options.loadCaseHost, { documentRef: options.documentRef, getPreFlight: options.getPreFlight });
   const loadCaseAuthoringPanel = mountLfeaPipelineLoadCaseAuthoringPanel(options.loadCaseHost, { documentRef: options.documentRef, getNodeIds: options.getNodeIds });
-  const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, { documentRef: options.documentRef, onExportCsv: options.onExportCsv });
+  const resultsPanel = mountLfeaPipelineResultsPanel(options.resultsHost, { documentRef: options.documentRef, onExportCsv: safeExportCsv });
   const runPanel = mountLfeaPipelineRunPanel(options.resultsHost, {
     documentRef: options.documentRef,
     getPreFlight: options.getPreFlight,
@@ -33,7 +62,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
   const exportPanel = mountLfeaPipelineExportPanel(options.resultsHost, {
     documentRef: options.documentRef,
     getResultsPanel: () => resultsPanel,
-    onExportCsv: options.onExportCsv,
+    onExportCsv: safeExportCsv,
     onExportCompleted: options.onExportCompleted,
   });
   const resultsAuthorityPanel = mountLfeaResultsAuthorityPanel(options.resultsHost, { documentRef: options.documentRef });
@@ -55,6 +84,19 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     onContinue: options.onContinueFromErrorCheck,
     onNavigatePrerequisite: options.onNavigatePrerequisite,
     onLocateOccurrence: (finding, locateOptions) => repairWorkspace?.locateOccurrence(finding, locateOptions),
+    onAnalyze: options.onAnalyze,
+    getAccdbController: options.getAccdbRepairController,
+    onRunPrototype: (caseIds) => {
+      const pre = options.getPreFlight?.();
+      const cases = caseIds ?? pre?.preparation?.requestedCaseIds ?? ['IXP-W'];
+      if (typeof options.onAnalyze === 'function') {
+        const result = options.onAnalyze(cases);
+        options.sourceHost?.dispatchEvent(new CustomEvent('lfea-pipeline-analysis-completed', { bubbles: true }));
+        return result;
+      }
+      options.onContinueFromErrorCheck?.();
+      return null;
+    },
   });
   repairWorkspace = mountLfeaAccdbRepairWorkspace(errorCheckPanel.getWorkspaceHost(), {
     documentRef: options.documentRef,

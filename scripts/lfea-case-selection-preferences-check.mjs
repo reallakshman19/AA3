@@ -1,3 +1,4 @@
+import { readAccdbOwnerSource } from './lfea-accdb-owner-source.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -104,7 +105,7 @@ for (const path of [
   'src/workspace/lfea-pipeline-accdb-input-panel.js',
   'src/workspace/linear-piping-inputxml-source-workflow.js',
 ]) {
-  const code = readFileSync(path, 'utf8');
+  const code = path.endsWith('lfea-pipeline-accdb-input-panel.js') ? readAccdbOwnerSource() : readFileSync(path, 'utf8');
   assert.match(code, /const applied = this\.preFlight\?\.preparation\?\.requestedCaseIds/u, path);
   assert.match(code, /return this\.getSnapshot\(\);/u);
 }

@@ -42,7 +42,7 @@ import { mergeAuthoredInputXmlLinearPhysicalCase } from './core/linear-piping-an
 import { mountLinearPipingResultsWorkbench } from './workspace/linear-piping-results-workbench.js';
 import { mountLfeaPreflightUi } from './workspace/lfea-preflight-ui.js';
 import { mountEmpiricalV3SafetyWorkbench } from './workspace/empirical-v3-safety-workbench.js';
-import { EVENT_TOPICS } from './workspace/event-topics.js';
+import { APPLICATION_EVENTS, EVENT_TOPICS } from './workspace/event-topics.js';
 import { SUPPORT_RESTRAINT_EVENTS } from './workspace/support-restraint-events.js';
 import { diagnoseAccdbCollinearBacktracks } from './core/linear-piping-analysis-consumer/accdb-collinear-backtrack-diagnosis.js';
 import { TOPOLOGY_EVENTS } from './workspace/topology-events.js';
@@ -90,7 +90,44 @@ const lfeaEngineeringSessionUnsubscribe = lfeaEngineeringSession.subscribe((_sta
   if (['SOURCE_REPLACED', 'SOURCE_CLEARED', 'PREFLIGHT_CHANGED'].includes(event?.type)) {
     invalidateLfeaDownstreamPresentation(event.type);
   }
+  refreshLfeaTopBar();
 });
+
+/**
+ * The shared Workspace dataset and benchmark badge are not LFEA's active
+ * ACCDB/source or its Run state. Reflect the selected LFEA session without
+ * changing benchmark evidence or granting any preparation authorization.
+ */
+function refreshLfeaTopBar() {
+  const active = coreWorkspace.getApplicationViewState()?.activeViewId === 'LFEA';
+  const caption = applicationRoot.querySelector('[data-role="topbar-dataset-kind"]');
+  const value = applicationRoot.querySelector('[data-role="topbar-dataset"]');
+  const benchmark = applicationRoot.querySelector('[data-role="tab-benchmark-status"]');
+  const runStatus = applicationRoot.querySelector('[data-role="lfea-topbar-run-status"]');
+  if (caption) caption.textContent = active ? 'Source: ' : 'Dataset: ';
+  if (value) {
+    const dataset = coreWorkspace.getSnapshot();
+    value.textContent = active
+      ? lfeaEngineeringSession.getState().source.fileName ?? 'None loaded'
+      : dataset?.status === 'ready' ? dataset.dataset?.datasetId || 'Unnamed' : 'None loaded';
+  }
+  if (benchmark) benchmark.hidden = active;
+  if (!runStatus) return;
+  runStatus.hidden = !active;
+  if (!active) return;
+  const state = lfeaEngineeringSession.getState();
+  const preFlight = state.preparation?.preFlight;
+  const completed = state.analysis?.result !== null && state.analysis?.result !== undefined;
+  runStatus.dataset.status = completed ? 'COMPLETED' : !state.source.fileName ? 'NO_SOURCE'
+    : preFlight?.solveAuthorized ? 'READY' : 'BLOCKED';
+  runStatus.textContent = completed
+    ? 'LFEA linear result available · code assessment separate'
+    : !state.source.fileName ? 'LFEA Run · no source'
+      : preFlight?.solveAuthorized ? 'LFEA Run · authorized, not executed'
+        : 'LFEA Run blocked · check current Error Check';
+}
+const lfeaTopBarViewUnsubscribe = EventBus.subscribe(APPLICATION_EVENTS.CHANGED, refreshLfeaTopBar);
+const lfeaTopBarWorkspaceUnsubscribe = EventBus.subscribe(EVENT_TOPICS.WORKSPACE_SNAPSHOT_CHANGED, refreshLfeaTopBar);
 
 const linearPipingInputXmlSource = mountLinearPipingInputXmlSourceWorkflow(applicationRoot, {
   documentRef: applicationRoot.ownerDocument,
@@ -143,6 +180,7 @@ lfeaAccdbInputPanel = mountLfeaPipelineAccdbInputPanel(lfeaPipelineShell.getSour
       syncLfeaAccdbEngineeringSession(snapshot);
     }
     refreshLfeaStepGuidance();
+    lfeaAnalysisSurface?.refreshSourceStep();
   },
 });
 // Direct file input changes (including provider-specific panels) supersede any
@@ -188,8 +226,12 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
       loadCaseHost: lfeaPipelineShell.getLoadCaseHost(),
       resultsHost: lfeaPipelineShell.getResultsHost(),
       getPreFlight: () => activeLfeaPreFlight(),
+      getAccdbRepairController: () =>
+        lfeaSessionPreparationOwner(lfeaEngineeringSession.getState())
+          === LFEA_ENGINEERING_PREPARATION_OWNERS.ACCDB ? lfeaAccdbInputPanel : null,
       onAuthorizePreFlight: (approval) => authorizeActiveLfeaPreFlight(approval),
       onContinueFromErrorCheck: () => lfeaPipelineShell.setActiveStep('LOAD_CASE'),
+      onNavigatePrerequisite: (stepId) => lfeaPipelineShell.setActiveStep(stepId),
       onApplyCaseSelection: (caseIds) => applyLfeaCaseSelection(caseIds),
       onAnalyze: (caseIds) => runLfeaPipelineAnalysis(caseIds),
       onExportCsv: (csvText, fileName) => downloadLfeaCsv(csvText, fileName),
@@ -230,6 +272,7 @@ const lfeaAnalysisSurfaceReady = import('./workspace/lfea-pipeline-analysis-surf
 syncLfeaEngineeringSessionFromControllers();
 lfeaStepGuidanceReady = true;
 refreshLfeaStepGuidance();
+refreshLfeaTopBar();
 const lfeaVerificationDrawer = mountLfeaPipelineVerificationDrawer(lfeaPipelineShell.getVerificationDrawerHost(), {
   documentRef: applicationRoot.ownerDocument,
 });
@@ -534,6 +577,12 @@ function runLfeaPipelineAnalysis(caseIds) {
     const state = lfeaAnalysisSurface.analysisController.analyze(preFlight, caseIds);
     lfeaEngineeringSession.bindAnalysisResult(state);
     lfeaAnalysisSurface.resultsPanel.setState(state);
+    // The previous PREFLIGHT_CHANGED message described an earlier invalid
+    // result, not this newly bound authorized execution. Replace only the
+    // toolbar's stale presentation; never change pre-flight/solver authority.
+    lfeaPipelineShell.setAssembleStatus(
+      'Current LFEA linear analysis complete for ' + state.cases.length
+        + ' selected case(s). Output is current; code assessment is separate.', false);
     lfeaPipelineShell.setStepStatus('LOAD_CASE', { complete: true });
     lfeaPipelineShell.setStepStatus('RUN', { complete: true });
     lfeaPipelineShell.setActiveStep('OUTPUT');
@@ -743,6 +792,8 @@ const workspace = Object.freeze({
   getPreflightReviewModel() { return preflightUi.getProjection(); },
   destroy() {
     lfeaEngineeringSessionUnsubscribe();
+    lfeaTopBarViewUnsubscribe();
+    lfeaTopBarWorkspaceUnsubscribe();
     preflightSubscriptions.forEach((unsubscribe) => unsubscribe());
     empiricalV3SourceSubscriptions.forEach((unsubscribe) => unsubscribe());
     clearEmpiricalV3GovernedPreparedExecution();

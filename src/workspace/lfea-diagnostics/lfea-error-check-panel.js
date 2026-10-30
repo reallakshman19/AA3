@@ -7,6 +7,7 @@ import {
   selectLfeaErrorCheckSections,
 } from './lfea-error-check-presentation.js';
 import { lfeaPipelineIcon } from '../lfea-pipeline-icon-manifest.js';
+import { classifyLfeaAccdbFindingAction } from './lfea-accdb-capability-actions.js';
 import { mountLfeaInlineBendFactorAuthorityControl } from '../lfea-bend-factor-authority-control.js';
 
 export const LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA = 'lfea-common-error-check-panel/v1';
@@ -37,6 +38,9 @@ export class LfeaCommonErrorCheckPanelController {
     this.acknowledgedGroupIds = new Set();
     this.reviewedGroupIds = new Set();
     this.openGroupIds = new Set();
+    // Inspector-to-finding navigation is inspection, not an engineer's
+    // deliberate review act or current-preparation acceptance.
+    this.navigationOnlyGroupIds = new Set();
     this.limitationsAccepted = false;
     this.preparationIdentity = null;
     this.reviewerIdentity = '';
@@ -66,6 +70,7 @@ export class LfeaCommonErrorCheckPanelController {
       this.acknowledgedGroupIds.clear();
       this.reviewedGroupIds.clear();
       this.openGroupIds.clear();
+      this.navigationOnlyGroupIds.clear();
       this.limitationsAccepted = false;
       this.reviewerIdentity = '';
       this.reviewReason = '';
@@ -88,6 +93,49 @@ export class LfeaCommonErrorCheckPanelController {
     this.activeCategory = token;
     this.render();
     return this.getSnapshot();
+  }
+
+  /**
+   * Reveal a SOURCE-inspector related finding in the current governed
+   * occurrence list. This never relocates the inspector's source selection,
+   * fabricates a locator, or marks a CONDITIONAL finding reviewed.
+   * A stale preparation or unknown finding fails closed.
+   */
+  revealOccurrence(findingId, expectedPreparationHash) {
+    if (!expectedPreparationHash
+      || this.presentation.preparationSemanticHash !== expectedPreparationHash) {
+      throw new TypeError('Stale related finding: the preparation has changed. Inspect current Error Check findings.');
+    }
+    const id = String(findingId ?? '');
+    const matches = this.presentation.rows.filter((row) => row.findingId === id);
+    if (matches.length !== 1) {
+      throw new TypeError('Related finding ID is missing from the current governed preparation; no guessed occurrence was opened.');
+    }
+    const category = this.presentation.sections.find((section) =>
+      section.rows.some((row) => row.findingId === id));
+    const group = category?.groups.find((entry) => entry.findingIds.includes(id));
+    if (!category || !group) {
+      throw new TypeError('Related finding has no unique current Error Check group.');
+    }
+    this.activeCategory = category.categoryId;
+    this.openGroupIds.add(group.groupId);
+    this.navigationOnlyGroupIds.add(group.groupId);
+    this.render();
+    const card = [...this.elements.body.querySelectorAll('[data-role="lfea-common-error-check-finding-group"]')]
+      .find((entry) => entry.dataset.groupCode === group.code
+        && entry.dataset.disposition === group.disposition);
+    if (!card) throw new TypeError('Current related finding group could not be rendered.');
+    const search = card.querySelector('[data-role="lfea-error-check-occurrence-search"]');
+    if (!search) throw new TypeError('Current finding occurrence search is unavailable.');
+    search.value = id;
+    search.dispatchEvent(new this.documentRef.defaultView.Event('input', { bubbles: true }));
+    const target = [...card.querySelectorAll('[data-role="lfea-error-check-occurrence"]')]
+      .find((entry) => entry.dataset.findingId === id);
+    if (!target) throw new TypeError('Related finding occurrence could not be rendered for this exact ID.');
+    target.setAttribute('tabindex', '-1');
+    target.focus();
+    target.scrollIntoView?.({ block: 'nearest' });
+    return true;
   }
 
   /**
@@ -202,6 +250,8 @@ export class LfeaCommonErrorCheckPanelController {
     authorization.replaceChildren(renderAuthorizationPanel(this));
   }
 
+  getWorkspaceHost() { return this.elements?.workspaceHost ?? null; }
+
   getSnapshot() {
     return Object.freeze({
       schema: LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA,
@@ -258,16 +308,26 @@ function createElements(doc) {
   authorization.className = 'lfea-common-error-check__authorization';
   authorization.dataset.role = 'lfea-common-error-check-authorization';
 
+  const workspaceHost = doc.createElement('div');
+  workspaceHost.className = 'lfea-common-error-check__model-host';
+  workspaceHost.dataset.role = 'lfea-common-error-check-model-host';
+
   const content = doc.createElement('div');
   content.className = 'lfea-common-error-check__content';
   content.append(body, authorization);
+
+  // Side-by-side: model canvas on the left, grouped findings on the right.
+  const main = doc.createElement('div');
+  main.className = 'lfea-common-error-check__main';
+  main.dataset.role = 'lfea-common-error-check-main';
+  main.append(workspaceHost, content);
 
   const evidence = doc.createElement('details');
   evidence.className = 'lfea-common-error-check__evidence';
   evidence.dataset.role = 'lfea-common-error-check-evidence';
 
-  section.append(header, filters, content, evidence);
-  return { section, summary, status, filters, body, authorization, evidence };
+  section.append(header, filters, main, evidence);
+  return { section, summary, status, filters, main, workspaceHost, body, authorization, evidence };
 }
 
 function renderFilters(controller, root) {
@@ -363,12 +423,23 @@ function renderGroup(controller, group) {
   details.open = controller.openGroupIds.has(group.groupId);
   details.addEventListener('toggle', () => {
     if (details.open) {
+      // Re-renders re-create open <details> and re-fire this event; only a
+      // genuine state change (or the explicit header button) locates the group
+      // in the model canvas. Groups opened programmatically by
+      // revealOccurrence stay navigation-only.
+      const alreadyOpen = controller.openGroupIds.has(group.groupId);
       controller.openGroupIds.add(group.groupId);
-      if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized) {
+      if (!alreadyOpen && typeof controller.options.onLocateGroup === 'function'
+        && !controller.navigationOnlyGroupIds.has(group.groupId)) {
+        controller.options.onLocateGroup(group);
+      }
+      if (group.disposition === 'CONDITIONAL' && !controller.presentation.solveAuthorized
+        && !controller.navigationOnlyGroupIds.has(group.groupId)) {
         controller.markLimitationReviewed(group.groupId);
       }
     } else {
       controller.openGroupIds.delete(group.groupId);
+      controller.navigationOnlyGroupIds.delete(group.groupId);
     }
   });
 
@@ -385,6 +456,21 @@ function renderGroup(controller, group) {
   disposition.dataset.disposition = group.disposition;
   disposition.textContent = group.disposition === 'PASS' ? 'PASS · INFO' : group.disposition;
   summary.append(badge, text, disposition);
+  if (typeof controller.options.onLocateGroup === 'function' && group.rows.length > 0) {
+    // Clicking a group shows every occurrence's exact source element in the
+    // model canvas; preventDefault keeps the click from also toggling the
+    // <details> open state (collapse never relocates the canvas).
+    const locate = actionButton(doc, 'Show all in model', 'icon-step-input');
+    locate.classList.add('lfea-common-error-check__locate-group');
+    locate.dataset.action = 'lfea-error-check-locate-group';
+    locate.dataset.groupId = group.groupId;
+    locate.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      controller.options.onLocateGroup(group);
+    });
+    summary.append(locate);
+  }
   if (group.disposition === 'CONDITIONAL') {
     const kind = doc.createElement('span');
     kind.className = 'lfea-common-error-check__limitation-kind';
@@ -410,6 +496,21 @@ function renderGroup(controller, group) {
     details.append(action);
   }
 
+  if (controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
+    const mapped = classifyLfeaAccdbFindingAction(group.code);
+    const route = labelledParagraph(doc, 'Actual ACCDB action',
+      mapped.actionClass + ' — ' + mapped.action, 'lfea-accdb-finding-action-class');
+    route.dataset.actionClass = mapped.actionClass;
+    details.append(route);
+    if (mapped.nextStep && typeof controller.options.onNavigatePrerequisite === 'function') {
+      const go = actionButton(doc, 'Go to ' + (mapped.nextStep === 'LOAD_CASE' ? 'Load case' : mapped.nextStep),
+        'icon-step-load-case');
+      go.dataset.action = 'lfea-error-check-next-step';
+      go.addEventListener('click', () => controller.options.onNavigatePrerequisite(mapped.nextStep));
+      details.append(go);
+    }
+  }
+
   details.append(labelledParagraph(doc, 'Applies to',
     `${group.occurrences} location${group.occurrences === 1 ? '' : 's'}`,
     'lfea-common-error-check-occurrences'));
@@ -417,23 +518,126 @@ function renderGroup(controller, group) {
     details.append(labelledParagraph(doc, 'Source features',
       summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
   }
-  details.append(
+  details.append(renderOccurrenceFinder(controller, group));
+  const technical = doc.createElement('div');
+  technical.className = 'lfea-common-error-check__technical';
+  technical.dataset.role = 'lfea-error-check-technical-details';
+  technical.hidden = true;
+  const technicalToggle = doc.createElement('button');
+  technicalToggle.type = 'button';
+  technicalToggle.textContent = 'Technical details · evidence and governed source references';
+  technicalToggle.dataset.action = 'lfea-error-check-technical-toggle';
+  technicalToggle.setAttribute('aria-expanded', 'false');
+  technicalToggle.addEventListener('click', () => {
+    technical.hidden = !technical.hidden;
+    technicalToggle.setAttribute('aria-expanded', String(!technical.hidden));
+  });
+  details.append(technicalToggle);
+  technical.append(
     labelledParagraph(doc, 'Finding code', group.code, 'lfea-common-error-check-code'),
     labelledParagraph(doc, 'Governed disposition', group.disposition, 'lfea-common-error-check-governed-disposition'),
     labelledParagraph(doc, 'Authority message', group.rows[0].message, 'lfea-common-error-check-authority-message'),
   );
   if (group.rows[0].technicalBasis) {
-    details.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
+    technical.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
   }
   if (group.rows[0].remediation) {
-    details.append(labelledParagraph(doc, 'Remediation', group.rows[0].remediation, 'lfea-common-error-check-remediation'));
+    technical.append(labelledParagraph(doc, 'Remediation', group.rows[0].remediation, 'lfea-common-error-check-remediation'));
   }
-  details.append(labelledParagraph(doc, 'Finding IDs',
+  technical.append(labelledParagraph(doc, 'Finding IDs',
     summarizeList(group.findingIds), 'lfea-common-error-check-finding-id'));
+  details.append(technical);
   card.append(details);
   const action = renderGroupAction(controller, group);
   if (action) card.append(action);
   return card;
+}
+
+
+/**
+ * Occurrence-level navigation is separate from grouped acceptance. Every
+ * governed finding retains its exact ID and provenance; paging only controls
+ * presentation size, never drops or acknowledges an occurrence.
+ */
+function renderOccurrenceFinder(controller, group) {
+  const doc = controller.documentRef;
+  const root = doc.createElement('div');
+  root.className = 'lfea-common-error-check__occurrence-finder';
+  root.dataset.role = 'lfea-error-check-occurrence-finder';
+  const title = doc.createElement('strong');
+  title.textContent = 'Find individual occurrences (' + group.rows.length + ')';
+  const search = doc.createElement('input');
+  search.type = 'search';
+  search.setAttribute('aria-label', 'Search occurrences for ' + group.code);
+  search.placeholder = 'Finding ID, source feature, node, segment, case';
+  search.dataset.role = 'lfea-error-check-occurrence-search';
+  const results = doc.createElement('div');
+  results.dataset.role = 'lfea-error-check-occurrence-results';
+  const controls = doc.createElement('div');
+  controls.className = 'lfea-common-error-check__occurrence-pager';
+  let page = 0;
+  const PAGE_SIZE = 8;
+  const update = () => {
+    const needle = search.value.toLowerCase().trim();
+    const matching = group.rows.filter((entry) => {
+      if (!needle) return true;
+      const haystack = [
+        entry.findingId, entry.code, entry.message,
+        ...(entry.sourceFeatureIds ?? []), ...(entry.canonicalEntityIds ?? []),
+        ...(entry.physicalCaseIds ?? []),
+      ].join(' ').toLowerCase();
+      return haystack.includes(needle);
+    });
+    const pages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+    page = Math.min(page, pages - 1);
+    results.replaceChildren();
+    const slice = matching.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+    for (const entry of slice) {
+      const row = doc.createElement('div');
+      row.className = 'lfea-common-error-check__occurrence';
+      row.dataset.role = 'lfea-error-check-occurrence';
+      row.dataset.findingId = entry.findingId;
+      const label = doc.createElement('span');
+      label.textContent = entry.findingId + ' · source '
+        + (entry.sourceFeatureIds.length ? entry.sourceFeatureIds.join(', ') : 'no source-feature ID')
+        + ' · entities ' + (entry.canonicalEntityIds.length ? entry.canonicalEntityIds.join(', ') : 'none');
+      row.append(label);
+      const locate = actionButton(doc, 'Locate', 'icon-step-input');
+      locate.dataset.action = 'lfea-error-check-locate-occurrence';
+      locate.dataset.findingId = entry.findingId;
+      locate.disabled = typeof controller.options.onLocateOccurrence !== 'function';
+      locate.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: false }));
+      row.append(locate);
+      const edit = actionButton(doc, 'Inspect / edit source', 'icon-step-input');
+      edit.dataset.action = 'lfea-error-check-edit-occurrence';
+      edit.dataset.findingId = entry.findingId;
+      edit.disabled = typeof controller.options.onLocateOccurrence !== 'function';
+      edit.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: true }));
+      row.append(edit);
+      results.append(row);
+    }
+    if (!matching.length) {
+      const empty = doc.createElement('p');
+      empty.textContent = 'No matching occurrences; governed findings have not been dismissed.';
+      results.append(empty);
+    }
+    controls.replaceChildren();
+    const prev = actionButton(doc, 'Previous', 'icon-step-input');
+    prev.dataset.action = 'lfea-error-check-occurrence-previous';
+    prev.disabled = page === 0;
+    prev.addEventListener('click', () => { page -= 1; update(); });
+    const count = doc.createElement('span');
+    count.textContent = (page + 1) + ' / ' + pages + ' · ' + matching.length + ' total';
+    const next = actionButton(doc, 'Next', 'icon-step-input');
+    next.dataset.action = 'lfea-error-check-occurrence-next';
+    next.disabled = page + 1 >= pages;
+    next.addEventListener('click', () => { page += 1; update(); });
+    controls.append(prev, count, next);
+  };
+  search.addEventListener('input', () => { page = 0; update(); });
+  root.append(title, search, results, controls);
+  update();
+  return root;
 }
 
 function renderGroupAction(controller, group) {
@@ -462,6 +666,14 @@ function renderGroupAction(controller, group) {
         row.append(paragraph(doc,
           'Resolve it in the "B31 / B31J component basis" selector above. The pre-flight re-runs on its own -- nothing needs reloading.'));
       }
+      return row;
+    }
+    if (typeof controller.options.onLocateOccurrence === 'function'
+      && controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
+      const locate = actionButton(doc, 'Locate first occurrence in piping model', 'icon-step-input');
+      locate.dataset.action = 'lfea-error-check-locate-first';
+      locate.addEventListener('click', () => controller.options.onLocateOccurrence(group.rows[0]));
+      row.append(locate, paragraph(doc, 'Only supported source-table corrections are editable. Unsupported mechanics and governed choices are not fixes.'));
       return row;
     }
     const lock = actionButton(doc, 'Fix in source and reload', 'icon-step-input');

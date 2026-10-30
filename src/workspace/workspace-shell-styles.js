@@ -22,7 +22,9 @@ export function advancedShellStyles() {
     .application-shell {
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       height: 100vh;
+      width: 100%;
       min-width: 0;
       overflow: hidden;
       background: var(--bg-dark);
@@ -54,6 +56,9 @@ export function advancedShellStyles() {
     .brand-title { font-size: 14px; font-weight: 900; letter-spacing: 0.08em; color: #f8fafc; }
     .brand-subtitle { font-size: 10px; font-weight: 600; color: var(--accent-blue); letter-spacing: 0.05em; }
     .top-bar-meta { gap: 12px; }
+    /* Author display rules must not override the actual hidden state:
+       Workspace benchmark is NOT the LFEA result, and vice versa. */
+    .top-bar-meta [hidden] { display: none !important; }
     .meta-pill {
       gap: 6px;
       padding: 4px 10px;
@@ -68,10 +73,15 @@ export function advancedShellStyles() {
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-green); box-shadow: 0 0 8px var(--status-green); }
     .application-navigation-shell {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
       border-bottom: 1px solid var(--border-color);
       background: var(--bg-panel-strong);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
+    .application-navigation-shell > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
     .navigation-bar-container { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; }
     .application-navigation { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 4px 0; overflow-x: auto; }
     .application-navigation__status { min-height: 20px; padding: 0 12px; color: #fca5a5; font-size: 11px; }
@@ -301,7 +311,58 @@ export function advancedShellStyles() {
 
     .unavailable-view { max-width: 760px; margin: 40px auto; padding: 28px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-panel); text-align: center; }
     @media (max-width: 900px) {
-      .top-bar-meta { display: none; }
+      /* Keep source and Run meaning visible on narrow LFEA screens. A hidden
+         meta row previously dropped the actual ACCDB filename entirely. */
+      .top-bar-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 5px 12px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 5px 12px 9px;
+        box-sizing: border-box;
+        font-size: 11px;
+      }
+      .top-bar-meta > span {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      .top-bar-meta [data-role="topbar-dataset"] { overflow-wrap: anywhere; }
+      /* All navigation actions must remain visibly reachable, rather than
+         occupying a 967px-wide row or needing clipped horizontal scrolling. */
+      .application-navigation {
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 4px;
+        overflow: visible;
+        padding: 6px 10px;
+        box-sizing: border-box;
+      }
+      .application-navigation__item { min-width: 0; max-width: 100%; }
+      .application-navigation button {
+        min-width: 0;
+        max-width: 100%;
+        min-height: 32px;
+        padding: 6px 9px;
+        font-size: 11px;
+        line-height: 1.3;
+        white-space: normal;
+        text-align: center;
+      }
+      .application-navigation-shell > .brand-group {
+        flex-wrap: wrap;
+        padding: 8px 12px 3px;
+        gap: 4px 12px;
+      }
+      .application-navigation-shell [data-role="application-navigation-status"] {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
       .tab-benchmark-status { flex-wrap: wrap; }
       .load-calc-workbench { flex-direction: column; overflow-y: auto; }
       .load-calc-sidebar, .load-calc-inspector { flex: none; border: none; border-bottom: 1px solid var(--border-color); }

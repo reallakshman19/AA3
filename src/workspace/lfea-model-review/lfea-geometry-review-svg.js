@@ -99,12 +99,22 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     return;
   }
 
+  const highlightedSegments = new Set(options.highlightSegmentIds ?? []);
+  const highlightedNodes = new Set(options.highlightNodeIds ?? []);
   const density = lfeaGeometryReviewDisplayDensity(descriptor.segments.length);
   host.dataset.segmentLabels = density.segmentLabelsVisible ? 'VISIBLE' : 'SUPPRESSED_FOR_DENSITY';
   const axes = isometricAxes(verticalAxis);
   const projected = projectNodes(descriptor.nodes, verticalAxis);
   const projectedById = new Map(projected.map((node) => [node.nodeId, node]));
   const transform = createLfeaViewport(projected, DIMENSIONS);
+  // Projection can place distinct source nodes at the same screen point.
+  // Separate only their interactive hit markers; the source coordinates and
+  // all drawn pipe and restraint geometry retain their true projection.
+  const nodeHitTargets = typeof options.onSelectNode === 'function'
+    ? separateOverlappingNodeHitTargets(projected.map((node) => ({
+      nodeId: node.nodeId, point: lfeaScreenPoint(node, transform),
+    })))
+    : new Map();
   const svg = host.ownerDocument.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', `${descriptor.label} piping geometry`);
@@ -128,6 +138,20 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
     line.dataset.segmentId = segment.segmentId;
     line.dataset.segmentType = segment.type;
     line.dataset.segmentCategory = lfeaSegmentCategory(segment.type);
+    line.dataset.selected = highlightedSegments.has(segment.segmentId) ? 'true' : 'false';
+    if (typeof options.onSelectSegment === 'function') {
+      line.setAttribute('tabindex', '0');
+      line.setAttribute('role', 'button');
+      line.setAttribute('aria-label', 'Select piping segment ' + segment.segmentId
+        + ' from ' + segment.startNodeId + ' to ' + segment.endNodeId);
+      line.addEventListener('click', () => options.onSelectSegment(segment));
+      line.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          options.onSelectSegment(segment);
+        }
+      });
+    }
     const title = host.ownerDocument.createElementNS(SVG_NS, 'title');
     title.textContent = `${segment.segmentId}: ${segment.type} ${segment.startNodeId} → ${segment.endNodeId}`;
     line.append(title);
@@ -146,12 +170,54 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
 
   for (const node of projected) {
     const [x, y] = lfeaScreenPoint(node, transform);
+    const hitTarget = nodeHitTargets.get(node.nodeId);
+    if (hitTarget?.displaced) {
+      const leader = host.ownerDocument.createElementNS(SVG_NS, 'line');
+      leader.setAttribute('x1', String(x));
+      leader.setAttribute('y1', String(y));
+      leader.setAttribute('x2', String(hitTarget.x));
+      leader.setAttribute('y2', String(hitTarget.y));
+      leader.setAttribute('class', 'lfea-geometry-review__node-hit-leader');
+      leader.setAttribute('stroke', 'currentColor');
+      leader.setAttribute('stroke-dasharray', '2 3');
+      leader.setAttribute('stroke-opacity', '0.65');
+      leader.setAttribute('pointer-events', 'none');
+      svg.append(leader);
+    }
     const marker = host.ownerDocument.createElementNS(SVG_NS, 'circle');
-    marker.setAttribute('cx', String(x));
-    marker.setAttribute('cy', String(y));
+    marker.setAttribute('cx', String(hitTarget?.x ?? x));
+    marker.setAttribute('cy', String(hitTarget?.y ?? y));
+    marker.dataset.projectedX = String(x);
+    marker.dataset.projectedY = String(y);
+    if (hitTarget?.displaced) marker.dataset.hitTargetOffset = 'DISPLAY_ONLY';
     marker.setAttribute('r', '3.5');
     marker.setAttribute('class', 'lfea-geometry-review__node');
     marker.dataset.nodeId = node.nodeId;
+    marker.dataset.selected = highlightedNodes.has(node.nodeId) ? 'true' : 'false';
+    if (typeof options.onSelectNode === 'function') {
+      marker.setAttribute('tabindex', '0');
+      marker.setAttribute('role', 'button');
+      const sourceNode = descriptor.representation === 'SOURCE';
+      marker.setAttribute('aria-label', (sourceNode
+        ? 'Select source node ' : 'Inspect derived analysis node ') + node.nodeId
+        + (sourceNode ? '' : ' (read-only; not an editable ACCDB source node)')
+        + (hitTarget?.displaced ? ' (offset hit target; geometry unchanged)' : ''));
+      marker.addEventListener('click', () => options.onSelectNode(node));
+      marker.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          options.onSelectNode(node);
+        }
+      });
+    }
+    if (hitTarget?.displaced) {
+      const hint = host.ownerDocument.createElementNS(SVG_NS, 'title');
+      hint.textContent = (descriptor.representation === 'SOURCE' ? 'Source node ' : 'Derived analysis node ')
+        + node.nodeId
+        + ': selector offset solely to distinguish overlapping projected nodes; geometry unchanged.'
+        + (descriptor.representation === 'SOURCE' ? '' : ' This analysis node is read-only.');
+      marker.append(hint);
+    }
     svg.append(marker);
 
     for (const restraint of node.restraints) {
@@ -169,7 +235,14 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
   const densityNote = density.segmentLabelsVisible
     ? ''
     : ` · inline span labels hidden above ${density.segmentLabelLimit} spans (hover for type); all spans/nodes retained`;
-  caption.textContent = `${descriptor.label} · ${descriptor.nodes.length} nodes · ${descriptor.segments.length} spans · read-only isometric display · vertical axis ${verticalAxis}${densityNote}`;
+  const interactive = typeof options.onSelectNode === 'function'
+    || typeof options.onSelectSegment === 'function';
+  const interactionScope = interactive
+    ? (descriptor.representation === 'SOURCE'
+      ? 'selectable view-only geometry; supported source fields are edited in the inspector (no drag editing)'
+      : 'selectable, read-only conditioned analysis geometry')
+    : 'read-only isometric display';
+  caption.textContent = `${descriptor.label} · ${descriptor.nodes.length} nodes · ${descriptor.segments.length} spans · ${interactionScope} · vertical axis ${verticalAxis}${densityNote}`;
   svg.append(caption);
   host.append(svg);
   attachLfeaGeometryViewportInteractions(svg, options.viewBox ?? LFEA_GEOMETRY_DEFAULT_VIEW_BOX, options.onViewBoxChange);
@@ -202,6 +275,9 @@ function attachLfeaGeometryViewportInteractions(svg, initialViewBox, onViewBoxCh
 
   svg.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
+    // A root-level pointer capture retargets the subsequent click to the SVG,
+    // swallowing selectable node/span clicks. Pan only from non-control regions.
+    if (event.target?.closest?.('[role="button"]')) return;
     drag = { startX: event.clientX, startY: event.clientY, origin: { ...viewBox } };
     svg.setPointerCapture(event.pointerId);
     svg.style.cursor = 'grabbing';
@@ -222,6 +298,55 @@ function attachLfeaGeometryViewportInteractions(svg, initialViewBox, onViewBoxCh
   };
   svg.addEventListener('pointerup', endDrag);
   svg.addEventListener('pointercancel', endDrag);
+}
+
+/**
+ * Source-identical geometry may create coincident projected node selectors.
+ * Construct a deterministic layout for the *hit targets*, not model points.
+ * Callout leaders and data-projected-* retain the actual geometry reference.
+ * Distinct controls must not silently select a differently numbered node.
+ */
+export function separateOverlappingNodeHitTargets(entries, minimumSpacing = 16) {
+  const result = new Map();
+  const seen = new Set();
+  for (let index = 0; index < entries.length; index += 1) {
+    if (seen.has(index)) continue;
+    const component = [index];
+    seen.add(index);
+    for (let cursor = 0; cursor < component.length; cursor += 1) {
+      const a = entries[component[cursor]].point;
+      for (let other = 0; other < entries.length; other += 1) {
+        if (seen.has(other)) continue;
+        const b = entries[other].point;
+        if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= minimumSpacing) continue;
+        seen.add(other);
+        component.push(other);
+      }
+    }
+    if (component.length === 1) {
+      const entry = entries[index];
+      result.set(entry.nodeId, { x: entry.point[0], y: entry.point[1], displaced: false });
+      continue;
+    }
+    // Stable ID ordering ensures a reorder of the source records does not
+    // arbitrarily change which distinct node the engineer is pointing at.
+    component.sort((a, b) => String(entries[a].nodeId).localeCompare(String(entries[b].nodeId), undefined, { numeric: true }));
+    const center = component.reduce((acc, id) => {
+      acc[0] += entries[id].point[0] / component.length;
+      acc[1] += entries[id].point[1] / component.length;
+      return acc;
+    }, [0, 0]);
+    const radius = Math.max(16, component.length * 9 / Math.PI);
+    for (const [position, id] of component.entries()) {
+      const theta = -Math.PI / 2 + 2 * Math.PI * position / component.length;
+      result.set(entries[id].nodeId, {
+        x: center[0] + radius * Math.cos(theta),
+        y: center[1] + radius * Math.sin(theta),
+        displaced: true,
+      });
+    }
+  }
+  return result;
 }
 
 function applyViewBox(svg, box) {

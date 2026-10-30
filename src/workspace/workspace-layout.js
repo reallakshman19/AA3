@@ -20,7 +20,8 @@ function applicationMarkup() {
       <output data-role="application-navigation-status" aria-live="polite"></output>
       <div class="top-bar-meta">
         <span data-role="tab-benchmark-status" data-benchmark-tab="WORKSPACE" data-status="Unknown"><strong data-role="tab-benchmark-value">Not run</strong><a data-role="tab-benchmark-evidence" hidden>Evidence</a></span>
-        <span>Dataset: <strong data-role="topbar-dataset">None loaded</strong></span>
+        <span data-role="lfea-topbar-run-status" aria-live="polite" hidden></span>
+        <span><span data-role="topbar-dataset-kind">Dataset: </span><strong data-role="topbar-dataset">None loaded</strong></span>
       </div>
     </header>
     <div data-application-view="WORKSPACE" class="application-view application-view--workspace">${workspaceMarkup()}</div>

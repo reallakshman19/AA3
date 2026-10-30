@@ -6,6 +6,7 @@ import {
   buildLfeaErrorCheckPresentation,
   selectLfeaErrorCheckSections,
 } from '../src/workspace/lfea-diagnostics/lfea-error-check-presentation.js';
+import { lfeaFindingSuggestedAction } from '../src/workspace/lfea-finding-suggested-action.js';
 
 const findings = Object.freeze([
   finding('F-SOURCE', 'SOURCE_NOTE', 'SOURCE', 'PASS', 'INFO', 'Source evidence retained.'),
@@ -14,6 +15,33 @@ const findings = Object.freeze([
   finding('F-LOAD', 'PRESSURE_BLOCK', 'PRESSURE', 'BLOCK', 'INFO', 'Pressure authority is incomplete.'),
   finding('F-OTHER', 'VENDOR_EXTENSION', 'VENDOR_PRIVATE_CATEGORY', 'ADVISORY', 'WARNING', 'Vendor-specific source note.'),
 ]);
+// Unsupported-mechanics guidance is informational and MUST NOT state
+// engineering suitability, directional error or code qualification. The
+// existing governed disposition/acceptance path stays unchanged.
+const unsupportedGuidanceCodes = [
+  'MODEL_BEND_EXACT_MECHANICS_UNAVAILABLE',
+  'MODEL_TEE_EXACT_MECHANICS_UNAVAILABLE',
+  'MODEL_REDUCER_EXACT_MECHANICS_UNAVAILABLE',
+  'MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED',
+  'MODEL_RESTRAINT_FRICTION_UNSUPPORTED',
+  'ACCDB_RESTRAINT_FRICTION_NOT_MODELED',
+  'MODEL_RESTRAINT_GAP_UNSUPPORTED',
+  'ACCDB_RESTRAINT_GAP_NOT_MODELED',
+  'MODEL_RESTRAINT_UNILATERAL_UNSUPPORTED',
+  'MODEL_SIF_TYPE_UNSUPPORTED',
+  'ACCDB_SIF_TYPE_UNCLASSIFIED',
+];
+for (const code of unsupportedGuidanceCodes) {
+  const advice = lfeaFindingSuggestedAction(code);
+  assert.ok(advice && advice.length > 35, 'missing supported limitation explanation: ' + code);
+  assert.doesNotMatch(advice,
+    /normally safe|fine to accept|accept unless|accept for a|simplification cost you nothing|reads high|reads low|will read high|will read low/iu,
+    'Unsupported mechanics must not present an unqualified engineering-suitability or signed-error claim: ' + code);
+}
+assert.match(lfeaFindingSuggestedAction('MODEL_PRESSURE_STRUCTURAL_EFFECTS_UNREPRESENTED'),
+  /code-stress assessment is not performed/iu);
+assert.match(lfeaFindingSuggestedAction('ACCDB_FORCES_MOMENTS_PRESENT_NOT_COMPILED'),
+  /not compiled into active linear load cases/iu);
 const preFlight = makePreFlight(findings);
 const before = JSON.stringify(preFlight);
 
@@ -96,6 +124,10 @@ const accdbPanelSource = fs.readFileSync(
   new URL('../src/workspace/lfea-pipeline-accdb-input-panel.js', import.meta.url),
   'utf8',
 );
+const workspaceSource = fs.readFileSync(
+  new URL('../src/workspace/lfea-diagnostics/lfea-accdb-repair-workspace.js', import.meta.url),
+  'utf8',
+);
 
 assert.match(presentationSource, /buildLfeaDiagnosticPresentation\(preFlight, options\)/u);
 assert.doesNotMatch(presentationSource, /capabilityEffects|message\.includes|severity\s*===/u);
@@ -108,6 +140,19 @@ assert.doesNotMatch(
 );
 assert.match(panelSource, /selectLfeaErrorCheckSections\(this\.presentation, this\.activeCategory\)/u);
 assert.match(panelSource, /markLimitationReviewed\(group\.groupId\)/u);
+// Group-level model navigation: an explicit "Show all in model" header button
+// plus locate-on-expand, both routed through the composed onLocateGroup
+// callback (never through core analysis/authorization operations).
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-locate-group'/u);
+assert.match(panelSource, /controller\.options\.onLocateGroup\(group\)/u);
+assert.match(panelSource, /!alreadyOpen && typeof controller\.options\.onLocateGroup === 'function'/u);
+assert.match(surfaceSource, /onLocateGroup: \(group\) => repairWorkspace\?\.locateFindingGroup\(group\)/u);
+// Group locate in the workspace unions exact resolved targets only, keeps the
+// single-target focus fallback, and never invents node-editing hooks.
+assert.match(workspaceSource, /locateFindingGroup\(group\)/u);
+assert.match(workspaceSource, /resolveLfeaAccdbFindingTargets\(row, active\.source, descriptor\)/u);
+assert.match(workspaceSource, /focusHighlightedBounds\(\)/u);
+assert.doesNotMatch(workspaceSource, /onMoveNode|bindLfeaNodeEditor/u);
 assert.match(panelSource, /dataset\.role = 'lfea-error-check-accept-limitations'/u);
 assert.match(panelSource, /dataset\.action = 'authorize-lfea-error-check-limitations'/u);
 assert.match(panelSource, /this\.options\.onAuthorizePreFlight\(\{/u);

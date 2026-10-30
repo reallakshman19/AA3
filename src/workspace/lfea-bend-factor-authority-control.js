@@ -31,6 +31,15 @@ let currentSelection = EMPTY_SELECTION;
 // a panel that re-renders re-appends the same node, and it must already
 // hold the shared selection when it reconnects.
 const mountedControls = new Set();
+// Direct subscribers receive the explicitly selected basis irrespective of
+// profile-control DOM replacement or inline Error Check re-rendering.
+const authoritySelectionListeners = new Set();
+
+export function subscribeLfeaBendFactorAuthoritySelection(listener) {
+  if (typeof listener !== 'function') throw new TypeError('An authority selection listener is required.');
+  authoritySelectionListeners.add(listener);
+  return () => authoritySelectionListeners.delete(listener);
+}
 
 export function lfeaBendFactorAuthoritySelection() {
   return currentSelection;
@@ -54,6 +63,11 @@ export function setLfeaBendFactorAuthoritySelection(selection, doc) {
     ?? [...mountedControls].find((control) => control.root.isConnected)?.root?.ownerDocument
     ?? (typeof document !== 'undefined' ? document : null);
   if (docRef) regenerateNativePreFlights(docRef);
+  // Unlike synthetic profile-select events, this path cannot silently miss
+  // the active ACCDB adapter when a repaired source's inline controls move.
+  // Listeners must regenerate their own current intake (and must never
+  // interpret a complete UI selection as an authorization).
+  for (const listener of [...authoritySelectionListeners]) listener(currentSelection);
   return currentSelection;
 }
 

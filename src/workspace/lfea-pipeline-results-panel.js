@@ -259,7 +259,22 @@ export class LfeaPipelineResultsPanelController {
     if (recovered === null) {
       return emptyParagraph(this.documentRef, this.elementForceUnavailableReason(active));
     }
-    return elementActionTable(this.documentRef, recovered);
+    try {
+      const rows = lfeaElementActionDisplayRows(recovered);
+      const note = this.documentRef.createElement('p');
+      note.dataset.role = 'lfea-pipeline-element-actions-basis';
+      note.textContent = 'Sealed recovery · global XYZ, signed joint-on-element I/J end actions · forces N, moments N·m. No code-stress assessment.';
+      const wrap = this.documentRef.createElement('div');
+      wrap.append(note, elementActionTable(this.documentRef, rows));
+      return wrap;
+    } catch (error) {
+      const unavailable = emptyParagraph(this.documentRef,
+        'Element end forces cannot be displayed: '
+        + (error instanceof Error ? error.message : String(error))
+        + '. No missing end or force value was inferred.');
+      unavailable.dataset.role = 'lfea-pipeline-element-actions-unavailable';
+      return unavailable;
+    }
   }
 
   /**
@@ -346,6 +361,15 @@ export class LfeaPipelineResultsPanelController {
     button.type = 'button';
     button.dataset.action = 'lfea-pipeline-results-csv';
     button.textContent = 'Download CSV';
+    if (this.activeView === 'ELEMENT_FORCES') {
+      // No blank or fabricated CSV when sealed end-action custody is absent.
+      try {
+        lfeaElementActionDisplayRows(this.recoveredActionsFor(active.caseId));
+      } catch (_error) {
+        button.disabled = true;
+        button.title = 'Element end-action recovery is unavailable or incomplete; CSV is withheld.';
+      }
+    }
     button.addEventListener('click', () => this.options.onExportCsv?.(this.csvFor(active), csvName(active.caseId, this.activeView)));
     bar.append(button);
     return bar;
@@ -365,11 +389,14 @@ export class LfeaPipelineResultsPanelController {
     if (this.activeView === 'DISPLACEMENTS') {
       return toCsv(['Node', 'DX_mm', 'DY_mm', 'DZ_mm', 'RX_deg', 'RY_deg', 'RZ_deg', 'Dresultant_mm'], csvRows(this.displacementRows(active)));
     }
-    const recovered = this.recoveredActionsFor(active.caseId) ?? [];
+    const recovered = this.recoveredActionsFor(active.caseId);
+    if (recovered === null) {
+      throw new TypeError(this.elementForceUnavailableReason(active));
+    }
     return toCsv(
       ['Element', 'End', 'FX_N', 'FY_N', 'FZ_N', 'MX_Nm', 'MY_Nm', 'MZ_Nm'],
-      recovered.map((row) => [row.elementId, row.end,
-        ...['fx', 'fy', 'fz', 'mx', 'my', 'mz'].map((field) => formatNumber(row[field] ?? row.actions?.[field]))]),
+      lfeaElementActionDisplayRows(recovered).map((row) => [row.elementId, row.end,
+        ...ELEMENT_ACTION_COMPONENTS.map((field) => formatNumber(row[field]))]),
     );
   }
 
@@ -452,13 +479,43 @@ function nodeTable(doc, rows, labels) {
   return scrollWrap(doc, table);
 }
 
-function elementActionTable(doc, actions) {
-  const rows = actions.map((row) => [
+/**
+ * The sealed recovery schema has one record per element with global.I and
+ * global.J, each carrying fx/fy/fz/mx/my/mz. It has no flat 'end' field.
+ * Present both actual global end actions, never synthetic zeros or blanks;
+ * this mapping does not transform or recompute a force or a moment.
+ */
+export const ELEMENT_ACTION_COMPONENTS = Object.freeze(['fx', 'fy', 'fz', 'mx', 'my', 'mz']);
+
+export function lfeaElementActionDisplayRows(elementActions) {
+  if (!Array.isArray(elementActions)) {
+    throw new TypeError('Sealed recovery elementActions must be an array.');
+  }
+  return Object.freeze(elementActions.flatMap((entry) => {
+    if (typeof entry?.elementId !== 'string' || !entry.elementId.trim()) {
+      throw new TypeError('Sealed recovery action is missing an element ID.');
+    }
+    return ['I', 'J'].map((end) => {
+      const action = entry.global?.[end];
+      if (!action || ELEMENT_ACTION_COMPONENTS.some((field) =>
+        typeof action[field] !== 'number' || !Number.isFinite(action[field]))) {
+        throw new TypeError('Sealed global end action missing or nonfinite for '
+          + entry.elementId + ' end ' + end + '.');
+      }
+      return Object.freeze({
+        elementId: entry.elementId, end,
+        ...Object.fromEntries(ELEMENT_ACTION_COMPONENTS.map((field) => [field, action[field]])),
+      });
+    });
+  }));
+}
+
+function elementActionTable(doc, rows) {
+  return nodeTable(doc, rows.map((row) => [
     row.elementId,
     row.end,
-    ...['fx', 'fy', 'fz', 'mx', 'my', 'mz'].map((field) => formatNumber(row[field] ?? row.actions?.[field])),
-  ]);
-  return nodeTable(doc, rows, ['Element', 'End', 'FX [N]', 'FY [N]', 'FZ [N]', 'MX [N·m]', 'MY [N·m]', 'MZ [N·m]']);
+    ...ELEMENT_ACTION_COMPONENTS.map((field) => formatNumber(row[field])),
+  ]), ['Element', 'End', 'FX [N]', 'FY [N]', 'FZ [N]', 'MX [N·m]', 'MY [N·m]', 'MZ [N·m]']);
 }
 
 function scrollWrap(doc, node) {

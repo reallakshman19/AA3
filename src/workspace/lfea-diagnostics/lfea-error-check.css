@@ -76,9 +76,13 @@
 
 .lfea-common-error-check__content {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 0.9fr);
+  /* Inside the side-by-side __main band this is the right-hand column, so
+     findings stack above the authorization card; the stacked (narrow) layout
+     restores the findings/authorization pair via the media query below. */
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 12px;
+  min-width: 0;
 }
 
 .lfea-common-error-check__category {
@@ -148,6 +152,16 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+/* "Show all in model" lives in the group header row; keep it inline-sized so
+   the header stays a single line next to the disposition badge. Clicking it
+   must not toggle the <details> (handled in JS with preventDefault). */
+.lfea-common-error-check__finding summary .lfea-common-error-check__locate-group {
+  flex: none;
+  min-height: 0;
+  padding: 2px 8px;
+  font-size: 10px;
 }
 
 .lfea-common-error-check__disposition[data-disposition="CONDITIONAL"] { color: #fbbf24; }
@@ -442,6 +456,13 @@
   display: none;
 }
 
+@media (max-width: 1100px) {
+  /* Stack canvas above findings again, restoring the findings/authorization
+     two-column pair for the wider stacked band. */
+  .lfea-common-error-check__main { grid-template-columns: minmax(0, 1fr); }
+  .lfea-common-error-check__content { grid-template-columns: minmax(0, 2fr) minmax(280px, 0.9fr); }
+}
+
 @media (max-width: 1050px) {
   .lfea-common-error-check__content { grid-template-columns: minmax(0, 1fr); }
   .lfea-common-error-check__authorization { position: static; margin: 0 14px 12px; }
@@ -449,7 +470,23 @@
 
 
 /* #47 — source provenance and governed ACCDB correction, not SVG-only edits. */
-.lfea-common-error-check__model-host { margin: 4px 14px 14px; min-width: 0; }
+.lfea-common-error-check__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin: 4px 14px 14px;
+  min-width: 0;
+}
+.lfea-common-error-check__model-host { min-width: 0; }
+/* In the side-by-side band the model is the point: give the SVG the full
+   left-column width and move the inspector below it instead of beside it. */
+@media (min-width: 1101px) {
+  .lfea-common-error-check__main .lfea-accdb-repair-workspace { grid-template-columns: minmax(0, 1fr); }
+  .lfea-common-error-check__main .lfea-accdb-repair-workspace__svg,
+  .lfea-common-error-check__main .lfea-accdb-repair-workspace__inspector { grid-column: 1; }
+  .lfea-common-error-check__main .lfea-accdb-repair-workspace__inspector { max-height: none; }
+}
 .lfea-accdb-repair-workspace {
   border: 1px solid var(--workspace-border);
   border-radius: 8px;

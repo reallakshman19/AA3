@@ -55,6 +55,7 @@ export function mountLfeaPipelineAnalysisSurface(options) {
     onContinue: options.onContinueFromErrorCheck,
     onNavigatePrerequisite: options.onNavigatePrerequisite,
     onLocateOccurrence: (finding, locateOptions) => repairWorkspace?.locateOccurrence(finding, locateOptions),
+    onLocateGroup: (group) => repairWorkspace?.locateFindingGroup(group),
   });
   repairWorkspace = mountLfeaAccdbRepairWorkspace(errorCheckPanel.getWorkspaceHost(), {
     documentRef: options.documentRef,

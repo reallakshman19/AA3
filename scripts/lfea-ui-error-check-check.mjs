@@ -124,6 +124,10 @@ const accdbPanelSource = fs.readFileSync(
   new URL('../src/workspace/lfea-pipeline-accdb-input-panel.js', import.meta.url),
   'utf8',
 );
+const workspaceSource = fs.readFileSync(
+  new URL('../src/workspace/lfea-diagnostics/lfea-accdb-repair-workspace.js', import.meta.url),
+  'utf8',
+);
 
 assert.match(presentationSource, /buildLfeaDiagnosticPresentation\(preFlight, options\)/u);
 assert.doesNotMatch(presentationSource, /capabilityEffects|message\.includes|severity\s*===/u);
@@ -136,6 +140,19 @@ assert.doesNotMatch(
 );
 assert.match(panelSource, /selectLfeaErrorCheckSections\(this\.presentation, this\.activeCategory\)/u);
 assert.match(panelSource, /markLimitationReviewed\(group\.groupId\)/u);
+// Group-level model navigation: an explicit "Show all in model" header button
+// plus locate-on-expand, both routed through the composed onLocateGroup
+// callback (never through core analysis/authorization operations).
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-locate-group'/u);
+assert.match(panelSource, /controller\.options\.onLocateGroup\(group\)/u);
+assert.match(panelSource, /!alreadyOpen && typeof controller\.options\.onLocateGroup === 'function'/u);
+assert.match(surfaceSource, /onLocateGroup: \(group\) => repairWorkspace\?\.locateFindingGroup\(group\)/u);
+// Group locate in the workspace unions exact resolved targets only, keeps the
+// single-target focus fallback, and never invents node-editing hooks.
+assert.match(workspaceSource, /locateFindingGroup\(group\)/u);
+assert.match(workspaceSource, /resolveLfeaAccdbFindingTargets\(row, active\.source, descriptor\)/u);
+assert.match(workspaceSource, /focusHighlightedBounds\(\)/u);
+assert.doesNotMatch(workspaceSource, /onMoveNode|bindLfeaNodeEditor/u);
 assert.match(panelSource, /dataset\.role = 'lfea-error-check-accept-limitations'/u);
 assert.match(panelSource, /dataset\.action = 'authorize-lfea-error-check-limitations'/u);
 assert.match(panelSource, /this\.options\.onAuthorizePreFlight\(\{/u);

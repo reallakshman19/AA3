@@ -115,6 +115,9 @@ export class LfeaAccdbRepairWorkspaceController {
     if (edit && this.selection?.kind === 'SEGMENT') {
       this.message += ' Select the correct endpoint node to edit; no automatic relocation.';
     }
+    if (edit && this.selection?.kind === 'NODE') {
+      this.suggestNodeFix(finding, targets, active);
+    }
     this.render();
     if (this.selection) this.focusCurrentSelection();
     this.section.scrollIntoView?.({ block: 'nearest' });
@@ -128,6 +131,45 @@ export class LfeaAccdbRepairWorkspaceController {
    * Resolution stays exact-ID only (see lfea-accdb-finding-locator); nothing
    * is inferred from proximity.
    */
+  /**
+   * Suggested fix for near-coincident source nodes (the only topology class
+   * with a deterministic, source-bound correction): prefill the coordinate
+   * editor with the paired node's raw value on the axis with the largest
+   * offset. The engineer still reviews the cell preview and applies
+   * explicitly — nothing writes without the governed transaction.
+   */
+  suggestNodeFix(finding, targets, active) {
+    if (finding?.code !== 'TOPOLOGY_DISTINCT_NODES_NEAR_COINCIDENT') return;
+    if (this.representation !== 'SOURCE' || targets.nodeIds.length < 2) return;
+    const descriptor = this.geometry(active.pre).selected;
+    const nodes = targets.nodeIds
+      .map((id) => descriptor.nodes.find((entry) => entry.nodeId === id))
+      .filter(Boolean);
+    const selected = nodes.find((entry) => entry.nodeId === this.selection.id);
+    if (!selected) return;
+    // Never suggest collapsing an element: exclude pair nodes that share a
+    // rendered segment with the selection (the governed editor rejects such
+    // an edit anyway — element length must stay positive).
+    const incident = new Set(descriptor.segments
+      .filter((segment) => segment.startNodeId === selected.nodeId
+        || segment.endNodeId === selected.nodeId)
+      .flatMap((segment) => [segment.startNodeId, segment.endNodeId]));
+    const pair = nodes.find((entry) => entry.nodeId !== selected.nodeId
+      && !incident.has(entry.nodeId));
+    if (!pair) return;
+    const axis = ['y', 'z'].reduce((best, candidate) =>
+      Math.abs(pair[candidate] - selected[candidate]) > Math.abs(pair[best] - selected[best])
+        ? candidate : best, 'x');
+    const upper = axis.toUpperCase();
+    const raw = active.editor.getCoordinateRawValue(pair.nodeId, upper);
+    if (raw == null || !Number.isFinite(Number(raw))) return;
+    this.axis = upper;
+    this.rawValue = String(raw);
+    this.message += ' Suggested fix: align node ' + this.selection.id + ' to node ' + pair.nodeId
+      + ' on axis ' + upper + ' (offset ' + Math.abs(pair[axis] - selected[axis]).toFixed(4)
+      + ' m). Review the affected-cell preview, then Apply.';
+  }
+
   locateFindingGroup(group) {
     const active = this.active();
     if (!active) return false;
@@ -317,8 +359,6 @@ export class LfeaAccdbRepairWorkspaceController {
   }
 
   selectNode(node) {
-    const restoreFocus = this.keyboardSelectionFocus?.kind === 'NODE'
-      && this.keyboardSelectionFocus.id === node.nodeId;
     this.keyboardSelectionFocus = null;
     this.selection = { kind: 'NODE', id: node.nodeId };
     this.pending = null;
@@ -329,19 +369,20 @@ export class LfeaAccdbRepairWorkspaceController {
       ? 'Source node ' : 'Derived analysis node ') + node.nodeId
       + (this.representation === 'SOURCE' ? ' selected.' : ' selected for inspection (read-only).');
     this.render();
-    if (restoreFocus) this.restoreSourceSelectorFocus('NODE', node.nodeId);
+    // Every render rebuilds the SVG; without an explicit restore the active
+    // element drops to BODY (issue #49 focus loss), for pointer and keyboard
+    // selection alike.
+    this.restoreSourceSelectorFocus('NODE', node.nodeId);
   }
 
   selectSegment(segment) {
-    const restoreFocus = this.keyboardSelectionFocus?.kind === 'SEGMENT'
-      && this.keyboardSelectionFocus.id === segment.segmentId;
     this.keyboardSelectionFocus = null;
     this.selection = { kind: 'SEGMENT', id: segment.segmentId };
     this.pending = null;
     this.pendingProperty = null;
     this.message = 'Segment ' + segment.segmentId + ' selected. Choose a source endpoint to edit.';
     this.render();
-    if (restoreFocus) this.restoreSourceSelectorFocus('SEGMENT', segment.segmentId);
+    this.restoreSourceSelectorFocus('SEGMENT', segment.segmentId);
   }
 
   previewCoordinate() {

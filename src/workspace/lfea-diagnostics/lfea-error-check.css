@@ -164,6 +164,98 @@
   font-size: 10px;
 }
 
+/* Occurrences with no exact source identity carry no source-edit action;
+   the muted badge reads as a state, not a control. */
+.lfea-common-error-check__review-only {
+  flex: none;
+  padding: 2px 7px;
+  border: 1px dashed var(--workspace-border);
+  border-radius: 5px;
+  color: var(--workspace-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Recorded source facts (PASS) are evidence, not repair actions; keep the
+   separation line quieter than the actionable issue counts. */
+.lfea-common-error-check__source-evidence {
+  color: var(--workspace-muted);
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* Auto fix queue: actionable findings consolidated above the categories.
+   Collapsible — the expanded finding cards below already carry the detail. */
+.lfea-common-error-check__fix-queue {
+  margin-bottom: 12px;
+  border: 1px solid var(--workspace-border);
+  border-left: 3px solid var(--workspace-accent);
+  border-radius: 6px;
+  background: var(--workspace-panel-strong);
+}
+.lfea-common-error-check__fix-queue > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.lfea-common-error-check__fix-queue > summary::before { content: '▸'; color: var(--workspace-muted); }
+.lfea-common-error-check__fix-queue[open] > summary::before { content: '▾'; }
+.lfea-common-error-check__fix-queue > summary h4 { margin: 0; font-size: 12px; }
+.lfea-common-error-check__fix-queue-count { color: var(--workspace-muted); font-size: 11px; }
+.lfea-common-error-check__fix-queue > p { margin: 0 12px 8px; font-size: 11px; }
+.lfea-common-error-check__fix-batch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--workspace-border);
+}
+.lfea-common-error-check__fix-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--workspace-border);
+  font-size: 11px;
+}
+.lfea-common-error-check__fix-queue > [data-role="lfea-error-check-fix-item"]:first-of-type,
+.lfea-common-error-check__fix-queue > [data-role="lfea-error-check-fix-skipped"] { }
+.lfea-common-error-check__fix-item-label { flex: 1 1 280px; overflow-wrap: anywhere; }
+.lfea-common-error-check__fix-queue > [data-role="lfea-error-check-fix-skipped"] {
+  margin: 8px 12px 10px;
+  font-size: 10px;
+}
+.lfea-common-error-check__fix-ledger {
+  margin: 8px 12px 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--workspace-border);
+  font-size: 10px;
+}
+.lfea-common-error-check__fix-ledger strong { display: block; margin-bottom: 4px; font-size: 10px; }
+.lfea-common-error-check__fix-ledger p { margin: 2px 0; color: var(--workspace-muted); }
+.lfea-common-error-check__fix-ledger p[data-status="APPLIED"] { color: #4ade80; }
+
+/* Bounded occurrence list: an expanded group must not turn the findings
+   column into a waterfall. */
+.lfea-common-error-check__occurrence-results {
+  max-height: 220px;
+  overflow-y: auto;
+  min-width: 0;
+}
+.lfea-common-error-check__occurrence > span {
+  flex: 1 1 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
 .lfea-common-error-check__disposition[data-disposition="CONDITIONAL"] { color: #fbbf24; }
 .lfea-common-error-check__disposition[data-disposition="BLOCK"] { color: #f87171; }
 .lfea-common-error-check__disposition[data-disposition="PASS"],
@@ -561,7 +653,6 @@
   display: flex; flex-wrap: wrap; align-items: center;
   gap: 4px 8px; padding: 6px 0; border-bottom: 1px solid var(--workspace-border);
 }
-.lfea-common-error-check__occurrence > span { flex: 1 1 260px; overflow-wrap: anywhere; font-size: 11px; }
 .lfea-common-error-check__occurrence-pager { display: flex; gap: 6px; align-items: center; justify-content: end; padding-top: 6px; font-size: 11px; }
 @media (max-width: 880px) {
   .lfea-accdb-repair-workspace { grid-template-columns: minmax(0, 1fr); }

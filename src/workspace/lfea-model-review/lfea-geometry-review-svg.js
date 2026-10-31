@@ -123,27 +123,61 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
   svg.dataset.objectPath = descriptor.objectPath;
   svg.dataset.verticalAxis = verticalAxis;
 
+  // Overlapping projected spans (the collinear-overlap finding itself) would
+  // otherwise make every duplicate unreachable by pointer: the DOM-top line
+  // eats every click. Mirror the node-hit-target treatment: duplicates keep
+  // their true geometry via dashed leaders but get a displaced, individually
+  // clickable stroke. Keyboard focus stays on the same line element.
+  const segmentOccurrences = new Map();
   for (const segment of descriptor.segments) {
     const start = projectedById.get(segment.startNodeId);
     const end = projectedById.get(segment.endNodeId);
     if (!start || !end) continue;
     const [x1, y1] = lfeaScreenPoint(start, transform);
     const [x2, y2] = lfeaScreenPoint(end, transform);
+    const endpoints = [[x1, y1], [x2, y2]].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const segKey = endpoints.map(([px, py]) => Math.round(px * 2) / 2 + ':' + Math.round(py * 2) / 2).join('|');
+    const occurrence = segmentOccurrences.get(segKey) ?? 0;
+    segmentOccurrences.set(segKey, occurrence + 1);
+    let hx1 = x1; let hy1 = y1; let hx2 = x2; let hy2 = y2;
+    const displaced = occurrence > 0;
+    if (displaced) {
+      const dx = x2 - x1; const dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const ox = (-dy / len) * 8 * occurrence;
+      const oy = (dx / len) * 8 * occurrence;
+      hx1 += ox; hy1 += oy; hx2 += ox; hy2 += oy;
+      for (const [ax, ay, bx, by] of [[x1, y1, hx1, hy1], [x2, y2, hx2, hy2]]) {
+        const leader = host.ownerDocument.createElementNS(SVG_NS, 'line');
+        leader.setAttribute('x1', String(ax));
+        leader.setAttribute('y1', String(ay));
+        leader.setAttribute('x2', String(bx));
+        leader.setAttribute('y2', String(by));
+        leader.setAttribute('class', 'lfea-geometry-review__segment-hit-leader');
+        leader.setAttribute('stroke', 'currentColor');
+        leader.setAttribute('stroke-dasharray', '2 3');
+        leader.setAttribute('stroke-opacity', '0.65');
+        leader.setAttribute('pointer-events', 'none');
+        svg.append(leader);
+      }
+    }
     const line = host.ownerDocument.createElementNS(SVG_NS, 'line');
-    line.setAttribute('x1', String(x1));
-    line.setAttribute('y1', String(y1));
-    line.setAttribute('x2', String(x2));
-    line.setAttribute('y2', String(y2));
-    line.setAttribute('class', 'lfea-geometry-review__segment');
+    line.setAttribute('x1', String(hx1));
+    line.setAttribute('y1', String(hy1));
+    line.setAttribute('x2', String(hx2));
+    line.setAttribute('y2', String(hy2));
+    line.setAttribute('class', 'lfea-geometry-review__segment' + (displaced ? ' lfea-geometry-review__segment--displaced-hit' : ''));
     line.dataset.segmentId = segment.segmentId;
     line.dataset.segmentType = segment.type;
     line.dataset.segmentCategory = lfeaSegmentCategory(segment.type);
     line.dataset.selected = highlightedSegments.has(segment.segmentId) ? 'true' : 'false';
+    if (displaced) line.dataset.hitTargetOffset = 'DISPLAY_ONLY';
     if (typeof options.onSelectSegment === 'function') {
       line.setAttribute('tabindex', '0');
       line.setAttribute('role', 'button');
       line.setAttribute('aria-label', 'Select piping segment ' + segment.segmentId
-        + ' from ' + segment.startNodeId + ' to ' + segment.endNodeId);
+        + ' from ' + segment.startNodeId + ' to ' + segment.endNodeId
+        + (displaced ? ' (offset hit target; geometry unchanged)' : ''));
       line.addEventListener('click', () => options.onSelectSegment(segment));
       line.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -153,7 +187,8 @@ export function renderLfeaGeometryReviewSvg(host, descriptor, options = {}) {
       });
     }
     const title = host.ownerDocument.createElementNS(SVG_NS, 'title');
-    title.textContent = `${segment.segmentId}: ${segment.type} ${segment.startNodeId} → ${segment.endNodeId}`;
+    title.textContent = `${segment.segmentId}: ${segment.type} ${segment.startNodeId} → ${segment.endNodeId}`
+      + (displaced ? ' · selector offset solely to distinguish overlapping projected spans; geometry unchanged.' : '');
     line.append(title);
     svg.append(line);
 

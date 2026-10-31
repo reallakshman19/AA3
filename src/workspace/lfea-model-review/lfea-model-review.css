@@ -45,6 +45,11 @@
 .lfea-geometry-review__svg { min-height: 260px; border: 1px solid var(--workspace-border); background: var(--workspace-panel-strong); overflow: hidden; }
 .lfea-geometry-review__svg svg { display: block; width: 100%; min-height: 260px; }
 .lfea-geometry-review__segment { stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* Duplicated projected spans: the stroke is displaced purely so each span
+   stays pointer-reachable (see renderer); the dashed leaders retain the
+   true geometry. Selected styling must match the normal segment rules. */
+.lfea-geometry-review__segment--displaced-hit { stroke-opacity: 0.9; }
+.lfea-geometry-review__segment-hit-leader { pointer-events: none; }
 .lfea-geometry-review__segment[data-segment-category="PIPE"] { stroke: #60a5fa; }
 .lfea-geometry-review__segment[data-segment-category="BEND"] { stroke: #f59e0b; }
 .lfea-geometry-review__segment[data-segment-category="FITTING"] { stroke: #c084fc; }

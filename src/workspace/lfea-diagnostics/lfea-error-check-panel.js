@@ -7,7 +7,7 @@ import {
   selectLfeaErrorCheckSections,
 } from './lfea-error-check-presentation.js';
 import { lfeaPipelineIcon } from '../lfea-pipeline-icon-manifest.js';
-import { classifyLfeaAccdbFindingAction } from './lfea-accdb-capability-actions.js';
+import { classifyLfeaAccdbFindingAction, LFEA_ACCDB_ACTION_CLASSES } from './lfea-accdb-capability-actions.js';
 import { mountLfeaInlineBendFactorAuthorityControl } from '../lfea-bend-factor-authority-control.js';
 
 export const LFEA_COMMON_ERROR_CHECK_PANEL_SCHEMA = 'lfea-common-error-check-panel/v1';
@@ -41,6 +41,15 @@ export class LfeaCommonErrorCheckPanelController {
     // Inspector-to-finding navigation is inspection, not an engineer's
     // deliberate review act or current-preparation acceptance.
     this.navigationOnlyGroupIds = new Set();
+    // Fix-queue batch state: skipped items leave the queue for this
+    // preparation only; a Fix-all walk advances through the governed
+    // transaction one item at a time as the pre-flight regenerates. The
+    // ledger records what the queue did (applied/skipped) for this
+    // preparation — it resets with the preparation hash.
+    this.skippedFixGroupIds = new Set();
+    this.fixWalkActive = false;
+    this.fixWalkCurrent = null;
+    this.fixLedger = [];
     this.limitationsAccepted = false;
     this.preparationIdentity = null;
     this.reviewerIdentity = '';
@@ -67,10 +76,24 @@ export class LfeaCommonErrorCheckPanelController {
     const nextPresentation = buildLfeaErrorCheckPresentation(preFlight);
     const nextIdentity = nextPresentation.preparationSemanticHash ?? null;
     if (nextIdentity !== this.preparationIdentity) {
+      // A fresh preparation while the walk was parked on an item means that
+      // item's governed Apply went through. Capture it BEFORE the reset and
+      // record it into the new preparation's ledger, marked handled so the
+      // walk never loops on a persisting finding.
+      const appliedGroupId = this.fixWalkActive ? this.fixWalkCurrent : null;
       this.acknowledgedGroupIds.clear();
       this.reviewedGroupIds.clear();
       this.openGroupIds.clear();
       this.navigationOnlyGroupIds.clear();
+      this.skippedFixGroupIds.clear();
+      this.fixWalkActive = false;
+      this.fixWalkCurrent = null;
+      this.fixLedger = [];
+      if (appliedGroupId) {
+        this.fixLedger.push({ groupId: appliedGroupId, status: 'APPLIED' });
+        this.skippedFixGroupIds.add(appliedGroupId);
+        this.fixWalkActive = true; // the walk continues to the next item
+      }
       this.limitationsAccepted = false;
       this.reviewerIdentity = '';
       this.reviewReason = '';
@@ -84,7 +107,44 @@ export class LfeaCommonErrorCheckPanelController {
       this.activeCategory = 'ALL';
     }
     this.render();
+    if (this.fixWalkActive) this.advanceFixWalk();
     return this;
+  }
+
+  /**
+   * Fix-all walk: after each governed Apply the preparation hash changes and
+   * refresh() lands here; open the next eligible, non-skipped fix. The walk
+   * ends when nothing eligible remains — every fix still goes through the
+   * workspace Preview → Apply transaction; this only sequences them.
+   */
+  advanceFixWalk() {
+    const next = eligibleFixGroups(this)
+      .find(({ group }) => !this.skippedFixGroupIds.has(group.groupId));
+    if (!next || typeof this.options.onLocateOccurrence !== 'function') {
+      this.fixWalkActive = false;
+      this.fixWalkCurrent = null;
+      this.render();
+      return;
+    }
+    this.fixWalkCurrent = next.group.groupId;
+    this.options.onLocateOccurrence(next.firstRow, { edit: true });
+  }
+
+  startFixWalk() {
+    if (!eligibleFixGroups(this).length) return;
+    this.fixWalkActive = true;
+    this.advanceFixWalk();
+  }
+
+  skipAllFixes() {
+    for (const { group } of eligibleFixGroups(this)) {
+      this.skippedFixGroupIds.add(group.groupId);
+      this.fixLedger.push({ groupId: group.groupId, status: 'SKIPPED' });
+    }
+    this.fixWalkActive = false;
+    this.fixWalkCurrent = null;
+    this.render();
+    return this.getSnapshot();
   }
 
   setCategoryFilter(categoryId) {
@@ -223,6 +283,8 @@ export class LfeaCommonErrorCheckPanelController {
     body.replaceChildren();
     if (!this.presentation.empty) {
       body.append(renderTriageBanner(this.documentRef, this.presentation));
+      const fixQueue = renderFixQueue(this);
+      if (fixQueue) body.append(fixQueue);
     }
 
     if (this.presentation.empty) {
@@ -377,6 +439,162 @@ function renderTriageBanner(doc, presentation) {
   return banner;
 }
 
+/**
+ * Eligible auto-fix entries — the XML229 eligibleActions() gates ported to
+ * the LFEA governed write path: only findings whose governed action class is
+ * EDITABLE_INPUT, with at least one occurrence carrying exact source identity,
+ * and not authority-gated. "Fix" never writes directly: it opens the first
+ * resolvable occurrence in the source-bound workspace, where the governed
+ * Preview → Apply transaction (with receipt and fresh pre-flight) is the only
+ * write. Everything else is reported with an explicit skip reason, never
+ * silently dropped.
+ */
+function eligibleFixGroups(controller) {
+  if (controller.preFlight?.diagnostics?.sourceBundle?.sourceKind !== 'ACCDB') return [];
+  if (typeof controller.options.onLocateOccurrence !== 'function') return [];
+  const entries = [];
+  for (const section of controller.presentation.sections) {
+    for (const group of section.groups) {
+      if (group.disposition === 'PASS' || group.disposition === 'CONDITIONAL') continue;
+      if (LFEA_COMPONENT_FACTOR_AUTHORITY_CODES.has(group.code)) continue;
+      const mapped = classifyLfeaAccdbFindingAction(group.code);
+      const hasIdentity = group.rows.some((entry) =>
+        entry.sourceFeatureIds.length > 0 || entry.canonicalEntityIds.length > 0);
+      if (mapped.actionClass === LFEA_ACCDB_ACTION_CLASSES.EDITABLE_INPUT && hasIdentity) {
+        entries.push({ group, firstRow: group.rows[0] });
+      }
+    }
+  }
+  return entries;
+}
+
+function renderFixQueue(controller) {
+  if (controller.preFlight?.diagnostics?.sourceBundle?.sourceKind !== 'ACCDB') return null;
+  const doc = controller.documentRef;
+  const groups = controller.presentation.sections.flatMap((section) => section.groups);
+  const eligible = eligibleFixGroups(controller)
+    .filter(({ group }) => !controller.skippedFixGroupIds.has(group.groupId));
+
+  const skipped = { NO_IN_APP_TRANSACTION: 0, EXTERNAL_SOURCE: 0, GOVERNED_NOT_EDIT: 0 };
+  for (const group of groups) {
+    if (group.disposition === 'PASS' || group.disposition === 'CONDITIONAL') continue;
+    if (LFEA_COMPONENT_FACTOR_AUTHORITY_CODES.has(group.code)) continue;
+    const mapped = classifyLfeaAccdbFindingAction(group.code);
+    if (mapped.actionClass === LFEA_ACCDB_ACTION_CLASSES.UNSUPPORTED_MECHANICS) {
+      skipped.NO_IN_APP_TRANSACTION += 1;
+    } else if (mapped.actionClass === LFEA_ACCDB_ACTION_CLASSES.EXTERNAL_SOURCE_CORRECTION) {
+      skipped.EXTERNAL_SOURCE += 1;
+    } else if (mapped.actionClass !== LFEA_ACCDB_ACTION_CLASSES.EDITABLE_INPUT) {
+      skipped.GOVERNED_NOT_EDIT += 1;
+    }
+  }
+
+  const card = doc.createElement('details');
+  card.className = 'lfea-common-error-check__fix-queue';
+  card.dataset.role = 'lfea-error-check-fix-queue';
+  card.open = true;
+  const summary = doc.createElement('summary');
+  summary.className = 'lfea-common-error-check__fix-queue-summary';
+  const title = doc.createElement('h4');
+  title.textContent = 'Auto fix queue';
+  const total = eligible.length + controller.skippedFixGroupIds.size;
+  const summaryText = doc.createElement('span');
+  summaryText.className = 'lfea-common-error-check__fix-queue-count';
+  summaryText.textContent = eligible.length
+    ? `${eligible.length} fixable of ${total} actionable`
+    : total ? `${total} actionable, none fixable in-app` : 'nothing actionable';
+  summary.append(title, summaryText);
+  card.append(summary);
+
+  const basis = paragraph(doc, eligible.length
+    ? 'Each Fix opens the governed source transaction (Preview → Apply); nothing writes without it.'
+    : 'No finding group currently qualifies for an in-app source fix.');
+  card.append(basis);
+
+  if (eligible.length && typeof controller.options.onLocateOccurrence === 'function') {
+    const batch = doc.createElement('div');
+    batch.className = 'lfea-common-error-check__fix-batch';
+    batch.dataset.role = 'lfea-error-check-fix-batch';
+    const fixAll = actionButton(doc, 'Fix all…', 'icon-step-input');
+    fixAll.dataset.action = 'lfea-error-check-fix-all';
+    fixAll.title = 'Walk every queued fix through the governed transaction, one Preview → Apply at a time.';
+    fixAll.addEventListener('click', () => controller.startFixWalk());
+    const skipAll = actionButton(doc, 'Skip all', 'icon-step-input');
+    skipAll.dataset.action = 'lfea-error-check-skip-all';
+    skipAll.title = 'Remove every queued item from this preparation\'s queue (resets on the next preparation).';
+    skipAll.addEventListener('click', () => controller.skipAllFixes());
+    batch.append(fixAll, skipAll);
+    card.append(batch);
+  }
+
+  for (const { group, firstRow } of eligible) {
+    const item = doc.createElement('div');
+    item.className = 'lfea-common-error-check__fix-item';
+    item.dataset.role = 'lfea-error-check-fix-item';
+    item.dataset.groupCode = group.code;
+    const label = doc.createElement('span');
+    label.className = 'lfea-common-error-check__fix-item-label';
+    label.textContent = group.plainMessage;
+    const badge = doc.createElement('span');
+    badge.className = 'lfea-common-error-check__badge';
+    badge.textContent = group.occurrences > 1 ? `${group.occurrences}×` : '1×';
+    const fix = actionButton(doc, 'Fix…', 'icon-step-input');
+    fix.dataset.action = 'lfea-error-check-fix-item';
+    fix.dataset.groupCode = group.code;
+    fix.title = 'Open the first occurrence in the source-bound workspace; apply through the governed Preview → Apply transaction.';
+    fix.addEventListener('click', () => controller.options.onLocateOccurrence?.(firstRow, { edit: true }));
+    const skip = actionButton(doc, 'Skip', 'icon-step-input');
+    skip.dataset.action = 'lfea-error-check-fix-skip';
+    skip.dataset.groupId = group.groupId;
+    skip.addEventListener('click', () => {
+      controller.skippedFixGroupIds.add(group.groupId);
+      controller.fixLedger.push({ groupId: group.groupId, status: 'SKIPPED' });
+      if (!eligibleFixGroups(controller)
+        .some(({ group: entry }) => !controller.skippedFixGroupIds.has(entry.groupId))) {
+        controller.fixWalkActive = false;
+        controller.fixWalkCurrent = null;
+      }
+      controller.render();
+    });
+    item.append(badge, label, fix, skip);
+    card.append(item);
+  }
+
+  if (controller.fixLedger.length > 0) {
+    const ledger = doc.createElement('div');
+    ledger.className = 'lfea-common-error-check__fix-ledger';
+    ledger.dataset.role = 'lfea-error-check-fix-ledger';
+    const ledgerTitle = doc.createElement('strong');
+    ledgerTitle.textContent = 'Queue ledger (this preparation)';
+    ledger.append(ledgerTitle);
+    for (const entry of controller.fixLedger.slice(-8)) {
+      const line = doc.createElement('p');
+      line.dataset.status = entry.status;
+      line.textContent = (entry.status === 'APPLIED' ? '✓ applied · ' : '⊘ skipped · ')
+        + String(entry.groupId).split('::')[0];
+      ledger.append(line);
+    }
+    card.append(ledger);
+  }
+
+  const reasons = [];
+  if (skipped.NO_IN_APP_TRANSACTION) {
+    reasons.push(`${skipped.NO_IN_APP_TRANSACTION} · no in-app repair transaction exists for this mechanics class`);
+  }
+  if (skipped.EXTERNAL_SOURCE) {
+    reasons.push(`${skipped.EXTERNAL_SOURCE} · correction belongs in the source authority, then re-import`);
+  }
+  if (skipped.GOVERNED_NOT_EDIT) {
+    reasons.push(`${skipped.GOVERNED_NOT_EDIT} · governed choice or workflow step, not a source edit`);
+  }
+  if (reasons.length) {
+    const note = paragraph(doc, 'Not auto-fixable: ' + reasons.join(' · '));
+    note.dataset.role = 'lfea-error-check-fix-skipped';
+    card.append(note);
+  }
+  return card;
+}
+
 function renderCategory(controller, category) {
   const doc = controller.documentRef;
   const section = doc.createElement('section');
@@ -390,6 +608,18 @@ function renderCategory(controller, category) {
   const counts = paragraph(doc, `${category.findingCount} occurrence${category.findingCount === 1 ? '' : 's'} across ${distinct === 1 ? 'it' : 'them'}`);
   counts.dataset.role = 'lfea-common-error-check-category-counts';
   section.append(heading, counts);
+  // Compact review (cf. XML229 COMPACT_REVIEW_R1, defect 1): recorded source
+  // facts (PASS) are evidence, not repair actions — say so explicitly instead
+  // of letting them blur into the actionable issue counts.
+  const evidenceGroups = category.groups.filter((group) => group.disposition === 'PASS');
+  if (evidenceGroups.length > 0) {
+    const evidenceCount = evidenceGroups.reduce((sum, group) => sum + group.occurrences, 0);
+    const evidence = paragraph(doc, `Source evidence · ${evidenceCount} recorded fact${evidenceCount === 1 ? '' : 's'}`
+      + ` across ${evidenceGroups.length} group${evidenceGroups.length === 1 ? '' : 's'} (not repair actions)`);
+    evidence.className = 'lfea-common-error-check__source-evidence';
+    evidence.dataset.role = 'lfea-common-error-check-source-evidence';
+    section.append(evidence);
+  }
 
   const list = doc.createElement('div');
   list.className = 'lfea-common-error-check__findings';
@@ -496,28 +726,22 @@ function renderGroup(controller, group) {
     details.append(action);
   }
 
-  if (controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
-    const mapped = classifyLfeaAccdbFindingAction(group.code);
-    const route = labelledParagraph(doc, 'Actual ACCDB action',
-      mapped.actionClass + ' — ' + mapped.action, 'lfea-accdb-finding-action-class');
-    route.dataset.actionClass = mapped.actionClass;
-    details.append(route);
-    if (mapped.nextStep && typeof controller.options.onNavigatePrerequisite === 'function') {
-      const go = actionButton(doc, 'Go to ' + (mapped.nextStep === 'LOAD_CASE' ? 'Load case' : mapped.nextStep),
-        'icon-step-load-case');
-      go.dataset.action = 'lfea-error-check-next-step';
-      go.addEventListener('click', () => controller.options.onNavigatePrerequisite(mapped.nextStep));
-      details.append(go);
-    }
+  // Compact review (cf. XML229 COMPACT_REVIEW_R1): the card shows one concise
+  // finding, one next action and its relevant controls. Evidence lines —
+  // actual governed ACCDB action class, applicability count and source
+  // features — stay available, but inside the technical disclosure rather
+  // than repeated in the card body.
+  const accdbMapped = controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB'
+    ? classifyLfeaAccdbFindingAction(group.code)
+    : null;
+  if (accdbMapped?.nextStep && typeof controller.options.onNavigatePrerequisite === 'function') {
+    const go = actionButton(doc, 'Go to ' + (accdbMapped.nextStep === 'LOAD_CASE' ? 'Load case' : accdbMapped.nextStep),
+      'icon-step-load-case');
+    go.dataset.action = 'lfea-error-check-next-step';
+    go.addEventListener('click', () => controller.options.onNavigatePrerequisite(accdbMapped.nextStep));
+    details.append(go);
   }
 
-  details.append(labelledParagraph(doc, 'Applies to',
-    `${group.occurrences} location${group.occurrences === 1 ? '' : 's'}`,
-    'lfea-common-error-check-occurrences'));
-  if (group.sourceFeatureIds.length > 0) {
-    details.append(labelledParagraph(doc, 'Source features',
-      summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
-  }
   details.append(renderOccurrenceFinder(controller, group));
   const technical = doc.createElement('div');
   technical.className = 'lfea-common-error-check__technical';
@@ -525,7 +749,7 @@ function renderGroup(controller, group) {
   technical.hidden = true;
   const technicalToggle = doc.createElement('button');
   technicalToggle.type = 'button';
-  technicalToggle.textContent = 'Technical details · evidence and governed source references';
+  technicalToggle.textContent = 'Why / technical evidence · governed action class, applicability and source references';
   technicalToggle.dataset.action = 'lfea-error-check-technical-toggle';
   technicalToggle.setAttribute('aria-expanded', 'false');
   technicalToggle.addEventListener('click', () => {
@@ -533,11 +757,24 @@ function renderGroup(controller, group) {
     technicalToggle.setAttribute('aria-expanded', String(!technical.hidden));
   });
   details.append(technicalToggle);
+  if (accdbMapped) {
+    const route = labelledParagraph(doc, 'Actual ACCDB action',
+      accdbMapped.actionClass + ' — ' + accdbMapped.action, 'lfea-accdb-finding-action-class');
+    route.dataset.actionClass = accdbMapped.actionClass;
+    technical.append(route);
+  }
   technical.append(
+    labelledParagraph(doc, 'Applies to',
+      `${group.occurrences} location${group.occurrences === 1 ? '' : 's'}`,
+      'lfea-common-error-check-occurrences'),
     labelledParagraph(doc, 'Finding code', group.code, 'lfea-common-error-check-code'),
     labelledParagraph(doc, 'Governed disposition', group.disposition, 'lfea-common-error-check-governed-disposition'),
     labelledParagraph(doc, 'Authority message', group.rows[0].message, 'lfea-common-error-check-authority-message'),
   );
+  if (group.sourceFeatureIds.length > 0) {
+    technical.append(labelledParagraph(doc, 'Source features',
+      summarizeList(group.sourceFeatureIds), 'lfea-common-error-check-source-features'));
+  }
   if (group.rows[0].technicalBasis) {
     technical.append(labelledParagraph(doc, 'Technical basis', group.rows[0].technicalBasis, 'lfea-common-error-check-technical-basis'));
   }
@@ -572,6 +809,7 @@ function renderOccurrenceFinder(controller, group) {
   search.placeholder = 'Finding ID, source feature, node, segment, case';
   search.dataset.role = 'lfea-error-check-occurrence-search';
   const results = doc.createElement('div');
+  results.className = 'lfea-common-error-check__occurrence-results';
   results.dataset.role = 'lfea-error-check-occurrence-results';
   const controls = doc.createElement('div');
   controls.className = 'lfea-common-error-check__occurrence-pager';
@@ -598,7 +836,11 @@ function renderOccurrenceFinder(controller, group) {
       row.dataset.role = 'lfea-error-check-occurrence';
       row.dataset.findingId = entry.findingId;
       const label = doc.createElement('span');
-      label.textContent = entry.findingId + ' · source '
+      // Compact review row: one line — exact finding ID plus the primary
+      // source identity. The full provenance string stays on the title.
+      const primary = entry.sourceFeatureIds[0] ?? entry.canonicalEntityIds[0] ?? 'no source identity';
+      label.textContent = entry.findingId + ' · ' + primary;
+      label.title = entry.findingId + ' · source '
         + (entry.sourceFeatureIds.length ? entry.sourceFeatureIds.join(', ') : 'no source-feature ID')
         + ' · entities ' + (entry.canonicalEntityIds.length ? entry.canonicalEntityIds.join(', ') : 'none');
       row.append(label);
@@ -608,12 +850,26 @@ function renderOccurrenceFinder(controller, group) {
       locate.disabled = typeof controller.options.onLocateOccurrence !== 'function';
       locate.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: false }));
       row.append(locate);
-      const edit = actionButton(doc, 'Inspect / edit source', 'icon-step-input');
-      edit.dataset.action = 'lfea-error-check-edit-occurrence';
-      edit.dataset.findingId = entry.findingId;
-      edit.disabled = typeof controller.options.onLocateOccurrence !== 'function';
-      edit.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: true }));
-      row.append(edit);
+      // Compact review (cf. XML229 COMPACT_REVIEW_R1, defect 3): an occurrence
+      // without any exact source identity has nothing a source edit can bind
+      // to, so offering "Inspect / edit source" would be a misleading dead
+      // action. Such cases are review-only; Locate stays available because it
+      // honestly reports the unresolved identity in the workspace.
+      const hasSourceIdentity = entry.sourceFeatureIds.length > 0 || entry.canonicalEntityIds.length > 0;
+      if (hasSourceIdentity) {
+        const edit = actionButton(doc, 'Inspect / edit source', 'icon-step-input');
+        edit.dataset.action = 'lfea-error-check-edit-occurrence';
+        edit.dataset.findingId = entry.findingId;
+        edit.disabled = typeof controller.options.onLocateOccurrence !== 'function';
+        edit.addEventListener('click', () => controller.options.onLocateOccurrence?.(entry, { edit: true }));
+        row.append(edit);
+      } else {
+        const reviewOnly = doc.createElement('span');
+        reviewOnly.className = 'lfea-common-error-check__review-only';
+        reviewOnly.dataset.role = 'lfea-error-check-review-only';
+        reviewOnly.textContent = 'Review only · no exact source identity';
+        row.append(reviewOnly);
+      }
       results.append(row);
     }
     if (!matching.length) {
@@ -670,10 +926,21 @@ function renderGroupAction(controller, group) {
     }
     if (typeof controller.options.onLocateOccurrence === 'function'
       && controller.preFlight?.diagnostics?.sourceBundle?.sourceKind === 'ACCDB') {
-      const locate = actionButton(doc, 'Locate first occurrence in piping model', 'icon-step-input');
-      locate.dataset.action = 'lfea-error-check-locate-first';
-      locate.addEventListener('click', () => controller.options.onLocateOccurrence(group.rows[0]));
-      row.append(locate, paragraph(doc, 'Only supported source-table corrections are editable. Unsupported mechanics and governed choices are not fixes.'));
+      // Compact review (cf. XML229 COMPACT_REVIEW_R1, defect 3): locating is
+      // only meaningful when at least one occurrence carries an exact source
+      // identity. Otherwise the button is a dead action — say review-only.
+      const groupHasSourceIdentity = group.sourceFeatureIds.length > 0
+        || group.rows.some((entry) => entry.canonicalEntityIds.length > 0);
+      if (groupHasSourceIdentity) {
+        const locate = actionButton(doc, 'Locate first occurrence in piping model', 'icon-step-input');
+        locate.dataset.action = 'lfea-error-check-locate-first';
+        locate.addEventListener('click', () => controller.options.onLocateOccurrence(group.rows[0]));
+        row.append(locate, paragraph(doc, 'Only supported source-table corrections are editable. Unsupported mechanics and governed choices are not fixes.'));
+        return row;
+      }
+      const note = paragraph(doc, 'Review only · no occurrence has an exact source identity to locate or edit.');
+      note.dataset.role = 'lfea-error-check-review-only';
+      row.append(note);
       return row;
     }
     const lock = actionButton(doc, 'Fix in source and reload', 'icon-step-input');

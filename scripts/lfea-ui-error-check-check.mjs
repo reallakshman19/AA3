@@ -153,6 +153,41 @@ assert.match(workspaceSource, /locateFindingGroup\(group\)/u);
 assert.match(workspaceSource, /resolveLfeaAccdbFindingTargets\(row, active\.source, descriptor\)/u);
 assert.match(workspaceSource, /focusHighlightedBounds\(\)/u);
 assert.doesNotMatch(workspaceSource, /onMoveNode|bindLfeaNodeEditor/u);
+// Compact review presentation (cf. XML229 COMPACT_REVIEW_R1 port): evidence
+// metadata lives behind the technical disclosure, and occurrences without any
+// exact source identity render a review-only state instead of a source-edit
+// action.
+assert.match(panelSource, /Why \/ technical evidence/u);
+assert.match(panelSource, /hasSourceIdentity/u);
+assert.match(panelSource, /dataset\.role = 'lfea-error-check-review-only'/u);
+assert.doesNotMatch(panelSource, /Inspect \/ edit source[\s\S]{0,400}lfea-error-check-review-only/u);
+assert.match(panelSource, /dataset\.role = 'lfea-common-error-check-source-evidence'/u);
+assert.match(panelSource, /not repair actions/u);
+// Auto fix queue: eligibleActions-style gating (EDITABLE_INPUT + exact source
+// identity + not authority-gated) with explicit skip reasons; Fix only opens
+// the governed workspace transaction, never a direct write.
+assert.match(panelSource, /dataset\.role = 'lfea-error-check-fix-queue'/u);
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-fix-item'/u);
+assert.match(panelSource, /LFEA_ACCDB_ACTION_CLASSES\.EDITABLE_INPUT/u);
+assert.match(panelSource, /NO_IN_APP_TRANSACTION/u);
+// Batch operations: collapsible queue with a governed Fix-all walk and
+// Skip-all; skips are per-preparation only and never write the source.
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-fix-all'/u);
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-skip-all'/u);
+assert.match(panelSource, /dataset\.action = 'lfea-error-check-fix-skip'/u);
+assert.match(panelSource, /skippedFixGroupIds\.clear\(\)/u);
+assert.match(panelSource, /advanceFixWalk\(\)/u);
+assert.match(panelSource, /dataset\.role = 'lfea-error-check-fix-ledger'/u);
+// Suggested fix for near-coincident nodes preflights the governed coordinate
+// transaction; segment duplicates get displaced pointer hit targets.
+assert.match(workspaceSource, /suggestNodeFix\(finding, targets, active\)/u);
+assert.match(workspaceSource, /TOPOLOGY_DISTINCT_NODES_NEAR_COINCIDENT/u);
+const svgSource = fs.readFileSync(
+  new URL('../src/workspace/lfea-model-review/lfea-geometry-review-svg.js', import.meta.url),
+  'utf8',
+);
+assert.match(svgSource, /segmentOccurrences/u);
+assert.match(svgSource, /dataset\.hitTargetOffset = 'DISPLAY_ONLY'/u);
 assert.match(panelSource, /dataset\.role = 'lfea-error-check-accept-limitations'/u);
 assert.match(panelSource, /dataset\.action = 'authorize-lfea-error-check-limitations'/u);
 assert.match(panelSource, /this\.options\.onAuthorizePreFlight\(\{/u);
